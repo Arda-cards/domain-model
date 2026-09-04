@@ -173,6 +173,12 @@ check dem_heldViewHeadBased for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Tran
 assert dem_confirmedAcceptCited { confirmedAcceptCited }
 check dem_confirmedAcceptCited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot expect 0
+// R-a (MINESWEEPER's chain A review): the residual's MOVED_OTHERWISE arm under the hold cannot be reading our own accept in
+// flight — at every held tick a committed accept citing the opener strictly precedes it. Negative control: drop `confirmViol`'s
+// RNotLanded arm and this check finds the counterexample (an uncited CONFIRM enters HELD with no accept) — run as a probe.
+assert dem_heldImpliesAcceptLanded { heldImpliesAcceptLanded }
+check dem_heldImpliesAcceptLanded for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot expect 0
 assert dem_releasedClaimUncited { releasedClaimUncited }
 check dem_releasedClaimUncited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot expect 0

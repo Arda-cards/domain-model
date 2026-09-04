@@ -73,7 +73,12 @@ fact CycleCitations {
 /** cycleResidualAt — HOLD level. ABSENT before the cycle's genesis; a closed cycle (withdrawn / rolled over) is gone;
     REQUESTING reads differently by phase: at RESERVED our accept has not landed (UNMOVED — retry), UNDER THE HOLD a third
     party shelved it back (MOVED_OTHERWISE — SPEARHEAD-D7 Option A: the hold is void, RELEASE + detach, never a re-accept
-    from under a hold); REQUESTED uncited (a UI accept) and IN_PROCESS-and-beyond are moved under someone else's act. */
+    from under a hold); REQUESTED uncited (a UI accept) and IN_PROCESS-and-beyond are moved under someone else's act.
+    UNDER THE HOLD OUR ACCEPT HAS LANDED (MINESWEEPER's chain A review, R-a): a held phase is entered only by a committed
+    CONFIRM at RESERVED (`EffectWitness`; transfers and acts need a held prePhase), `confirmViol` refuses an uncited CONFIRM
+    (RNotLanded) and the adopted `citationLands` reads a committed one as cited — a committed accept STRICTLY precedes it.
+    So "the head cites nothing of ours" at a held tick is a LATER row, never our own accept in flight; the derivation is
+    pinned by `heldImpliesAcceptLanded` (checked, `dem_heldImpliesAcceptLanded`), not by the remedy. */
 fun cycleResidualAt[c: CardCycle, t: Tick]: one sem/PeerView {
   (no stateOfCycleAt[c, t])           => sem/PV_ABSENT
   else closedAt[c, t]                 => sem/PV_MOVED_OTHERWISE
@@ -158,6 +163,13 @@ pred detachRequiresReleased {
 }
 /** confirmedAcceptCited — a committed CONFIRM's RESERVE has a citing accept (LC-IL-03 read through E2). */
 pred confirmedAcceptCited { all o: claim/ConfirmOcc | committed[o] implies claim/cited[o] }
+/** heldImpliesAcceptLanded — at every held tick a committed accept citing the hold's opener strictly precedes `t` (R-a):
+    the residual's MOVED_OTHERWISE arm under the hold never classifies our own accept in flight. Theorem of the CONFIRM guard
+    (RNotLanded) + `citationLands` + the held-phase entry effects; non-vacuous by `dem_claimArc` (reaches I_HELD). */
+pred heldImpliesAcceptLanded {
+  all c: CardCycle, t: Tick | claim/heldAt[c, t] implies
+    (some a: AcceptOcc | committed[a] and a.subject = c and a.arche = claim/openerBefore[c, t] and precedes[a.tick, t])
+}
 /** releasedClaimUncited — a committed RELEASE at RESERVED has no citing accept before it (LC-IL-04 read through E2; named apart
     from demand_movement's `releasedReserveUncited` so a system root may open both confined modules;
     at HELD a RELEASE may follow a cited accept — E2b's whole point, `dem_withdrawnUnderHoldReleases`). */
