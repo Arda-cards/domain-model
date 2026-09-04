@@ -70,17 +70,20 @@ abstract sig PoolOcc extends plog/SubjectOcc {}
 /** pool — the reading alias for the spine's `subject` field (receiver syntax: `o.pool`). */
 fun pool[o: PoolOcc]: one InventoryPool { o.subject }
 
-sig PoolAddOcc    extends PoolOcc { item: one InventoryItem, reverses: lone univ } { bindings = subject + item + arche + reverses }
-sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone univ } { bindings = subject + item + arche + reverses }
+sig PoolAddOcc    extends PoolOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
+sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 // B-mov (DT-029 E6 / SAMWISE-S1 as ruled, 2026-09-03): every movement row binds its causal signature `arche` (kernel field;
 // the caller's RESERVE row id, or itself when self-minted — MP's Q7 rule: every row an act writes carries the act's `arche`)
 // and `reverses` — the row this movement UNDOES (a reversal is a NEW context: it carries its own `arche`; S1 item 2).
+// `reverses` is typed `lone PoolOcc`, never `lone univ`: a field over `univ` is a |PoolOcc| × |univ| relation and inflated every
+// root opening this module by ~60 % primary vars (the receiver canary, B-mov's P4 falsified 2026-09-04); `ReversalDiscipline`
+// constrains it to the inverse kind anyway, so the type costs nothing and the matrix is |PoolOcc|².
 /** PoolTransferOcc — M2b (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the ONE kind that moves an
     InventoryItem between pools (ownership-by-genesis — items move between pools, pools never
     re-attach). `subject` (the spine field, read via `pool[o]`/`o.pool`) is the SOURCE pool
     (`from`); atomic remove-then-add. `to` is the destination. This is the model seat of R2 —
     "take inventory from Inventory-at-Rest into a new DemandItem without receiving". */
-sig PoolTransferOcc extends PoolOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone univ }
+sig PoolTransferOcc extends PoolOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone PoolOcc }
   { bindings = subject + item + to + arche + reverses }
 /** ReversalDiscipline — B-mov: `reverses` names a COMMITTED row on the SAME pool, EARLIER, of the INVERSE kind and the same
     item — an add reversing a remove, a remove reversing an add, a transfer reversing a transfer whose `to` is this one's
