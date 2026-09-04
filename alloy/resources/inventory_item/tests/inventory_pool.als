@@ -95,3 +95,32 @@ run unit_pool_transferSameTargetRefused {
 run unit_pool_splitInPool {
   some s: SplitOcc, a: PoolAddOcc | splitInPool[s, a]
 } for 7 but 2 Scalar, 3 Int expect 1
+
+// ── B-mov (DT-029 E6 / SAMWISE-S1 / MINESWEEPER-Q7 = A): the causal signature on movement rows ──────────────────
+/** A re-sent movement — a second add on ONE pool citing the SAME origin a committed add already carries — is refused
+    with exactly RDuplicateOrigin (the idempotent callee; the module fact `ArcheUnique` needs this typed refusal — Q8). */
+run unit_pool_duplicateOriginRefused {
+  some g: PoolOcc, disj a, b: PoolAddOcc | committed[g] and committed[a]
+    and a.arche = g and b.arche = g and a.pool = b.pool and precedes[g.tick, a.tick] and precedes[a.tick, b.tick]
+    and b.admission in Rejected and b.admission.because = RDuplicateOrigin
+} for 6 but 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
+/** Q7 = A: a CITING transfer's paired destination add carries the SAME arche — one act, one causal signature, two rows on
+    two pools (no duplicate: uniqueness is per (arche, pool)). */
+run unit_pool_transferBothHalvesOneArche {
+  some g: PoolOcc, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
+    and o.arche = g and precedes[g.tick, o.tick] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
+    and a.arche = o.arche and a.pool != o.pool
+} for 6 but 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
+/** A self-minted transfer's pair cites the transfer row itself — the transfer IS the add's immediate cause. */
+run unit_pool_selfMintedTransferPairCitesTransfer {
+  some o: PoolTransferOcc, a: PoolAddOcc | committed[o] and committed[a] and o.arche = o
+    and a.pool = o.to and a.item = o.item and adjacentCommit[o, a] and a.arche = o
+} for 6 but 2 Scalar, 3 Int expect 1
+/** A reversal names the inverse row on the same pool, same item, earlier — and carries its OWN arche (a new context). */
+run unit_pool_reversalNamesInverse {
+  some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.reverses = a and r.arche != a.arche
+} for 6 but 2 Scalar, 3 Int expect 1
+/** An add cannot "reverse" an add (the inverse-kind discipline). */
+run unit_pool_reversalWrongKindImpossible {
+  some disj a, b: PoolAddOcc | b.reverses = a
+} for 6 but 2 Scalar, 3 Int expect 0

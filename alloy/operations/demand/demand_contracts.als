@@ -30,6 +30,12 @@ module operations/demand/demand_contracts
 
 open operations/demand/demand_types
 
+// POOL MOVEMENTS (chain B-mov, DT-029 E6 / SAMWISE-S1 / MINESWEEPER-Q7 = A): the demand's movement legs — merge,
+// extract, transfer — ride a MOVEMENT-semantics intent chain keyed by the pool, governed by the CONFINED module
+// `demand_movement.als` and verified in its own root `tests/unit/demand_movement.als` (C-2 cone confinement, the
+// demand_reset.als precedent). An edit to THIS module's laws propagates into that root's cone (it opens the real
+// implementation) — re-run it with any change here. No law below reads the chain; none may without opening it.
+
 // ── C1 · cycle indivisibility (R1/R3) — single-log law ──────────────────────────────────────────
 /** A cycle belongs to at most one live DemandItem at any moment (`demandOf` is at most one) —
     the module-owned INTEGRITY half of collation (the policy half is the caller's). */

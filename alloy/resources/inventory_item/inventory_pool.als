@@ -70,21 +70,43 @@ abstract sig PoolOcc extends plog/SubjectOcc {}
 /** pool — the reading alias for the spine's `subject` field (receiver syntax: `o.pool`). */
 fun pool[o: PoolOcc]: one InventoryPool { o.subject }
 
-sig PoolAddOcc    extends PoolOcc { item: one InventoryItem } { bindings = subject + item }
-sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem } { bindings = subject + item }
+sig PoolAddOcc    extends PoolOcc { item: one InventoryItem, reverses: lone univ } { bindings = subject + item + arche + reverses }
+sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone univ } { bindings = subject + item + arche + reverses }
+// B-mov (DT-029 E6 / SAMWISE-S1 as ruled, 2026-09-03): every movement row binds its causal signature `arche` (kernel field;
+// the caller's RESERVE row id, or itself when self-minted — MP's Q7 rule: every row an act writes carries the act's `arche`)
+// and `reverses` — the row this movement UNDOES (a reversal is a NEW context: it carries its own `arche`; S1 item 2).
 /** PoolTransferOcc — M2b (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the ONE kind that moves an
     InventoryItem between pools (ownership-by-genesis — items move between pools, pools never
     re-attach). `subject` (the spine field, read via `pool[o]`/`o.pool`) is the SOURCE pool
     (`from`); atomic remove-then-add. `to` is the destination. This is the model seat of R2 —
     "take inventory from Inventory-at-Rest into a new DemandItem without receiving". */
-sig PoolTransferOcc extends PoolOcc { item: one InventoryItem, to: one InventoryPool }
-  { bindings = subject + item + to }
+sig PoolTransferOcc extends PoolOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone univ }
+  { bindings = subject + item + to + arche + reverses }
+/** ReversalDiscipline — B-mov: `reverses` names a COMMITTED row on the SAME pool, EARLIER, of the INVERSE kind and the same
+    item — an add reversing a remove, a remove reversing an add, a transfer reversing a transfer whose `to` is this one's
+    source and whose source is this one's `to`. The late-movement detector (the owner's module) excludes rows named by a
+    committed reversal, so a repair never trips its own detector (DT-027 §7). */
+fact ReversalDiscipline {
+  all o: PoolAddOcc    | some o.reverses implies (o.reverses in PoolRemoveOcc and committed[o.reverses & PoolRemoveOcc]
+                                                  and (o.reverses & PoolRemoveOcc).subject = o.subject and (o.reverses & PoolRemoveOcc).item = o.item
+                                                  and precedes[(o.reverses & PoolRemoveOcc).tick, o.tick])
+  all o: PoolRemoveOcc | some o.reverses implies (o.reverses in PoolAddOcc and committed[o.reverses & PoolAddOcc]
+                                                  and (o.reverses & PoolAddOcc).subject = o.subject and (o.reverses & PoolAddOcc).item = o.item
+                                                  and precedes[(o.reverses & PoolAddOcc).tick, o.tick])
+  all o: PoolTransferOcc | some o.reverses implies (o.reverses in PoolTransferOcc and committed[o.reverses & PoolTransferOcc]
+                                                  and (o.reverses & PoolTransferOcc).to = o.subject and (o.reverses & PoolTransferOcc).subject = o.to
+                                                  and (o.reverses & PoolTransferOcc).item = o.item and precedes[(o.reverses & PoolTransferOcc).tick, o.tick])
+}
 
 // ── refusal reasons ──────────────────────────────────────────────────────────────────────────────
 one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
         RHeldElsewhere,  // M2b (DT-020 §8.5.3): add refused — the item is already held by ANOTHER
                          //   live pool (poolMembershipExclusive: at most one pool per item per tick)
-        RSameTarget      // M2b: transfer refused — `to` names the same pool as `from` (no-op move)
+        RSameTarget,     // M2b: transfer refused — `to` names the same pool as `from` (no-op move)
+        RDuplicateOrigin // B-mov (DT-029 E5 S-2 / S1 item 3): a movement citing an `arche` a COMMITTED row on this pool
+                         //   already carries — the idempotent callee's typed refusal ("already landed"); the runtime's
+                         //   typed duplicate refusal. LOCAL atom: this module opens no pattern layer, and the pattern's
+                         //   `RDuplicateArche` would clash in the flat namespace with a root that opens both.
         extends Reason {}
 
 // ── the spine adoption: chaining (unconditional — a refused occurrence still read the real
@@ -101,9 +123,11 @@ fun poolAddViol[o: PoolAddOcc]: set Reason {
   // theorem — an add is refused if the item is currently held by ANY OTHER pool at this
   // tick (RAlreadyMember above only catches the SAME pool).
   + ((some q: InventoryPool - o.pool | o.item in heldAt[q, o.tick]) => RHeldElsewhere else none)
+  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov: a re-sent origin on this pool is refused, typed (the module FACT `ArcheUnique` needs the refusal — Q8)
 }
 fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
   ((o.item not in o.pre.holds) => RNotMember else none)
+  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
 /** poolTransferViol — M2b: RSameTarget (a no-op move), RNotMember (the item isn't at the
     SOURCE — `subject`/`from`), RWrongItem/RWrongTenant judged at the DESTINATION (`to`) — the
@@ -114,6 +138,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + ((o.item.itemPin.subject != o.to.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
+  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
 fact PoolAdmissionWitness {
   all o: PoolAddOcc      | (o.admission = Accepted iff no poolAddViol[o])      and (o.admission in Rejected implies o.admission.because = poolAddViol[o])
@@ -153,7 +178,10 @@ pred adjacentCommit[a, b: Occurrence] {
     transfer itself is. */
 fact TransferPairing {
   all o: PoolTransferOcc | committed[o] implies
-    (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a])
+    (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
+       and a.arche = o.arche)   // Q7 = A (MP, 2026-09-03): the paired half carries the transfer's causal signature — one act, one
+                                //   `arche` on both rows; adjacency stays as the model's "same transaction"; when the transfer is
+                                //   self-minted the pair cites the transfer row itself (it IS the add's immediate cause)
 }
 
 /** splitInPool — M2b composite (a DERIVED predicate, not a kind): a committed SplitOcc whose
@@ -164,6 +192,7 @@ fact TransferPairing {
 pred splitInPool[s: SplitOcc, a: PoolAddOcc] {
   committed[s] and committed[a] and a.item = s.nu and adjacentCommit[s, a]
   and s.target in heldAt[a.pool, s.tick]
+  and a.arche = s.arche   // Q7 = A inherits: the residue's add carries the split's causal signature
 }
 
 // ── the projections (wrappers over the spine's reads — public surface preserved) ────────────────
