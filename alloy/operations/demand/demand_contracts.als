@@ -36,6 +36,12 @@ open operations/demand/demand_types
 // demand_reset.als precedent). An edit to THIS module's laws propagates into that root's cone (it opens the real
 // implementation) — re-run it with any change here. No law below reads the chain; none may without opening it.
 
+// THE CYCLE CLAIM (chain A, DT-029 E6 / DT-027 §6.1 the additive arm): the demand's claim on a cycle rides a
+// HOLD-semantics intent chain keyed by the cycle, governed by the CONFINED module `demand_claim.als` and verified in
+// its own root `tests/unit/demand_claim.als` (the same confinement, for the same reason). `cycleIndivisible` below is a
+// THEOREM of that chain wherever membership mirrors the heads (`cycleIndivisibleFromChain`); `demandOf` stays the
+// membership read here — the head read `claimHolderOf` lives there. Re-run that root with any change here.
+
 // ── C1 · cycle indivisibility (R1/R3) — single-log law ──────────────────────────────────────────
 /** A cycle belongs to at most one live DemandItem at any moment (`demandOf` is at most one) —
     the module-owned INTEGRITY half of collation (the policy half is the caller's). */

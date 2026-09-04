@@ -68,3 +68,15 @@ before the JVM starts is deleted with it — the run's verdicts survive only in
 `for 5`; a single check at `for 6` ≈ 3 s, but `guarantees` (the twelve-law conjunction)
 is the heavy one (57 s at `for 4`). `for 5` is the gate scope; `for 6` on the whole root
 exceeded 10 minutes.
+
+## Open parameters resolve at parse time — qualify EVERY one (B-mov, 2026-09-04)
+
+A ROOT that instantiates a parametric module with a sig reachable by several import paths fails at parse time —
+"The name InventoryPool is ambiguous" — although the same name in scopes and expressions dedups. Open the types
+module ALIASED and qualify the parameter (`open resources/inventory_item/inventory_pool as ip` +
+`intent_log[ip/InventoryPool, sem/MoveSem]`; the soak slices' `kt/CardCycle`); the instance dedups with the
+module's own. A module opening the instance by one path parses; the root is where paths multiply — a
+never-executed root hides this until its first run. **Rule (MINESWEEPER): qualify EVERY open parameter, in modules
+too** — the loud failure is a property of several candidates being visible; with exactly one same-named sig in
+scope (a mock's, a peer module's) the parameter resolves SILENTLY to it and every verdict reads green against the
+wrong import. Gate-grep candidate: `grep -rn '^open .*\[[A-Za-z]' alloy` lists unqualified parameters.

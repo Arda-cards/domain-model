@@ -107,6 +107,9 @@ abstract sig CycleOcc extends clog/SubjectOcc {}
 fun cycle[o: CycleOcc]: one CardCycle { o.subject }
 
 sig RequestOcc            extends CycleOcc { qtyOverride: lone Quantity } { bindings = subject + qtyOverride }
+// `AcceptOcc` / `StartProcessingOcc` / `ShelveOcc` cite the claim chain's RESERVE / ACT_RESERVE (`arche`) when the act is a
+// demand saga's leg (DT-029 E6, chain A) — kanban stays HOLDER-BLIND: the citation discipline is the demand module's fact
+// (`operations/demand/demand_claim.als`, `CycleCitations`), never a kanban law.
 sig AcceptOcc             extends CycleOcc {} { bindings = subject }
 sig ShelveOcc             extends CycleOcc {} { bindings = subject }
 sig StartProcessingOcc    extends CycleOcc { pool: one EntityId } { bindings = subject + pool }   // ATTACHES the pool (exclusive while the cycle lives).
