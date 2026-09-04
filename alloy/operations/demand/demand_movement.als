@@ -62,7 +62,10 @@ fun movementsCiting[r: movement/ReserveOcc]: set PoolOcc { movement/citers[r] & 
     the act landed — R1 broken by a timeout read as a refusal), AND REMAINS late: a later committed reversal clears it, so
     this is a fact about the log as of now, not about the row at its own tick (MINESWEEPER, de9b305 review). The chain read
     is the cited leg's KEY, not the row's own pool: they differ for a transfer's paired add on the destination (PoolCitations'
-    second arm), and `phaseAt` reads I_FREE on a pool with no chain — reading `o.pool` reported every such paired add late. */
+    second arm), and `phaseAt` reads I_FREE on a pool with no chain — reading `o.pool` reported every such paired add late.
+    The `o.arche in movement/IntentOcc` guard excludes UNCITED rows only because `arche` is TOTAL (DT-029 D13 = A): a self-minted row
+    has `o.arche = o`, a PoolOcc, so the guard is false. Under a `lone` arche an empty `o.arche` makes `none in IntentOcc` vacuously
+    TRUE, `phaseAt[none, t]` reads I_FREE, and this predicate fires on every uncited committed row (MINESWEEPER, 8400902 review). */
 pred lateMovement[o: PoolOcc] {
   committed[o] and o.arche in movement/IntentOcc and movement/phaseAt[(o.arche & movement/IntentOcc).subject, o.tick] = sem/I_FREE
   and (no q: PoolAddOcc      | committed[q] and q.reverses = o)   // split per kind: `reverses` is declared on each of the three kinds, so a
