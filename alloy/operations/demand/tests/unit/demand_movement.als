@@ -3,7 +3,8 @@ module operations/demand/tests/unit/demand_movement
 open operations/demand/demand_movement
 open operations/demand/demand_contracts
 open meta/intent_log/semantics as sem
-open meta/intent_log/intent_log[InventoryPool, sem/MoveSem] as movement
+open resources/inventory_item/inventory_pool as ip                 // aliased: the parameter below must resolve by ONE path — unqualified,
+open meta/intent_log/intent_log[ip/InventoryPool, sem/MoveSem] as movement   //   four import paths reach InventoryPool here (the soak slices' kt/ pattern)
 open reference_data/item/item_mock
 open resources/processing_network/processing_network_mock
 open resources/kanban_card/kanban_card_mock
