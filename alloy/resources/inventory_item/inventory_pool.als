@@ -77,7 +77,9 @@ sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone Pool
 // and `reverses` — the row this movement UNDOES (a reversal is a NEW context: it carries its own `arche`; S1 item 2).
 // `reverses` is typed `lone PoolOcc`, never `lone univ`: a field over `univ` is a |PoolOcc| × |univ| relation and inflated every
 // root opening this module by ~60 % primary vars (the receiver canary, B-mov's P4 falsified 2026-09-04); `ReversalDiscipline`
-// constrains it to the inverse kind anyway, so the type costs nothing and the matrix is |PoolOcc|².
+// constrains it to the inverse kind anyway, so the type costs nothing and the matrix is |PoolOcc|². The type is NOT the
+// discipline: `lone PoolOcc` is not `lone <inverse kind>`, so `ReversalDiscipline` stays LOAD-BEARING for the inverse-kind half
+// (`unit_pool_reversalWrongKindImpossible` still proves it) — MINESWEEPER's read of f72191e, 2026-09-04.
 /** PoolTransferOcc — M2b (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the ONE kind that moves an
     InventoryItem between pools (ownership-by-genesis — items move between pools, pools never
     re-attach). `subject` (the spine field, read via `pool[o]`/`o.pool`) is the SOURCE pool
