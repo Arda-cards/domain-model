@@ -49,7 +49,10 @@ run mov_revokeRaceSerializes {
     r2.admission in Rejected and sem/RKeyTaken in r2.admission.because
   }
 } for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot expect 1
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 2 ProductionDelivery,
+      15 Tick, 14 Occurrence, 14 EntityId, 16 Snapshot expect 1   // scope derived (first execution UNSAT at 11 Tick / for 9): two extracts need
+      // two revokes (revokeExtractsAtomically, one extract per revoke), two deliveries (a revoked PD refuses a second revoke), two record +
+      // create-delivery pairs, the demand at IN_PROCESS (create, release, start) — 14 occurrences with the two RESERVEs and the item pin
 
 // R-05 (FM-DEM-04) — the interrupted distribute: the extract landed and cites its leg, the demand's DISTRIBUTE is lost;
 // the re-drive reads RESERVE × moved-by-this from the citation (`citedAt`) and CONFIRMs without a second extract.
@@ -74,8 +77,10 @@ run mov_transferBothHalvesOneArche {
     o.arche = l and a.arche = l and adjacentCommit[o, a] and f.peerRid = o
     precedes[l.tick, o.tick] and precedes[a.tick, f.tick]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
+} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot expect 1
+      // scope derived (first execution UNSAT at for 6): the transfer needs the item HELD at the source (poolTransferViol RNotMember) — a
+      // prior committed add on p — so 7 occurrences (add, leg, transfer, paired add, confirm, the item pin, a demand row for ownerVersion)
 
 // The late-act detector: the leg was RELEASEd (uncited, UNMOVED) and the add landed AFTER — a late movement.
 run mov_lateMovementDetected {
@@ -96,8 +101,10 @@ run mov_reversalExcluded {
     precedes[r.tick, rel.tick] and precedes[rel.tick, a.tick] and precedes[a.tick, x.tick]
     not lateMovement[a]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
+} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot expect 1
+      // scope widened ONCE (first execution UNSAT at for 6 = exactly the six occurrences counted: reserve, release, add, remove, the item pin,
+      // a demand row; `mov_lateMovementDetected`, the same trace minus the remove, is SAT) — if still UNSAT the diagnosis moves to the law
 
 // ── the additive-arm laws (theorems of citationView + the guards) ───────────────────────────────────────────────
 assert mov_confirmedMovementCited { confirmedMovementCited }
