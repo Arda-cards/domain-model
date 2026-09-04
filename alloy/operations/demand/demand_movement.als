@@ -58,10 +58,13 @@ fact PoolViews { all o: movement/ViewOcc | not movement/cited[o] implies o.peerV
 // ── the reads (A-1: the classifier is the module's `citedAt`) and the detector (A-5) ─────────────────────────────
 /** movementsCiting — the committed pool rows citing leg `r`. */
 fun movementsCiting[r: movement/ReserveOcc]: set PoolOcc { movement/citers[r] & PoolOcc }
-/** lateMovement — a committed pool row whose cited leg's chain reads FREE at the row's tick (the leg was RELEASEd before
-    the act landed — R1 broken by a timeout read as a refusal), unless a committed reversal names it. */
+/** lateMovement — a committed pool row whose CITED LEG's chain reads FREE at the row's tick (the leg was RELEASEd before
+    the act landed — R1 broken by a timeout read as a refusal), AND REMAINS late: a later committed reversal clears it, so
+    this is a fact about the log as of now, not about the row at its own tick (MINESWEEPER, de9b305 review). The chain read
+    is the cited leg's KEY, not the row's own pool: they differ for a transfer's paired add on the destination (PoolCitations'
+    second arm), and `phaseAt` reads I_FREE on a pool with no chain — reading `o.pool` reported every such paired add late. */
 pred lateMovement[o: PoolOcc] {
-  committed[o] and o.arche in movement/IntentOcc and movement/phaseAt[o.pool, o.tick] = sem/I_FREE
+  committed[o] and o.arche in movement/IntentOcc and movement/phaseAt[(o.arche & movement/IntentOcc).subject, o.tick] = sem/I_FREE
   and (no q: PoolAddOcc      | committed[q] and q.reverses = o)   // split per kind: `reverses` is declared on each of the three kinds, so a
   and (no q: PoolRemoveOcc   | committed[q] and q.reverses = o)   //   PoolOcc-typed join is ambiguous (knowledge-base: field-overload; B-mov'' run).
   and (no q: PoolTransferOcc | committed[q] and q.reverses = o)   //   PARENTHESIZED: a quantifier body extends to the end of the formula, so the

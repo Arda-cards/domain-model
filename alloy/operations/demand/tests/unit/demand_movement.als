@@ -82,6 +82,28 @@ run mov_transferBothHalvesOneArche {
       // scope derived (first execution UNSAT at for 6): the transfer needs the item HELD at the source (poolTransferViol RNotMember) — a
       // prior committed add on p — so 7 occurrences (add, leg, transfer, paired add, confirm, the item pin, a demand row for ownerVersion)
 
+// The transfer's paired add is NOT late (MINESWEEPER's de9b305 review): it cites the leg keyed on the SOURCE while sitting on the
+// destination, whose chain may be empty — the detector must read the CITED leg's chain, never the row's own pool.
+run mov_pairedAddNotLate {
+  some disj p, q: InventoryPool, l: TransferLeg, o: PoolTransferOcc, a: PoolAddOcc | {
+    committed[l] and committed[o] and committed[a]
+    l.subject = p and resolve[l.moveTo] = q and o.pool = p and o.to = q and a.pool = q
+    o.arche = l and a.arche = l and adjacentCommit[o, a] and precedes[l.tick, o.tick]
+    no movement/IntentOcc & subject.q                         // the destination has NO chain: phaseAt reads I_FREE there
+    not lateMovement[a]
+  }
+} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot expect 1
+// … and never late while its leg is live: a committed paired add under a RESERVED/HELD source leg is not a late movement (at de9b305,
+// which read the destination's empty chain, this check was SAT — the held failure this check guards against).
+assert mov_pairedAddNeverLateWhileLegLive {
+  all a: PoolAddOcc, tr: PoolTransferOcc | (committed[a] and committed[tr] and tr.to = a.pool and adjacentCommit[tr, a] and tr.arche = a.arche
+      and tr.arche in movement/IntentOcc and movement/phaseAt[(tr.arche & movement/IntentOcc).subject, a.tick] in sem/livePhases)
+    implies not lateMovement[a]
+}
+check mov_pairedAddNeverLateWhileLegLive for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 0
+
 // The late-act detector: the leg was RELEASEd (uncited, UNMOVED) and the add landed AFTER — a late movement.
 run mov_lateMovementDetected {
   some p: InventoryPool, r: movement/ReserveOcc, rel: movement/ReleaseOcc, a: PoolAddOcc | {
