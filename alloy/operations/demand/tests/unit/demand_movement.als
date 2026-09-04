@@ -101,10 +101,10 @@ run mov_reversalExcluded {
     precedes[r.tick, rel.tick] and precedes[rel.tick, a.tick] and precedes[a.tick, x.tick]
     not lateMovement[a]
   }
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot expect 1
-      // scope widened ONCE (first execution UNSAT at for 6 = exactly the six occurrences counted: reserve, release, add, remove, the item pin,
-      // a demand row; `mov_lateMovementDetected`, the same trace minus the remove, is SAT) — if still UNSAT the diagnosis moves to the law
+} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
+      // ORIGINAL scope restored: the six-occurrence count was right; the first-execution UNSAT was the LAW TEXT (lateMovement's split
+      // nested its quantifiers by precedence and never saw the remove) — found by the bisection probe, fixed in the module
 
 // ── the additive-arm laws (theorems of citationView + the guards) ───────────────────────────────────────────────
 assert mov_confirmedMovementCited { confirmedMovementCited }

@@ -62,10 +62,10 @@ fun movementsCiting[r: movement/ReserveOcc]: set PoolOcc { movement/citers[r] & 
     the act landed — R1 broken by a timeout read as a refusal), unless a committed reversal names it. */
 pred lateMovement[o: PoolOcc] {
   committed[o] and o.arche in movement/IntentOcc and movement/phaseAt[o.pool, o.tick] = sem/I_FREE
-  and no q: PoolAddOcc | committed[q] and q.reverses = o          // split per kind: `reverses` is declared on each of the three kinds, so a
-  and no q: PoolRemoveOcc | committed[q] and q.reverses = o       //   PoolOcc-typed join is ambiguous (knowledge-base: field-overload; B-mov'' run)
-  and no q: PoolTransferOcc | committed[q] and q.reverses = o
-}
+  and (no q: PoolAddOcc      | committed[q] and q.reverses = o)   // split per kind: `reverses` is declared on each of the three kinds, so a
+  and (no q: PoolRemoveOcc   | committed[q] and q.reverses = o)   //   PoolOcc-typed join is ambiguous (knowledge-base: field-overload; B-mov'' run).
+  and (no q: PoolTransferOcc | committed[q] and q.reverses = o)   //   PARENTHESIZED: a quantifier body extends to the end of the formula, so the
+}                                                                  //   unparenthesized chain nested the three and never saw a remove (B-mov''' probe)
 
 // ── the laws (L-3 / L-4, the additive form; theorems of `citationView` + the guards) ─────────────────────────────
 /** confirmedMovementCited — a committed CONFIRM's leg has a citing pool row (LC-IL-03 read through E2). */
