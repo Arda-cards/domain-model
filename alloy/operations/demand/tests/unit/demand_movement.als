@@ -104,6 +104,18 @@ assert mov_pairedAddNeverLateWhileLegLive {
 check mov_pairedAddNeverLateWhileLegLive for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 0
 
+// An UNCITED committed add is never late (MINESWEEPER's MG-12 review): the guard `o.arche in movement/IntentOcc` is what excludes it, and
+// it excludes it only because `arche` is TOTAL (a self-minted row cites itself, a PoolOcc). Drop the guard — or let the totality move so an
+// empty arche reads `none in IntentOcc` as true — and `phaseAt[none, t]` reads I_FREE and this witness goes UNSAT. The doc note's check.
+run mov_uncitedAddNotLate {
+  some p: InventoryPool, a: PoolAddOcc | {
+    committed[a] and a.pool = p and a.arche = a                 // self-minted: no caller context
+    no movement/IntentOcc                                        // no intent row anywhere: the only chain reads I_FREE by default
+    not lateMovement[a]
+  }
+} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 6 Tick, 6 EntityId, 6 Snapshot expect 1
+
 // The late-act detector: the leg was RELEASEd (uncited, UNMOVED) and the add landed AFTER — a late movement.
 run mov_lateMovementDetected {
   some p: InventoryPool, r: movement/ReserveOcc, rel: movement/ReleaseOcc, a: PoolAddOcc | {

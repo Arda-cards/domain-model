@@ -59,7 +59,9 @@ fact PoolViews { all o: movement/ViewOcc | not movement/cited[o] implies o.peerV
 /** movementsCiting — the committed pool rows citing leg `r`. */
 fun movementsCiting[r: movement/ReserveOcc]: set PoolOcc { movement/citers[r] & PoolOcc }
 /** lateMovement — a committed pool row whose CITED LEG's chain reads FREE at the row's tick (the leg was RELEASEd before
-    the act landed — R1 broken by a timeout read as a refusal), AND REMAINS late: a later committed reversal clears it, so
+    the act landed — R1 broken by a timeout read as a refusal), AND REMAINS late: a later committed reversal clears it ("later"
+    is `ReversalDiscipline`'s `precedes[reversed.tick, o.tick]`, in scope wherever the `q: Pool*Occ` quantifiers are — every cone that
+    opens `inventory_pool`), so
     this is a fact about the log as of now, not about the row at its own tick (MINESWEEPER, de9b305 review). The chain read
     is the cited leg's KEY, not the row's own pool: they differ for a transfer's paired add on the destination (PoolCitations'
     second arm), and `phaseAt` reads I_FREE on a pool with no chain — reading `o.pool` reported every such paired add late.
