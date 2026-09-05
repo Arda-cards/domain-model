@@ -29,9 +29,10 @@ module receiving/receiver/receiver_implementation
  */
 
 open receiving/receiver/receiver_contracts
-open meta/subject_log/subject_log[Receiver, ReceiverState] as rvlog           // same params ⇒ the SAME spine instances
-open meta/subject_log/subject_log[ReceivingLine, ReceivingLineState] as rllog //   as receiver_types
-open meta/subject_log/subject_log[OrderAttribution, AttributionState] as oalog
+open receiving/receiver/receiver_types as rt   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[rt/Receiver, rt/ReceiverState] as rvlog           // same params ⇒ the SAME spine instances
+open meta/subject_log/subject_log[rt/ReceivingLine, rt/ReceivingLineState] as rllog //   as receiver_types
+open meta/subject_log/subject_log[rt/OrderAttribution, rt/AttributionState] as oalog
 
 // ── spine adoption (DT-015 Q5; three subjects) ─────────────────────────────────────────────────
 fact ReceiverChaining       { rvlog/chained }

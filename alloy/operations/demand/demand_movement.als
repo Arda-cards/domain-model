@@ -17,9 +17,11 @@ module operations/demand/demand_movement
  */
 
 open operations/demand/demand_implementation                 // the originator kinds + the demand log (real machinery)
-open meta/subject_log/subject_log[DemandItem, DemandState] as dlog   // re-opened: aliases do not propagate (I-4)
+open operations/demand/demand_types as dt   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // re-opened: aliases do not propagate (I-4)
 open meta/intent_log/semantics as sem                        // aliased: pass sem/MoveSem below (the diamond rule)
-open meta/intent_log/intent_log[InventoryPool, sem/MoveSem] as movement
+open resources/inventory_item/inventory_pool as ip   // rule 10: the parameter below was resolving through a transitive open
+open meta/intent_log/intent_log[ip/InventoryPool, sem/MoveSem] as movement
 
 // ── the instance: spine + attribution (E2: moved-by-this = a committed pool row cites the leg) ──────────────────
 fact MovementSpine       { movement/spineAdopted }

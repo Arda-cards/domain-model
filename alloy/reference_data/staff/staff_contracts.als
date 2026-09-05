@@ -6,8 +6,8 @@ module reference_data/staff/staff_contracts
  * Consistency class: ATOMIC (single-module).
  */
 
-open reference_data/staff/staff_types
-open meta/subject_log/subject_log[StaffMember, StaffState] as stlog  // same params ⇒ the SAME spine instance
+open reference_data/staff/staff_types as st
+open meta/subject_log/subject_log[st/StaffMember, st/StaffState] as stlog  // same params ⇒ the SAME spine instance
 
 // ── C1: name uniqueness (identity-carried — unchanged by the conversion) ────────────────────────
 /** staffNameUnique — a staff member's name is unique WITHIN its tenant (MP ruling,

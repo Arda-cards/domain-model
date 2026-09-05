@@ -1,12 +1,12 @@
 module conventions/intent_log/tests/intent_log
 
-open conventions/intent_log/intent_log
+open conventions/intent_log/intent_log as il
 open meta/intent_log/semantics as sem
 // Identical parameters re-open the SAME instances the exemplar built (the DT-024 rule): a root
 // cannot see a library's alias for a parametric instance, so it re-opens them under the same names.
-open meta/intent_log/intent_log[Cart, sem/HoldSem] as claim
-open meta/intent_log/intent_log[Vat, sem/MoveSem]  as pour
-open meta/subject_log/subject_log[Vat, VatRec] as vlog   // the vat's own log too (E1: its archeUniquePerSubject is checked below)
+open meta/intent_log/intent_log[il/Cart, sem/HoldSem] as claim
+open meta/intent_log/intent_log[il/Vat, sem/MoveSem]  as pour
+open meta/subject_log/subject_log[il/Vat, il/VatRec] as vlog   // the vat's own log too (E1: its archeUniquePerSubject is checked below)
 
 /*
  * Root for the INTENT-LOG exemplar (DT-027). Tiny scopes; command prefix `conv_il_*`. Verifies the
@@ -195,5 +195,5 @@ check conv_il_heldViewHeadBased for 5 but 5 Int, 2 Porter, 2 Cart, 0 Vat, 2 Port
 assert conv_il_archeUniquePerVat { vlog/archeUniquePerSubject }
 check conv_il_archeUniquePerVat for 5 but 5 Int, 2 Porter, 0 Cart, 1 Vat, 2 PorterVersion, 6 Tick, 6 Occurrence, 8 Snapshot, 8 EntityId expect 0
 
-assert conv_il_guarantees { intent_log/guarantees }
+assert conv_il_guarantees { il/guarantees }
 check conv_il_guarantees for 5 but 5 Int, 2 Porter, 1 Cart, 1 Vat, 2 PorterVersion, 6 Tick, 6 Occurrence, 8 Snapshot, 10 EntityId expect 0

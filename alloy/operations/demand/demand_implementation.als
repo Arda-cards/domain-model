@@ -18,8 +18,9 @@ module operations/demand/demand_implementation
  */
 
 open operations/demand/demand_contracts
-open meta/subject_log/subject_log[DemandItem, DemandState] as dlog   // same params ⇒ the SAME spine instance as demand_types
-open meta/subject_log/subject_log[ProductionDelivery, PDState] as pdlog  // the second subject's spine (§8.1.2)
+open operations/demand/demand_types as dt   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // same params ⇒ the SAME spine instance as demand_types
+open meta/subject_log/subject_log[dt/ProductionDelivery, dt/PDState] as pdlog  // the second subject's spine (§8.1.2)
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
 fact DemandChaining      { dlog/chained }

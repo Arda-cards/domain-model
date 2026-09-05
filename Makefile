@@ -15,7 +15,7 @@ ALLOY_FLAGS ?= -s glucose
 # `out/` is in .gitignore; wipe it with `make clean`.
 OUT := out/alloy
 
-.PHONY: tools alloy check-layering check-alloy check-examples check-units check-integration test-unit test-sys soak soak-plan soak-chunk soak-status soak-harvest cnf-export report report-examples check clean
+.PHONY: tools alloy check-layering check-open-params check-alloy check-examples check-units check-integration test-unit test-sys soak soak-plan soak-chunk soak-status soak-harvest cnf-export report report-examples check clean
 
 ## tools: fetch/verify the pinned analysis tools (Alloy, ROBOT)
 tools:
@@ -56,6 +56,11 @@ check-layering:
 	  done; \
 	done; \
 	[ $$fail -eq 0 ] && echo "OK: layering respected (meta -/-> shared -/-> domains; DT-017 mock discipline)" || exit 1
+
+## check-open-params: model-gate rule 10 — every parameter of a parametric `open` is alias-qualified or declared locally
+##   (tools/open-params-gate.py; --selftest runs its 14 cases). Sibling: tools/adoption-gate.py (rule 9, adopted preds owe a check).
+check-open-params:
+	python3 tools/open-params-gate.py --selftest > /dev/null && python3 tools/open-params-gate.py alloy
 
 ## check-alloy: run every command in every test root (any alloy/**/tests/*.als); fail on expect mismatch.
 ## CHECK_SCOPE=alloy/<family> restricts the walk to one subtree — used by the full-gate CI workflow

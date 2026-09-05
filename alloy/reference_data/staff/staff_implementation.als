@@ -6,7 +6,8 @@ module reference_data/staff/staff_implementation
  */
 
 open reference_data/staff/staff_contracts
-open meta/subject_log/subject_log[StaffMember, StaffState] as stlog  // same params ⇒ the SAME spine instance
+open reference_data/staff/staff_types as st   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[st/StaffMember, st/StaffState] as stlog  // same params ⇒ the SAME spine instance
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact StaffChain { stlog/chained }

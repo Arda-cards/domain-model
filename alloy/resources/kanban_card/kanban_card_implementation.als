@@ -13,8 +13,8 @@ module resources/kanban_card/kanban_card_implementation
  * demand module reads.
  */
 
-open resources/kanban_card/kanban_card_types
-open meta/subject_log/subject_log[CardCycle, CycleState] as clog
+open resources/kanban_card/kanban_card_types as kt
+open meta/subject_log/subject_log[kt/CardCycle, kt/CycleState] as clog
 
 // ── the spine adoption: chaining (unconditional — refusals read the real state) + v1 commit ────
 fact CycleChain         { clog/chained }

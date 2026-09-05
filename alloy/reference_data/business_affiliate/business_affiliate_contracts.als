@@ -13,8 +13,8 @@ module reference_data/business_affiliate/business_affiliate_contracts
  *    roots get the log shape from the mock.
  */
 
-open reference_data/business_affiliate/business_affiliate_types
-open meta/subject_log/subject_log[BusinessAffiliate, BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
+open reference_data/business_affiliate/business_affiliate_types as bat
+open meta/subject_log/subject_log[bat/BusinessAffiliate, bat/BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
 
 // ── C1: role ownership (versioned — DT-023 Q-C folding) ─────────────────────────────────────────
 /** Every BusinessRole belongs to exactly one affiliate's history and inherits its tenant.

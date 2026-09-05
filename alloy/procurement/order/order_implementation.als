@@ -19,8 +19,9 @@ module procurement/order/order_implementation
  */
 
 open procurement/order/order_contracts
-open meta/subject_log/subject_log[Order, OrderState] as olog          // same params ⇒ SAME spine as order_types
-open meta/subject_log/subject_log[OrderLine, OrderLineState] as llog  // same params ⇒ SAME spine as order_types
+open procurement/order/order_types as ot   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[ot/Order, ot/OrderState] as olog          // same params ⇒ SAME spine as order_types
+open meta/subject_log/subject_log[ot/OrderLine, ot/OrderLineState] as llog  // same params ⇒ SAME spine as order_types
 
 // ── spine adoption ×2 (DT-015 Q5) ───────────────────────────────────────────────────────────────
 fact OrderChaining       { olog/chained }

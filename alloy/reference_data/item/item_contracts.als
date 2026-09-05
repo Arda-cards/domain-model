@@ -14,8 +14,8 @@ module reference_data/item/item_contracts
  *    roots get the log shape from the mock.
  */
 
-open reference_data/item/item_types
-open meta/subject_log/subject_log[Item, ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
+open reference_data/item/item_types as it
+open meta/subject_log/subject_log[it/Item, it/ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
 
 // ── C1: supply ownership (versioned — DT-023 Q-C folding) ───────────────────────────────────────
 /** Every ItemSupply belongs to exactly one Item's history and inherits its tenant; a state's

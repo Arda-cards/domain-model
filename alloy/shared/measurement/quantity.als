@@ -16,10 +16,10 @@ module shared/measurement/quantity
  * report. This module is the framework-side value-statistics; SUM here is the FLOW-signal temporal total.
  */
 
-open shared/values                              // Quantity
+open shared/values as va // Quantity
 open meta/keyed_value_algebra/keyed_order                 // lte (componentwise partial order), classify; → keyed_monoid add/zero
-open meta/measurement/measurement[Quantity]   // Signal, Measurement, measurementsIn, latestIn/firstIn, lastValueIn, …
-open meta/keyed_value_algebra/keyed_sum[Measurement]      // Fold over Measurement, rangeSum (the Σ-along-order fold)
+open meta/measurement/measurement[va/Quantity] as me // Signal, Measurement, measurementsIn, latestIn/firstIn, lastValueIn, …
+open meta/keyed_value_algebra/keyed_sum[me/Measurement]      // Fold over Measurement, rangeSum (the Σ-along-order fold)
 
 // ── MIN / MAX over a period's values (keyed PARTIAL order — lone; exists iff pairwise comparable) ──
 /** MIN — the period value ≤ all others (componentwise). None if the values are incomparable. */

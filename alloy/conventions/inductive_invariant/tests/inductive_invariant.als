@@ -19,9 +19,9 @@ module conventions/inductive_invariant/tests/inductive_invariant
  * drops out of the perimeter.
  */
 
-open conventions/inductive_invariant/inductive_invariant
-open meta/subject_log/subject_log[Cubby, CubbyRec] as cblog
-open meta/subject_log/subject_log[Hanger, HangerRec] as hglog
+open conventions/inductive_invariant/inductive_invariant as ii
+open meta/subject_log/subject_log[ii/Cubby, ii/CubbyRec] as cblog
+open meta/subject_log/subject_log[ii/Hanger, ii/HangerRec] as hglog
 
 // ── the havoc seeds — arbitrary pre-states, one kind per log ────────────────────────────────────
 /** Frame-free, always-committed: the post is an arbitrary well-formed record, so pre-states

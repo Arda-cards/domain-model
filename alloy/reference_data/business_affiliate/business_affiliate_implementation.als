@@ -11,7 +11,8 @@ module reference_data/business_affiliate/business_affiliate_implementation
  */
 
 open reference_data/business_affiliate/business_affiliate_contracts
-open meta/subject_log/subject_log[BusinessAffiliate, BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
+open reference_data/business_affiliate/business_affiliate_types as bat   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[bat/BusinessAffiliate, bat/BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact BaChain { balog/chained }

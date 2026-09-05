@@ -10,7 +10,8 @@ module reference_data/item/item_implementation
  */
 
 open reference_data/item/item_contracts
-open meta/subject_log/subject_log[Item, ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
+open reference_data/item/item_types as it   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[it/Item, it/ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact ItemChain { ilog/chained }

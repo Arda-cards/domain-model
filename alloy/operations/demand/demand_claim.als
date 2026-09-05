@@ -22,7 +22,8 @@ module operations/demand/demand_claim
  */
 
 open operations/demand/demand_implementation                          // the demand kinds + guards + the demand log (real machinery)
-open meta/subject_log/subject_log[DemandItem, DemandState] as dlog    // re-opened: aliases do not propagate (I-4)
+open operations/demand/demand_types as dt   // rule 10: the parameter below was resolving through a transitive open
+open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog    // re-opened: aliases do not propagate (I-4)
 open resources/kanban_card/kanban_card_types as kt                   // aliased: EVERY open parameter is qualified (B-mov's first execution;
 open meta/intent_log/semantics as sem                                 //   MINESWEEPER: an unqualified parameter is safe only by accident of scope)
 open meta/intent_log/intent_log[kt/CardCycle, sem/HoldSem] as claim   // the claim chain: keyed by the cycle, HOLD semantics
