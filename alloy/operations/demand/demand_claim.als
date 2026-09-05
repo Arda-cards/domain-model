@@ -52,6 +52,19 @@ fact ClaimBindings {
     has no row: a claim RESERVE self-mints in the I4 design — Q8's duplicate-cause refusal is the pattern's, unwitnessed
     here because no originator row exists to cite). */
 fact ClaimOrigins { all o: claim/IntentOcc | o.arche != o implies o.arche in dlog/SubjectOcc }
+/** ClaimLanding — the landing a CONFIRM / ACT_CONFIRM RECORDS is a citer of the intent it settles: a committed peer row citing that
+    intent, strictly earlier; and a committed RESERVE's acting demand version is a committed row. Run 1 at 4c35606 (note §8.1): the
+    pattern's `citers` counts every committed non-intent Action of ANY log — an ITEM-log row citing the RESERVE let the CONFIRM commit with
+    no accept, its `peerRid` a later REFUSED cycle row, the RESERVE's `ownerVersion` a REFUSED demand row: references bound by KIND alone
+    where the runtime binds by a committed row (a refused act writes no row). With `ClaimBindings` (`peerRid in CycleOcc`) and
+    `CycleCitations` (a cycle row citing a RESERVE is an accept on that cycle) this is the missing link of `heldImpliesAcceptLanded`.
+    The foreign citer itself stays legal here — D-2's blindness, and contexts do leak across hops (DT-030) — it just is not OUR landing.
+    Consequence made explicit (R-g): a GENESIS leg's CONFIRM has no legal citer under `CycleCitations` until a genesis citation rule exists. */
+fact ClaimLanding {
+  all o: claim/CitingOcc  | committed[o] implies
+    (o.peerRid in claim/citers[claim/settledIntent[o]] and precedes[(o.peerRid & CycleOcc).tick, o.tick])
+  all o: claim/ReserveOcc | committed[o] implies committed[o.ownerVersion & dlog/SubjectOcc]
+}
 
 // ── the peer rows' citation discipline — law A's shape, scoped to THIS chain's citers ────────────────────────────
 /** CycleCitations — a kanban row that cites one of OUR intent rows is on that intent's cycle, cites a COMMITTED row, and
@@ -71,7 +84,7 @@ fact CycleCitations {
 
 // ── the residuals (D-2: the applier's split when no committed peer row cites the intent) ───────────────────────
 /** cycleResidualAt — HOLD level. ABSENT before the cycle's genesis; a closed cycle (withdrawn / rolled over) is gone;
-    REQUESTING reads differently by phase: at RESERVED our accept has not landed (UNMOVED — retry), UNDER THE HOLD a third
+    REQUESTING reads differently by phase (read STRICTLY BEFORE `t`, `heldBefore` — run 1's mismatch 1): at RESERVED our accept has not landed (UNMOVED — retry), UNDER THE HOLD a third
     party shelved it back (MOVED_OTHERWISE — SPEARHEAD-D7 Option A: the hold is void, RELEASE + detach, never a re-accept
     from under a hold); REQUESTED uncited (a UI accept) and IN_PROCESS-and-beyond are moved under someone else's act.
     UNDER THE HOLD OUR ACCEPT HAS LANDED (MINESWEEPER's chain A review, R-a): a held phase is entered only by a committed
@@ -79,10 +92,20 @@ fact CycleCitations {
     (RNotLanded) and the adopted `citationLands` reads a committed one as cited — a committed accept STRICTLY precedes it.
     So "the head cites nothing of ours" at a held tick is a LATER row, never our own accept in flight; the derivation is
     pinned by `heldImpliesAcceptLanded` (checked, `dem_heldImpliesAcceptLanded`), not by the remedy. */
+/** heldBefore — a hold is in force STRICTLY BEFORE `t`: the chain's latest committed row before `t` left a held phase. Equal to
+    `claim/heldAt` (as-of) at every probe tick, where no intent row sits at `t`; at a view row's OWN tick it reads "before me" — the
+    RELEASE's own post-phase (I_FREE) never reaches the residual that decides the RELEASE. Run 1 at 4c35606 found the as-of read:
+    `dem_thirdPartyShelveUnderHoldReleases` was UNSAT because the held arm read the RELEASE's own I_FREE and yielded UNMOVED
+    (MINESWEEPER's E2 boundary-tick warning, caught by a witness). */
+pred heldBefore[c: CardCycle, t: Tick] {
+  let h = { r: claim/IntentOcc | committed[r] and r.subject = c and precedes[r.tick, t]
+             and (no r2: claim/IntentOcc | committed[r2] and r2.subject = c and precedes[r.tick, r2.tick] and precedes[r2.tick, t]) } |
+    some h and claim/iPost[h].iPhase in sem/heldPhases
+}
 fun cycleResidualAt[c: CardCycle, t: Tick]: one sem/PeerView {
   (no stateOfCycleAt[c, t])           => sem/PV_ABSENT
   else closedAt[c, t]                 => sem/PV_MOVED_OTHERWISE
-  else (statusAt[c, t] = REQUESTING)  => (claim/heldAt[c, t] => sem/PV_MOVED_OTHERWISE else sem/PV_UNMOVED)
+  else (statusAt[c, t] = REQUESTING)  => (heldBefore[c, t] => sem/PV_MOVED_OTHERWISE else sem/PV_UNMOVED)
   else sem/PV_MOVED_OTHERWISE
 }
 /** actResidualAt — ACT level (THE LEVEL RULE's residual): both acts under the hold need the cycle at REQUESTED (a start
