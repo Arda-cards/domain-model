@@ -123,7 +123,12 @@ sig AddVatOcc extends vlog/SubjectOcc {} { bindings = subject }   // genesis →
 /** PourOcc — the additive act. `arche` — the ORIGIN identity every occurrence carries since DT-029 E1
     (kernel-typed `one Occurrence` since ruling A, no field of its own here) — is bound to the RESERVE the pour fulfils (the
     runtime `arche_id` = the RESERVE's rId, SAMWISE-S1); `reverses` names the pour this pour undoes, if any. */
-sig PourOcc extends vlog/SubjectOcc { amount: one Int, reverses: lone univ }
+sig PourOcc extends vlog/SubjectOcc { amount: one Int, reverses: lone PourOcc }   // typed to the kind (B-mov's P4 finding, 2026-09-04:
+                                                                                   //   `lone univ` cost |PourOcc|×|univ| bits per command,
+                                                                                   //   +58–64 % primary on the receiver canary; `lone PourOcc` is
+                                                                                   //   N² — derived bound N²+2N+3 per command, one kind). The
+                                                                                   //   discipline stays `ArcheIdentity`'s second clause; the type
+                                                                                   //   is not the discipline (the `& PourOcc` reads there are now identity).
   { bindings = subject + amount + arche + reverses }
 
 fun vatLevelAt[v: Vat, t: Tick]: lone Int { vlog/recordAt[v, t].vLevel }
