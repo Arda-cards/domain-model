@@ -111,6 +111,11 @@ run mov_uncitedAddNotLate {
   some p: InventoryPool, a: PoolAddOcc | {
     committed[a] and a.pool = p and a.arche = a                 // self-minted: no caller context
     no movement/IntentOcc                                        // no intent row anywhere: the only chain reads I_FREE by default
+    (no q: PoolAddOcc | q.reverses = a) and (no q: PoolRemoveOcc | q.reverses = a) and (no q: PoolTransferOcc | q.reverses = a)
+                                                                 // NO reversal of `a` — run 1's control (mg12fix-5953d11) escaped through a
+                                                                 // committed remove reversing the add (instance read, XML): the witness was
+                                                                 // not yet a check on the guard. With this, dropping the guard reads the empty
+                                                                 // key as I_FREE and the add as late: `not lateMovement[a]` goes UNSAT.
     not lateMovement[a]
   }
 } for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
