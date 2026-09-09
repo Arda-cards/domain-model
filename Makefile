@@ -15,7 +15,7 @@ ALLOY_FLAGS ?= -s glucose
 # `out/` is in .gitignore; wipe it with `make clean`.
 OUT := out/alloy
 
-.PHONY: tools alloy check-layering check-open-params check-alloy check-examples check-units check-integration test-unit test-sys soak soak-plan soak-chunk soak-status soak-harvest cnf-export report report-examples check clean
+.PHONY: tools alloy check-layering check-open-params check-lifecycle check-alloy check-examples check-units check-integration test-unit test-sys soak soak-plan soak-chunk soak-status soak-harvest cnf-export report report-examples check clean
 
 ## tools: fetch/verify the pinned analysis tools (Alloy, ROBOT)
 tools:
@@ -62,11 +62,16 @@ check-layering:
 check-open-params:
 	python3 tools/open-params-gate.py --selftest > /dev/null && python3 tools/open-params-gate.py alloy
 
+## check-lifecycle: the SHAPE PARTITION gate (DT-030, 2026-09-09) — an adopter of meta/subject_log/lifecycle declares every concrete kind
+##   under a shape (never directly under SubjectOcc), and the adopter SET equals tools/lifecycle-gate.py's declared list (a seventh adopter fails until listed).
+check-lifecycle:
+	python3 tools/lifecycle-gate.py --selftest > /dev/null && python3 tools/lifecycle-gate.py alloy
+
 ## check-alloy: run every command in every test root (any alloy/**/tests/*.als); fail on expect mismatch.
 ## CHECK_SCOPE=alloy/<family> restricts the walk to one subtree — used by the full-gate CI workflow
 ## to shard the gate across matrix jobs; the default (whole tree) is the push gate, unchanged.
 CHECK_SCOPE ?= alloy
-check-alloy: $(ALLOY) check-layering
+check-alloy: $(ALLOY) check-layering check-lifecycle
 	@mkdir -p $(OUT); fail=0; \
 	for f in $$(find $(CHECK_SCOPE) -path '*/tests/*.als' ! -path '*/legacy/*' ! -path 'alloy/soak/*' | sort); do \
 	  echo "== $$f =="; \

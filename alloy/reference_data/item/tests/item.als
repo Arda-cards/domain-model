@@ -53,7 +53,7 @@ run unit_item_cardMinimumDefault {
 // The full arc: Create (live) → Update (live, content changed) → Delete (retired). One item,
 // three committed occurrences; the read API tracks the statuses.
 run unit_item_lifecycleArc {
-  some i: Item, c: CreateItemOcc, u: UpdateItemOcc, d: DeleteItemOcc {
+  some i: Item, c: CreateItemOcc, u: UpdateItemOcc, d: RetireItemOcc {
     c.subject = i and u.subject = i and d.subject = i
     committed[c] and committed[u] and committed[d]
     precedes[c.tick, u.tick] and precedes[u.tick, d.tick]
@@ -67,7 +67,7 @@ check unit_item_lifecycleShape { itemLifecycleShape } for 6 but 6 Tick, 5 Snapsh
 
 // Reason-precise refusal: mutating a retired item refuses with exactly RItemRetired.
 run unit_item_retiredMutateRefused {
-  some d: DeleteItemOcc, u: UpdateItemOcc {
+  some d: RetireItemOcc, u: UpdateItemOcc {
     committed[d] and u.subject = d.subject and precedes[d.tick, u.tick]
     u.admission in Rejected and u.admission.because = RItemRetired
   }
@@ -107,9 +107,17 @@ run unit_item_supplyVendorPinned {
 // INTRODUCING a row pinned to a RETIRED affiliate refuses with exactly RRetiredRef.
 // Fixture: BA Create → BA Delete → item Create carrying the pin.
 run unit_item_supplyRetiredVendorRefused {
-  some o: CreateItemOcc, s: o.supplies, d: DeleteBaOcc {
+  some o: CreateItemOcc, s: o.supplies, d: RetireBaOcc {
     committed[d]
     some s.supplierPin and s.supplierPin.subject = d.subject
     o.admission in Rejected and o.admission.because = RRetiredRef
   }
 } for 6 but 6 Tick, 5 Snapshot, 4 Occurrence expect 1
+
+// ── DT-030 retire cut (2026-09-09): terminality and the tombstone ────────────────────────────────
+assert unit_item_nothingAfterRetire {
+  all r: RetireItemOcc, o: CreateItemOcc + UpdateItemOcc + RetireItemOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+}
+check unit_item_nothingAfterRetire for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 0
+assert unit_item_retireIsTombstone { all r: RetireItemOcc | committed[r] implies (r.post = r.pre and not itemLiveAt[r.subject, r.tick]) }
+check unit_item_retireIsTombstone for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 0

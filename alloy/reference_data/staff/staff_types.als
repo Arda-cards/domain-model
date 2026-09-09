@@ -22,7 +22,8 @@ module reference_data/staff/staff_types
 open meta/profiles/domain_log        // PROFILE (DT-012): log anatomy + group/order premises
 open meta/kernel                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[StaffMember, StaffState] as stlog   // the SPINE
-open reference_data/shared/lifecycle // RdStatus (RD_LIVE/RD_RETIRED) + RRetiredRef (DT-023)
+open meta/subject_log/lifecycle[StaffMember, StaffState] as lc       // the SHAPES: Create / Retire (DT-030, 2026-09-09)
+open reference_data/shared/lifecycle // RRetiredRef (DT-023)
 
 /** StaffName — a staff member's readable name (opaque; content is runtime data). */
 sig StaffName {}
@@ -39,20 +40,21 @@ fact StaffMemberRefs { all s: StaffMember | no s.dataRefs }
 fact NoOrphanStaffName { all n: StaffName | n in StaffMember.name }
 
 // ── the state record ────────────────────────────────────────────────────────────────────────────
-/** StaffState — one moment's versioned payload of a StaffMember: STATUS-ONLY (name is
-    identity; nothing else is modeled yet). All generic pre/post joins on `sStatus` MUST be
-    type-restricted — three RdStatus-ranged sStatus fields now coexist
-    (knowledge-base/field-overload-across-log-modules.md). */
-sig StaffState extends Snapshot { sStatus: one RdStatus }
-fact StaffStateExtensional { all disj a, b: StaffState | a.sStatus != b.sStatus }
+/** StaffState — one moment's versioned payload of a StaffMember: FIELDLESS (name is identity; nothing else is
+    modeled yet; the lifecycle is the LOG's shape since 2026-09-09 — Live while the head is not a Retire). A value
+    with no fields is one value. */
+sig StaffState extends Snapshot {}
+fact StaffStateExtensional { lone StaffState }
 
-// ── the kinds — the reference-data lifecycle, Update omitted (status-only state) ────────────────
-/** StaffOcc — the staff log's occurrence family; the PIN TYPE (DT-023 R3). */
-abstract sig StaffOcc extends stlog/SubjectOcc {}
-/** Create — births the StaffMember LIVE. */
-sig CreateStaffOcc extends StaffOcc {} { bindings = subject }
-/** Delete — retires the StaffMember (terminal). */
-sig DeleteStaffOcc extends StaffOcc {} { bindings = subject }
+// ── the kinds — the reference-data lifecycle, Update omitted (fieldless state) ─────────────────
+/** StaffOcc — the staff log's occurrence family; the PIN TYPE (DT-023 R3). A SUBSET sig equal to the whole log
+    (the kinds sit under the lifecycle SHAPES, so the family cannot be their `extends` parent). */
+sig StaffOcc in stlog/SubjectOcc {}
+fact StaffOccIsTheLog { StaffOcc = stlog/SubjectOcc }
+/** Create — births the StaffMember (live: the head is not a retire). */
+sig CreateStaffOcc extends lc/CreateOcc {} { bindings = subject }
+/** Retire — ends the StaffMember's history (the tombstone; terminal). Was DeleteStaffOcc; MP's word 2026-09-09. */
+sig RetireStaffOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign; RRetiredRef is shared via lifecycle) ─────────────────
 one sig RStaffExists, RStaffNotCreated, RStaffRetired extends Reason {}
@@ -63,10 +65,10 @@ fun staffStateAt[s: StaffMember, t: Tick]: lone StaffState { stlog/recordAt[s, t
 /** staffVersionAt — the member's CURRENT VERSION at `t` (what a new pin must reference). */
 fun staffVersionAt[s: StaffMember, t: Tick]: lone StaffOcc { stlog/lastTouch[s, t] & StaffOcc }
 /** staffLiveAt — the member exists and is Live at `t` (the reference-target guard read). */
-pred staffLiveAt[s: StaffMember, t: Tick] { staffStateAt[s, t].sStatus = RD_LIVE }
+pred staffLiveAt[s: StaffMember, t: Tick] { lc/liveSubjectAt[s, t] }
 /** pinsCurrentStaff — `p` is the current version of its own member at `t` (pin currency). */
 pred pinsCurrentStaff[p: StaffOcc, t: Tick] { p = staffVersionAt[p.subject, t] }
 /** staffPinnableAt — current at `t` AND Live (what an introducing occurrence may pin). */
 pred staffPinnableAt[p: StaffOcc, t: Tick] {
-  pinsCurrentStaff[p, t] and (p.post & StaffState).sStatus = RD_LIVE
+  pinsCurrentStaff[p, t] and p not in lc/RetireOcc
 }

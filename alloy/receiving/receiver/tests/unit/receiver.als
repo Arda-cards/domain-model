@@ -269,11 +269,11 @@ run unit_rcv_poolInUseRefused {
 // decision (no upstream gate). Fixture: reference-data-first — Create then Delete on
 // one item; the refused add's pin denotes the retired current version.
 run unit_rcv_blindRetiredItemRefused {
-  some o: AddReceivingLineOcc, c: CreateItemOcc, d: DeleteItemOcc | {
+  some o: AddReceivingLineOcc, c: CreateItemOcc, d: RetireItemOcc | {
     committed[c] and committed[d]
-    c.subject = d.subject and (d.post & ItemState).sStatus = RD_RETIRED
+    c.subject = d.subject   // d is a committed retire: the tombstone, the item's current version
     no o.attribution and o.item = d
-    itemStateAt[d.subject, o.tick].sStatus = RD_RETIRED
+    itemVersionAt[d.subject, o.tick] = d   // retired-current (the log's shape since 2026-09-09; was a status read)
     receiverStatusAt[parentReceiverOf[o.subject], o.tick] = RV_EDITING
     refusedAtAdmission[o] and o.admission.because = RRetiredRef
   }
@@ -291,7 +291,7 @@ run unit_rcv_blindUpdateRetiredRefused {
   some o: UpdateReceivingLineOcc | {
     some o.item and no rlPre[o].sAttributions
     rlPre[o].sStatus = RL_RECEIVING
-    itemStateAt[o.item.subject, o.tick].sStatus = RD_RETIRED
+    itemVersionAt[o.item.subject, o.tick] in RetireItemOcc   // retired-current (was a status read)
     refusedAtAdmission[o] and o.admission.because = RRetiredRef
   }
 } for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -308,7 +308,7 @@ run unit_rcv_attributedRetiredItemAllowed {
   some o: AddReceivingLineOcc, g: AttachAttributionOcc | {
     committed[o] and committed[g]
     o.attribution = g.subject.eId
-    some o.item and itemStateAt[o.item.subject, o.tick].sStatus = RD_RETIRED
+    some o.item and itemVersionAt[o.item.subject, o.tick] in RetireItemOcc   // retired-current (was a status read)
   }
 } for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,

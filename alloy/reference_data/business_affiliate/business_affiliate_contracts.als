@@ -34,7 +34,7 @@ fun baRolesOf[b: BusinessAffiliate]: set BusinessRole {
 pred baLifecycleShape {
   all o: BaOcc | committed[o] implies {
     ((no balog/priorOn[o]) iff o in CreateBaOcc)
-    (some balog/priorOn[o] implies (balog/priorOn[o].post & BusinessAffiliateState).sStatus = RD_LIVE)
+    (some balog/priorOn[o] implies balog/priorOn[o] not in RetireBaOcc)   // the prior head is never the tombstone (terminality)
   }
 }
 

@@ -12,6 +12,7 @@ module reference_data/item/item_implementation
 open reference_data/item/item_contracts
 open reference_data/item/item_types as it   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[it/Item, it/ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
+open meta/subject_log/lifecycle[it/Item, it/ItemState] as lc       // same params ⇒ the SAME shapes instance
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact ItemChain { ilog/chained }
@@ -27,20 +28,21 @@ fun supplyRetiredViol[o: ItemWriteOcc]: set Reason {
       some s.supplierPin and not baLiveAt[s.supplierPin.subject, o.tick])
    => RRetiredRef else none)
 }
-/** createItemViol — Create refuses an already-created subject or a retired-vendor row. */
+/** createItemViol — Create refuses an already-created subject (the generic create arm) or a retired-vendor row. */
 fun createItemViol[o: CreateItemOcc]: set Reason {
-  (some o.pre => RItemExists else none) + supplyRetiredViol[o]
+  lc/createViol[o, RItemExists] + supplyRetiredViol[o]
 }
-/** itemMutateViol — Update/Delete refuse an uncreated or retired subject. */
+/** itemMutateViol — Update/Retire refuse an uncreated or already-retired subject (the generic liveness
+    conditions; the module's two atoms — the closed atom split in two). */
 fun itemMutateViol[o: ItemOcc]: set Reason {
-  ((no o.pre) => RItemNotCreated else none)
-  + ((some o.pre and (o.pre & ItemState).sStatus = RD_RETIRED) => RItemRetired else none)
+  ((not lc/startedBefore[o]) => RItemNotCreated else none)
+  + (lc/retiredBefore[o] => RItemRetired else none)
 }
 
 fact ItemAdmissionWitnessed {
   all o: CreateItemOcc | (o.admission = Accepted iff no createItemViol[o]) and (o.admission in Rejected implies o.admission.because = createItemViol[o])
   all o: UpdateItemOcc | let v = itemMutateViol[o] + supplyRetiredViol[o] | (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
-  all o: DeleteItemOcc | (o.admission = Accepted iff no itemMutateViol[o]) and (o.admission in Rejected implies o.admission.because = itemMutateViol[o])
+  all o: RetireItemOcc | (o.admission = Accepted iff no itemMutateViol[o]) and (o.admission in Rejected implies o.admission.because = itemMutateViol[o])
 }
 
 // ── supply-pin currency (DT-023 Q-A: a committed write's vendor pins are then-current) ─────────
@@ -49,19 +51,12 @@ fact ItemSupplyPinCurrency {
     all s: o.supplies | some s.supplierPin implies pinsCurrentBa[s.supplierPin, o.tick]
 }
 
-// ── effects (SET semantics on the write kinds; Delete carries content forward) ─────────────────
+// ── effects (SET semantics on the write kinds; the retire's tombstone is the lifecycle module's `RetireEffect`) ──
 fact ItemEffects {
   all o: ItemWriteOcc | committed[o] implies {
-    (o.post & ItemState).sStatus = RD_LIVE
     o.post.sSupplies            = o.supplies
     o.post.sDefaultSupply       = o.defaultSupply
     o.post.sCardMinimumQuantity = o.cardMinimumQuantity
-  }
-  all o: DeleteItemOcc | committed[o] implies {
-    (o.post & ItemState).sStatus = RD_RETIRED
-    o.post.sSupplies            = o.pre.sSupplies
-    o.post.sDefaultSupply       = o.pre.sDefaultSupply
-    o.post.sCardMinimumQuantity = o.pre.sCardMinimumQuantity
   }
 }
 

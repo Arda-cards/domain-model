@@ -53,10 +53,10 @@ check soak_rd_currentUnique for 6 but 5 Int, 3 Scalar,
 // SAT companion (anti-vacuity): a universe where an item AND an affiliate each carry a full
 // Create → Update → Delete arc SIMULTANEOUSLY, with a supply row pinned mid-history.
 run soak_rd_dynamicsCompanion {
-  some i: Item, c: CreateItemOcc, u: UpdateItemOcc, d: DeleteItemOcc |
+  some i: Item, c: CreateItemOcc, u: UpdateItemOcc, d: RetireItemOcc |
     c.subject = i and u.subject = i and d.subject = i
     and committed[c] and committed[u] and committed[d]
-  some b: BusinessAffiliate, c2: CreateBaOcc, u2: UpdateBaOcc, d2: DeleteBaOcc |
+  some b: BusinessAffiliate, c2: CreateBaOcc, u2: UpdateBaOcc, d2: RetireBaOcc |
     c2.subject = b and u2.subject = b and d2.subject = b
     and committed[c2] and committed[u2] and committed[d2]
   some s: ItemSupply | some s.supplierPin

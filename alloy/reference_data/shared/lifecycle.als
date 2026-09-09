@@ -4,12 +4,14 @@ module reference_data/shared/lifecycle
  * Reference-data LIFECYCLE vocabulary (DT-023 R1, MP ruling 2026-08-10): the SIMPLE
  * log-carried lifecycle every proper reference-data module adopts —
  *
- *   [*] -> Live: Create ; Live -> Live: Update ; Live -> Retired: Delete ; Retired -> [*]
+ *   [*] -> Live: Create ; Live -> Live: Update ; Live -> Retired: Retire ; Retired -> [*]
  *
- * Two statuses, terminal retirement (Reinstate is a deliberately free future seam — a new
- * kind on the log, no structural change). KINDS stay per-module (flat namespace; each
- * module declares its own Create/Update/Delete sigs on its own spine) — this file carries
- * only the shared STATUS vocabulary and the shared consumer-side refusal reason.
+ * SINCE 2026-09-09 (DT-030, MP's row-3 word: reference data converts to the generic retire) the two statuses are
+ * NOT a record field: Live / Retired is the SHAPE of the log — a subject is live while its head is not a retire
+ * kind (`meta/subject_log/lifecycle`: `liveSubjectAt`, `RetireOcc`, terminality). `RdStatus` / `RD_LIVE` /
+ * `RD_RETIRED` are gone with the field; each module's `Retire…Occ extends lc/RetireOcc` is the terminal act.
+ * (Reinstate stays a deliberately free future seam — a new kind on the log.) KINDS stay per-module (flat
+ * namespace) — this file carries only the shared consumer-side refusal reason.
  *
  * SHARING SCOPE (DT-023 R2): item, business_affiliate, and staff MAY share this module.
  * `resources/processing_network` deliberately does NOT open it — Station/Loop are not
@@ -19,12 +21,6 @@ module reference_data/shared/lifecycle
  */
 
 open meta/action/outcome   // Reason
-
-/** RdStatus — a reference-data instance's lifecycle status: Live (usable as a reference
-    target) or Retired (terminal; existing references are grandfathered per the DT-023
-    matrix, new references refuse). */
-abstract sig RdStatus {}
-one sig RD_LIVE, RD_RETIRED extends RdStatus {}
 
 /** RRetiredRef — the consumer-side refusal (DT-023 D2): an occurrence introducing a
     reference to a reference-data target whose current version at the occurrence's tick is

@@ -58,7 +58,7 @@ pred supplierPinsSound {
 pred itemLifecycleShape {
   all o: ItemOcc | committed[o] implies {
     ((no ilog/priorOn[o]) iff o in CreateItemOcc)
-    (some ilog/priorOn[o] implies (ilog/priorOn[o].post & ItemState).sStatus = RD_LIVE)
+    (some ilog/priorOn[o] implies ilog/priorOn[o] not in RetireItemOcc)   // the prior head is never the tombstone (terminality)
   }
 }
 

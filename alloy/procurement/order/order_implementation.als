@@ -22,6 +22,8 @@ open procurement/order/order_contracts
 open procurement/order/order_types as ot   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[ot/Order, ot/OrderState] as olog          // same params ⇒ SAME spine as order_types
 open meta/subject_log/subject_log[ot/OrderLine, ot/OrderLineState] as llog  // same params ⇒ SAME spine as order_types
+open meta/subject_log/lifecycle[ot/Order, ot/OrderState] as lco   // same params ⇒ the SAME shapes instance as order_types
+open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl
 
 // ── spine adoption ×2 (DT-015 Q5) ───────────────────────────────────────────────────────────────
 fact OrderChaining       { olog/chained }
@@ -31,24 +33,11 @@ fact LineCommitAccepts   { llog/commitAlwaysAccepts }
 
 // ── guard-side reads ────────────────────────────────────────────────────────────────────────────
 /** liveAtOccO — the order is STARTED and LIVE as the operation reads it (pre-record). */
-pred liveAtOccO[o: olog/SubjectOcc] { some o.pre and oPre[o].sStatus in liveOrderStatuses }
-/** startedBeforeO / deletedBeforeO — order-subject history strictly before `o`. */
-pred startedBeforeO[o: olog/SubjectOcc] {
-  some b: olog/SubjectOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
-pred deletedBeforeO[o: olog/SubjectOcc] {
-  some b: DeleteOrderOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
-/** startedBeforeL / removedBeforeL — line-subject history strictly before `o`. */
-pred startedBeforeL[o: llog/SubjectOcc] {
-  some b: llog/SubjectOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
-pred removedBeforeL[o: llog/SubjectOcc] {
-  some b: RemoveLineOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
-/** usableLineAtOcc — the line is started, unremoved, and not L_CLOSED as `o` reads it. */
+pred liveAtOccO[o: olog/SubjectOcc] { lco/liveAt[o] and oPre[o].sStatus in liveOrderStatuses }
+// (the started/deleted/removed-before preds are the lifecycle module's `lco/` / `lcl/` `startedBefore` and `retiredBefore` since 2026-09-09)
+/** usableLineAtOcc — the line is LIVE (started, not retired — the shape half) and not L_CLOSED (the domain half) as `o` reads it. */
 pred usableLineAtOcc[o: llog/SubjectOcc] {
-  startedBeforeL[o] and not removedBeforeL[o] and lPre[o].sLineStatus != L_CLOSED
+  lcl/liveAt[o] and lPre[o].sLineStatus != L_CLOSED
 }
 /** parentStatusAtOcc — the PARENT order's status as a line operation reads it (same-module
     ATOMIC: the guard reads the order log directly; strictly-before by OneOccurrencePerTick). */
@@ -109,7 +98,7 @@ fun attachDemandViol[o: llog/SubjectOcc, m: EntityId]: set Reason {
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ───────────────────
 // ORDER subject:
 fun createOrderViol[o: CreateOrderOcc]: set Reason {
-  (startedBeforeO[o] => ROrderStarted else none)
+  lco/createViol[o, ROrderStarted]
   + supplierRefViol[o.supplier, o.subject.tenantId, o.tick]
 }
 fun updateSupplierViol[o: UpdateSupplierOcc]: set Reason {
@@ -153,15 +142,15 @@ fun updateOrderDetailsViol[o: UpdateOrderDetailsOcc]: set Reason {
   + assigneeRefViol[o.assignee, o.subject.tenantId, o.tick]
 }
 fun annotateOrderViol[o: AnnotateOrderOcc]: set Reason {
-  ((not startedBeforeO[o] or deletedBeforeO[o]) => ROrderClosed else none)     // any lifecycle state (TQ-7(c): internal notes edit at ANY time), but the subject must exist
+  lco/liveViol[o, ROrderClosed]     // any lifecycle state (TQ-7(c): internal notes edit at ANY time), but the subject must exist and not be retired
 }
 fun deleteOrderViol[o: DeleteOrderOcc]: set Reason {
-  ((not startedBeforeO[o] or deletedBeforeO[o]) => ROrderClosed else none)
-  + ((startedBeforeO[o] and oPre[o].sStatus in liveOrderStatuses) => RNotTerminal else none)
+  lco/retireViol[o, ROrderClosed]                                                            // not started, or already retired
+  + ((lco/startedBefore[o] and oPre[o].sStatus in liveOrderStatuses) => RNotTerminal else none)   // delete requires a TERMINAL order
 }
 // LINE subject:
 fun addLineViol[o: AddLineOcc]: set Reason {
-  (startedBeforeL[o] => RLineStarted else none)
+  lcl/createViol[o, RLineStarted]
   + parentGateViol[o]
   + (some o.demand => attachDemandViol[o, o.demand] else none)
   // DT-023 cut 8 (inception vs propagation): the retirement gate binds only on the
@@ -211,6 +200,7 @@ fun detachViol[o: DetachDemandOcc]: set Reason {
 fun removeLineViol[o: RemoveLineOcc]: set Reason {
   ((not usableLineAtOcc[o]) => RLineClosed else none)
   + parentGateViol[o]
+  + ((some lPre[o].sDemand) => RDemandAttached else none)   // TWO ACTS (MP 2026-09-09): detach the demand first, then remove
 }
 fun recordAckViol[o: RecordAcknowledgmentOcc]: set Reason {
   (let ord = parentOf[o.subject] |
@@ -242,29 +232,37 @@ fun closeLineViol[o: CloseLineOcc]: set Reason {
   + ((not usableLineAtOcc[o]) => RLineClosed else none)
 }
 fun annotateLineViol[o: AnnotateLineOcc]: set Reason {
-  ((not startedBeforeL[o]) => RLineClosed else none)   // any state — removed/closed lines take notes
+  lcl/liveViol[o, RLineClosed]   // any DOMAIN state — closed lines take notes (TQ-7(c)); never after the retire (MP 2026-09-09: the point-defect fix)
+}
+/** orderDomainViol / lineDomainViol — the witness BY SHAPE (the lifecycle idiom): one dispatch per log over the Mutate
+    kinds; each kind's own violation set is unchanged. */
+fun orderDomainViol[o: lco/MutateOcc]: set Reason {
+  (o in UpdateSupplierOcc => updateSupplierViol[o] else none) + (o in ResetToSupplierOcc => resetToSupplierViol[o] else none)
+  + (o in SubmitOcc => submitViol[o] else none) + (o in CloseOrderOcc => closeOrderViol[o] else none)
+  + (o in CancelOrderOcc => cancelOrderViol[o] else none) + (o in UpdateOrderDetailsOcc => updateOrderDetailsViol[o] else none)
+  + (o in AnnotateOrderOcc => annotateOrderViol[o] else none)
+}
+fun lineDomainViol[o: lcl/MutateOcc]: set Reason {
+  (o in UpdateLineOcc => updateLineViol[o] else none) + (o in AttachDemandOcc => attachViol[o] else none)
+  + (o in DetachDemandOcc => detachViol[o] else none) + (o in RecordAcknowledgmentOcc => recordAckViol[o] else none)
+  + (o in RecordReceiptOcc => recordReceiptViol[o] else none) + (o in ReverseReceiptOcc => reverseReceiptViol[o] else none)
+  + (o in CloseLineOcc => closeLineViol[o] else none) + (o in AnnotateLineOcc => annotateLineViol[o] else none)
 }
 
 fact OrderAdmissionWitness {
-  all o: CreateOrderOcc        | (o.admission = Accepted iff no createOrderViol[o])     and (o.admission in Rejected implies o.admission.because = createOrderViol[o])
-  all o: UpdateSupplierOcc     | (o.admission = Accepted iff no updateSupplierViol[o])  and (o.admission in Rejected implies o.admission.because = updateSupplierViol[o])
-  all o: ResetToSupplierOcc    | (o.admission = Accepted iff no resetToSupplierViol[o]) and (o.admission in Rejected implies o.admission.because = resetToSupplierViol[o])
-  all o: SubmitOcc             | (o.admission = Accepted iff no submitViol[o])          and (o.admission in Rejected implies o.admission.because = submitViol[o])
-  all o: CloseOrderOcc         | (o.admission = Accepted iff no closeOrderViol[o])      and (o.admission in Rejected implies o.admission.because = closeOrderViol[o])
-  all o: CancelOrderOcc        | (o.admission = Accepted iff no cancelOrderViol[o])     and (o.admission in Rejected implies o.admission.because = cancelOrderViol[o])
-  all o: UpdateOrderDetailsOcc | (o.admission = Accepted iff no updateOrderDetailsViol[o]) and (o.admission in Rejected implies o.admission.because = updateOrderDetailsViol[o])
-  all o: AnnotateOrderOcc      | (o.admission = Accepted iff no annotateOrderViol[o])   and (o.admission in Rejected implies o.admission.because = annotateOrderViol[o])
-  all o: DeleteOrderOcc        | (o.admission = Accepted iff no deleteOrderViol[o])     and (o.admission in Rejected implies o.admission.because = deleteOrderViol[o])
-  all o: AddLineOcc            | (o.admission = Accepted iff no addLineViol[o])         and (o.admission in Rejected implies o.admission.because = addLineViol[o])
-  all o: UpdateLineOcc         | (o.admission = Accepted iff no updateLineViol[o])      and (o.admission in Rejected implies o.admission.because = updateLineViol[o])
-  all o: AttachDemandOcc       | (o.admission = Accepted iff no attachViol[o])          and (o.admission in Rejected implies o.admission.because = attachViol[o])
-  all o: DetachDemandOcc       | (o.admission = Accepted iff no detachViol[o])          and (o.admission in Rejected implies o.admission.because = detachViol[o])
-  all o: RemoveLineOcc         | (o.admission = Accepted iff no removeLineViol[o])      and (o.admission in Rejected implies o.admission.because = removeLineViol[o])
-  all o: RecordAcknowledgmentOcc | (o.admission = Accepted iff no recordAckViol[o])     and (o.admission in Rejected implies o.admission.because = recordAckViol[o])
-  all o: RecordReceiptOcc      | (o.admission = Accepted iff no recordReceiptViol[o])   and (o.admission in Rejected implies o.admission.because = recordReceiptViol[o])
-  all o: ReverseReceiptOcc     | (o.admission = Accepted iff no reverseReceiptViol[o])  and (o.admission in Rejected implies o.admission.because = reverseReceiptViol[o])
-  all o: CloseLineOcc          | (o.admission = Accepted iff no closeLineViol[o])       and (o.admission in Rejected implies o.admission.because = closeLineViol[o])
-  all o: AnnotateLineOcc       | (o.admission = Accepted iff no annotateLineViol[o])    and (o.admission in Rejected implies o.admission.because = annotateLineViol[o])
+  // BY SHAPE (DT-030, 2026-09-09): one witness per shape per log; the kinds' violation sets are unchanged
+  all o: lco/CreateOcc | let v = createOrderViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lco/MutateOcc | let v = orderDomainViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lco/RetireOcc | let v = deleteOrderViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lcl/CreateOcc | let v = addLineViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lcl/MutateOcc | let v = lineDomainViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lcl/RetireOcc | let v = removeLineViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
 }
 
 // ── effects (committed) — per-kind frames on the records ────────────────────────────────────────
@@ -283,22 +281,31 @@ pred sameOrderButStatus[b, a: OrderState] { a.sSupplier = b.sSupplier and sameOr
 pred sameLineButQuantity[b, a: OrderLineState] {
   a.sConfirmation = b.sConfirmation and a.sReceived = b.sReceived
   and a.sLineStatus = b.sLineStatus and a.sDemand = b.sDemand
+  and a.sInternalNotes = b.sInternalNotes
 }
 pred sameLineButDemand[b, a: OrderLineState] {
   a.sQuantity = b.sQuantity and a.sConfirmation = b.sConfirmation
   and a.sReceived = b.sReceived and a.sLineStatus = b.sLineStatus
+  and a.sInternalNotes = b.sInternalNotes
 }
 pred sameLineButConfirmation[b, a: OrderLineState] {
   a.sQuantity = b.sQuantity and a.sReceived = b.sReceived
   and a.sLineStatus = b.sLineStatus and a.sDemand = b.sDemand
+  and a.sInternalNotes = b.sInternalNotes
 }
 pred sameLineButReceived[b, a: OrderLineState] {
   a.sQuantity = b.sQuantity and a.sConfirmation = b.sConfirmation
   and a.sLineStatus = b.sLineStatus and a.sDemand = b.sDemand
+  and a.sInternalNotes = b.sInternalNotes
 }
 pred sameLineButStatus[b, a: OrderLineState] {
   a.sQuantity = b.sQuantity and a.sConfirmation = b.sConfirmation
   and a.sReceived = b.sReceived and a.sDemand = b.sDemand
+  and a.sInternalNotes = b.sInternalNotes
+}
+pred sameLineButInternalNotes[b, a: OrderLineState] {
+  a.sQuantity = b.sQuantity and a.sConfirmation = b.sConfirmation
+  and a.sReceived = b.sReceived and a.sLineStatus = b.sLineStatus and a.sDemand = b.sDemand
 }
 
 fact OrderEffectWitness {
@@ -346,7 +353,7 @@ fact OrderEffectWitness {
     oPost[o].sAssignee = oPre[o].sAssignee
     oPost[o].sNotes    = oPre[o].sNotes
   }
-  all o: DeleteOrderOcc   | committed[o] implies o.post = o.pre   // the tombstone
+  // (DeleteOrderOcc's tombstone: the lifecycle module's `RetireEffect`, since 2026-09-09)
 
   all o: AddLineOcc | committed[o] implies {
     lPost[o].sQuantity = o.qty
@@ -354,6 +361,7 @@ fact OrderEffectWitness {
     no lPost[o].sReceived                          // the keyed zero — accrual starts empty (F9)
     lPost[o].sLineStatus = L_OPEN
     lPost[o].sDemand = o.demand                    // lone → the singleton or empty set
+    no lPost[o].sInternalNotes                     // born without internal notes
   }
   all o: UpdateLineOcc | committed[o] implies {
     lPost[o].sQuantity = o.qty                     // SET (delta is client sugar)
@@ -367,10 +375,8 @@ fact OrderEffectWitness {
     lPost[o].sDemand = lPre[o].sDemand - o.demand
     sameLineButDemand[lPre[o], lPost[o]]
   }
-  all o: RemoveLineOcc | committed[o] implies {    // the tombstone; refs DROP — the demand is back in the queue
-    no lPost[o].sDemand
-    sameLineButDemand[lPre[o], lPost[o]]
-  }
+  // (RemoveLineOcc's tombstone: the lifecycle module's `RetireEffect`; the demand refs dropped with the DetachDemandOcc
+  //  that must precede it — two acts, MP 2026-09-09)
   all o: RecordAcknowledgmentOcc | committed[o] implies {
     lPost[o].sConfirmation = o.confirmation
     sameLineButConfirmation[lPre[o], lPost[o]]
@@ -387,7 +393,10 @@ fact OrderEffectWitness {
     lPost[o].sLineStatus = L_CLOSED
     sameLineButStatus[lPre[o], lPost[o]]
   }
-  all o: AnnotateLineOcc | committed[o] implies o.post = o.pre
+  all o: AnnotateLineOcc | committed[o] implies {   // SET the line's internal notes (any domain state)
+    lPost[o].sInternalNotes = o.notes
+    sameLineButInternalNotes[lPre[o], lPost[o]]
+  }
 }
 
 // (NO cross-log enforcement facts — C/OP: the guards above ARE the saga commit gates; the

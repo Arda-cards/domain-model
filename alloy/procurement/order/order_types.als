@@ -45,6 +45,8 @@ open meta/profiles/domain_log                        // PROFILE (DT-012): log an
 open meta/kernel                                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[Order, OrderState] as olog          // the ORDER log spine
 open meta/subject_log/subject_log[OrderLine, OrderLineState] as llog  // the LINE log spine
+open meta/subject_log/lifecycle[Order, OrderState] as lco             // the ORDER log's SHAPES (DT-030, 2026-09-09)
+open meta/subject_log/lifecycle[OrderLine, OrderLineState] as lcl     // the LINE log's SHAPES
 open shared/values                                   // Quantity (+ keyed-map add/negate)
 open shared/note                                     // Note (sNotes/sInternalNotes — record-carried; pin `2 Note`)
 open operations/demand/demand_types                  // DemandItem + statuses + reads (TYPES only)
@@ -194,14 +196,16 @@ sig OrderLineState extends Snapshot {
   sConfirmation: lone Confirmation,    // the vendor's answer (F3); none until acknowledged
   sReceived:     lone Quantity,        // STORED, incrementally maintained (F9); none = the keyed zero
   sLineStatus:   one  OrderLineStatus, // L_OPEN / L_CLOSED (closure by act — F7)
-  sDemand:       set  EntityId         // → DemandItem: the serviced demand (O3: the HOLDER carries the refs)
+  sDemand:       set  EntityId,        // → DemandItem: the serviced demand (O3: the HOLDER carries the refs)
+  sInternalNotes: set Note             // INTERNAL notes on the line (TQ-7(c) one rung down; 2026-09-09: was parked on the
+                                       //   kernel's inert `Occurrence.note` — a point defect; editable in any domain state)
   // (sItemData DISSOLVED at DT-023 cut 7a; the effective item version is DERIVED at read time
   //  since cut 10 — `effectiveItemAt`, frozen at Submit.)
 }
 fact OrderLineStateExtensional {
   all disj a, b: OrderLineState |
     a.sQuantity != b.sQuantity or a.sConfirmation != b.sConfirmation or a.sReceived != b.sReceived
-    or a.sLineStatus != b.sLineStatus or a.sDemand != b.sDemand
+    or a.sLineStatus != b.sLineStatus or a.sDemand != b.sDemand or a.sInternalNotes != b.sInternalNotes
 }
 // Record-carried refs are TYPED (soft — dangling allowed; tenancy is guard-side).
 fact OrderLineDemandRefIntegrity {
@@ -211,35 +215,35 @@ fact OrderLineDemandRefIntegrity {
 // ── the kinds — ORDER subject (product-register names in comments) ──────────────────────────────
 /** Create — start an order (births DRAFT; seeds the supplier binding — name may be the only
     content, PDEV-241). */
-sig CreateOrderOcc extends olog/SubjectOcc { supplier: one SupplierBinding }
+sig CreateOrderOcc extends lco/CreateOcc { supplier: one SupplierBinding }
   { bindings = subject + supplier }
 /** UpdateSupplier — choose/override the supplier while composing (F8). */
-sig UpdateSupplierOcc extends olog/SubjectOcc { supplier: one SupplierBinding }
+sig UpdateSupplierOcc extends lco/MutateOcc { supplier: one SupplierBinding }
   { bindings = subject + supplier }
 /** ResetToSupplier — discard the per-order overrides (F8). */
-sig ResetToSupplierOcc extends olog/SubjectOcc {} { bindings = subject }
+sig ResetToSupplierOcc extends lco/MutateOcc {} { bindings = subject }
 /** Submit — commit: freeze + snapshot + transmit (the freeze instant — F5). C/OP call-first
     (O2): the caller drives demand.StartProduction per serviced item FIRST (demand's own service
     op carries its member-cycle legs); this commit GATES on every serviced item IN_PROCESS. */
-sig SubmitOcc extends olog/SubjectOcc {} { bindings = subject }
+sig SubmitOcc extends lco/MutateOcc {} { bindings = subject }
 /** Close — order done, by act (requires every live line closed). */
-sig CloseOrderOcc extends olog/SubjectOcc {} { bindings = subject }
+sig CloseOrderOcc extends lco/MutateOcc {} { bindings = subject }
 /** Cancel — abandon while composing (DRAFT-ONLY — O4: post-submission cancellation retracts
     vendor commitments; a parked seam, not a casual operation). */
-sig CancelOrderOcc extends olog/SubjectOcc {} { bindings = subject }
+sig CancelOrderOcc extends lco/MutateOcc {} { bindings = subject }
 /** UpdateOrderDetails — SET the DRAFT-mutable header details as one facet cluster (TQ-7,
     cut 6): the payload IS the new cluster (the Receiver-header SET precedent — absent
     priority ⇒ OP_UNDEFINED, absent assignee/notes ⇒ cleared). DRAFT-only (the F5 family). */
-sig UpdateOrderDetailsOcc extends olog/SubjectOcc {
+sig UpdateOrderDetailsOcc extends lco/MutateOcc {
   priority: lone OrderPriority, assignee: lone StaffOcc, notes: lone Note
 } { bindings = subject + priority + assignee + notes }
 /** Annotate — SET the order's INTERNAL notes (any live-or-terminal state — TQ-7(c):
     editable at ANY time; the payload IS the new note set, so add/edit/remove are all this
     one act; history rides the log). Since cut 6 the notes land on the RECORD
     (sInternalNotes) — the pre-cut-6 payload-only reading is superseded. */
-sig AnnotateOrderOcc extends olog/SubjectOcc { notes: set Note } { bindings = subject + notes }
-/** Delete — retire the closed order (tombstoned; lines retire with it at runtime). */
-sig DeleteOrderOcc extends olog/SubjectOcc {} { bindings = subject }
+sig AnnotateOrderOcc extends lco/MutateOcc { notes: set Note } { bindings = subject + notes }
+/** Delete — retire the closed order (the Retire shape: the tombstone; lines retire with it at runtime). The NAME stays (MP, row 5). */
+sig DeleteOrderOcc extends lco/RetireOcc {} { bindings = subject }
 
 // ── the kinds — LINE subject ────────────────────────────────────────────────────────────────────
 /** AddLine — line genesis: from a DemandItem, from an Item, or free-form (F6). The on-the-fly
@@ -247,28 +251,29 @@ sig DeleteOrderOcc extends olog/SubjectOcc {} { bindings = subject }
     this is just genesis + attach. orderRef/itemRef ride the ENTITY (identity only — the
     effective version is the read-time derivation `effectiveItemAt`, cut 10); the item is
     guarded live on this arm (RRetiredRef — line-add is a new-commitment point, D3). */
-sig AddLineOcc extends llog/SubjectOcc { qty: lone Quantity, demand: lone EntityId }
+sig AddLineOcc extends lcl/CreateOcc { qty: lone Quantity, demand: lone EntityId }
   { bindings = subject + qty + demand }   // the descriptor pin rides the line IDENTITY (DT-023 cut 7a)
 /** UpdateLine — edit the requested quantity (SET; the item is immutable — O5). */
-sig UpdateLineOcc extends llog/SubjectOcc { qty: one Quantity } { bindings = subject + qty }
+sig UpdateLineOcc extends lcl/MutateOcc { qty: one Quantity } { bindings = subject + qty }
 /** LineDemandOcc — the abstract parent of the demand-addressing line kinds (`demand` declared
     once — the MemberOcc precedent). */
-abstract sig LineDemandOcc extends llog/SubjectOcc { demand: one EntityId }
+abstract sig LineDemandOcc extends lcl/MutateOcc { demand: one EntityId }   // both children are mutations: `extends` still holds
 /** AttachDemand — service a further DemandItem (C/OP gate order-side: item observed RELEASED,
     not held; NO demand-side operation pairs with attach — O3). */
 sig AttachDemandOcc extends LineDemandOcc {} { bindings = subject + demand }
 /** DetachDemand — stop servicing an item (it is simply back in the queue; pairs with nothing). */
 sig DetachDemandOcc extends LineDemandOcc {} { bindings = subject + demand }
-/** RemoveLine — retire a line while composing (tombstone; its demand refs drop — back in the
-    queue). */
-sig RemoveLineOcc extends llog/SubjectOcc {} { bindings = subject }
+/** RemoveLine — retire a line while composing (the Retire shape: the tombstone, terminal). TWO ACTS since 2026-09-09
+    (MP's word): a line still servicing a demand refuses `RDemandAttached` — the caller DETACHES first (`DetachDemandOcc`,
+    which puts the demand back in the queue), then removes. The NAME stays (MP, row 5). */
+sig RemoveLineOcc extends lcl/RetireOcc {} { bindings = subject }
 /** RecordAcknowledgment — the vendor's answer, or the WAIVED auto-confirm (F3). */
-sig RecordAcknowledgmentOcc extends llog/SubjectOcc { confirmation: one Confirmation }
+sig RecordAcknowledgmentOcc extends lcl/MutateOcc { confirmation: one Confirmation }
   { bindings = subject + confirmation }
 /** RecordReceipt — the accrual posting (F7/F9: the C/NOTIF reaction to demand
     RecordProduction notifications; the SAME kind is the manual repair / probe re-drive).
     Incremental: sReceived += qty — pairwise, no fold anywhere. */
-sig RecordReceiptOcc extends llog/SubjectOcc { qty: one Quantity } { bindings = subject + qty }
+sig RecordReceiptOcc extends lcl/MutateOcc { qty: one Quantity } { bindings = subject + qty }
 /** ReverseReceipt — the accrual's COMPENSATING posting (F9b, MP ruling 2026-08-14: the received
     quantity is FINANCIALLY BINDING — it is what incurs cost when the order closes — so a revoked
     delivery must decrement it, unlike purely operational effects; the C/NOTIF reaction to demand
@@ -276,12 +281,14 @@ sig RecordReceiptOcc extends llog/SubjectOcc { qty: one Quantity } { bindings = 
     Incremental: sReceived −= qty — pairwise, the ledger's reversing entry (corrections are never
     edits). Dedup (one reversal per revoked delivery) is runtime idempotency machinery — the
     accrual precedent: no law reads a delivery identity here. */
-sig ReverseReceiptOcc extends llog/SubjectOcc { qty: one Quantity } { bindings = subject + qty }
+sig ReverseReceiptOcc extends lcl/MutateOcc { qty: one Quantity } { bindings = subject + qty }
 /** CloseLine — line done, BY DECREE (F7: full receipt makes closure available, never actual;
     "short" = the derived reading open ≠ 0 at the close tick). */
-sig CloseLineOcc extends llog/SubjectOcc {} { bindings = subject }
-/** AnnotateLine — a note on the line (any state). */
-sig AnnotateLineOcc extends llog/SubjectOcc {} { bindings = subject }
+sig CloseLineOcc extends lcl/MutateOcc {} { bindings = subject }
+/** AnnotateLine — SET the line's INTERNAL notes (a Mutate: the payload IS the new note set — the order's cut-6 shape one
+    rung down; TQ-7(c): any DOMAIN state, closed lines included; never after the line's retire — MP 2026-09-09, the
+    point-defect fix: the note no longer rides the kernel's inert `Occurrence.note`). */
+sig AnnotateLineOcc extends lcl/MutateOcc { notes: set Note } { bindings = subject + notes }
 
 // (`orderCarriedSupplierRefs` — the SupplierReference closure export — DIED at DT-023 cut 7b
 // with the handle itself: the binding's vendor link is a typed pin + selector, no
@@ -317,6 +324,8 @@ one sig ROrderStarted,      // create: this order already has committed history 
         RLinesOpen,         // close: a live line is still L_OPEN
         RNoDemand           // record-receipt: the line is free-form (no received tracking — F7)
         extends Reason {}
+/** RDemandAttached — RemoveLine on a line still servicing a demand (two acts: detach first — MP 2026-09-09). */
+one sig RDemandAttached extends Reason {}
         // (RNoDescriptor RETIRED at DT-023 cut 7a: the descriptor pin is the line IDENTITY —
         //  a missing or extra pin is no longer a caller error but a different line kind.)
 

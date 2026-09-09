@@ -3,6 +3,7 @@ module meta/subject_log/tests/affirm
 open meta/action/stateful
 open meta/subject_log/subject_log[Widget, WidgetState] as wl
 open meta/subject_log/affirm[Widget, WidgetState] as aff      // same params ⇒ aff/AffirmOcc extends wl/SubjectOcc
+open meta/subject_log/lifecycle[Widget, WidgetState] as lc   // the retire kind for the terminality witness (2026-09-09)
 open meta/subject_log/affirm_reasons                          // RStaleAffirmation
 
 /*
@@ -17,18 +18,20 @@ sig Widget {}
 sig WidgetState extends Snapshot { level: one Int }
 fact WidgetStateExtensional { all disj a, b: WidgetState | a.level != b.level }
 
-one sig RNegative, RNotCreated extends Reason {}
+one sig RNegative, RNotCreated, RWidgetClosed extends Reason {}
 
-sig SetLevelOcc extends wl/SubjectOcc { to: one Int } { bindings = subject + to }
+sig SetLevelOcc extends lc/MutateOcc { to: one Int } { bindings = subject + to }   // a Mutate: carries the liveness arm (terminality needs every kind to)
 fact SpineAdopted { wl/chained and wl/commitAlwaysAccepts }
-fun setViol[o: SetLevelOcc]: set Reason { ((o.to < 0) => RNegative else none) }
+fun setViol[o: SetLevelOcc]: set Reason { lc/liveViol[o, RWidgetClosed] + ((o.to < 0) => RNegative else none) }
 fact SetLevelWitness {
   all o: SetLevelOcc | (o.admission = Accepted iff no setViol[o])
     and (o.admission in Rejected implies o.admission.because = setViol[o])
 }
 fact SetLevelEffect { all o: SetLevelOcc | committed[o] implies o.post.level = o.to }
+sig RetireWidgetOcc extends lc/RetireOcc {} { bindings = subject }
+fact RetireWitness { all o: RetireWidgetOcc | let v = lc/retireViol[o, RWidgetClosed] | (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v) }
 
-fact AffirmAdopted { aff/affirmAdmissionWitness[RNotCreated] }
+fact AffirmAdopted { aff/affirmAdmissionWitness[RNotCreated, RWidgetClosed] }
 
 // ── witnesses ───────────────────────────────────────────────────────────────────────────────────
 // A committed SetLevel, then a committed affirmation of its record: the record is unchanged and LOCF still reads it.
@@ -58,6 +61,16 @@ run unit_aff_noSubjectRefused {
   }
 } for 5 but 4 Int expect 1
 
+// An affirmation after a committed retire is refused with the adopter's closed atom: terminality covers affirmations.
+run unit_aff_afterRetireRefused {
+  some s: Widget, a: SetLevelOcc, r: RetireWidgetOcc, f: aff/AffirmOcc | {
+    a.subject = s and r.subject = s and f.subject = s
+    precedes[a.tick, r.tick] and precedes[r.tick, f.tick]
+    committed[a] and committed[r] and f.affirmed = a.post
+    refusedAtAdmission[f] and f.admission.because = RWidgetClosed
+  }
+} for 5 but 4 Int expect 1
+
 // ── laws ────────────────────────────────────────────────────────────────────────────────────────
 // A committed affirmation changes nothing: its post is its pre, and the as-of read at its tick is its pre.
 assert unit_aff_recordUnchanged {
@@ -82,3 +95,5 @@ assert unit_aff_refusalWritesNothing {
   all o: aff/AffirmOcc | refusedAtAdmission[o] implies no o.post
 }
 check unit_aff_refusalWritesNothing for 5 but 4 Int expect 0
+// Terminality on this root too: nothing (SetLevel, Affirm, Retire) commits after a committed retire.
+check unit_aff_nothingAfterRetire { lc/nothingAfterRetire } for 5 but 4 Int expect 0

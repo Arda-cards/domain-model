@@ -416,7 +416,7 @@ run unit_ord_lineRetiredItemRefused {
 // COMMITS — servicing a demand passes its reference along; refusing would strand the
 // demand (the anti-deadlock half; the vendor commitment re-check stays at Submit).
 run unit_ord_attachRetiredDemandAllowed {
-  some o: AttachDemandOcc, x: DeleteItemOcc | {
+  some o: AttachDemandOcc, x: RetireItemOcc | {
     committed[o] and committed[x]
     x.subject = resolve[o.subject.itemRef] and precedes[x.tick, o.tick]
     not itemLiveAt[resolve[o.subject.itemRef] & Item, o.tick]
@@ -468,7 +468,7 @@ run unit_ord_nameOnlySupplierLegal {
 // Submit refuses with exactly RRetiredRef — a draft against a dropped vendor must not go out.
 // Fixture: BA Create → order Create (pin, name, line) → BA Delete → Submit refused.
 run unit_ord_submitRetiredVendorRefused {
-  some sub: SubmitOcc, d: DeleteBaOcc {
+  some sub: SubmitOcc, d: RetireBaOcc {
     committed[d] and precedes[d.tick, sub.tick]
     oPre[sub].sSupplier.vendorPin.subject = d.subject
     refusedAtAdmission[sub] and sub.admission.because = RRetiredRef
@@ -481,7 +481,7 @@ run unit_ord_submitRetiredVendorRefused {
 // SUBMITTED after the vendor retires — the frozen binding's PIN keeps serving the agreed
 // version; no reactive law exists.
 run unit_ord_submittedSurvivesVendorRetirement {
-  some sub: SubmitOcc, d: DeleteBaOcc, t: Tick {
+  some sub: SubmitOcc, d: RetireBaOcc, t: Tick {
     committed[sub] and committed[d]
     precedes[sub.tick, d.tick] and precedes[d.tick, t]
     some oPost[sub].sSupplier.vendorPin
@@ -598,7 +598,7 @@ run unit_ord_assigneeForeignRefused {
 // DT-023 cut 7c (the D3 pre-Submit new-ref row): assigning a RETIRED staff member refuses
 // with exactly RRetiredRef. Fixture: staff Create → staff Delete → details write refused.
 run unit_ord_assigneeRetiredRefused {
-  some o: UpdateOrderDetailsOcc, d: DeleteStaffOcc | {
+  some o: UpdateOrderDetailsOcc, d: RetireStaffOcc | {
     committed[d]
     some o.assignee and o.assignee.subject = d.subject
     o.admission in Rejected
@@ -619,3 +619,37 @@ run unit_ord_internalNotesAnyTime {
 } for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 9 EntityId, 12 Snapshot, 2 Note expect 1
+
+// ── DT-030 retire cut (2026-09-09): two acts, the annotate-line fix, terminality ─────────────────
+// RemoveLine on a line still servicing a demand is refused RDemandAttached (TWO ACTS: detach first — MP's word).
+run unit_ord_removeWithDemandRefused {
+  some o: RemoveLineOcc | some lPre[o].sDemand and refusedAtAdmission[o] and RDemandAttached in o.admission.because
+} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 8 Snapshot, 2 Note expect 1
+// A committed RemoveLine saw no demand attached (the law behind the two acts).
+assert unit_ord_removeRequiresDetached { all o: RemoveLineOcc | committed[o] implies no lPre[o].sDemand }
+check unit_ord_removeRequiresDetached for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 8 Snapshot, 2 Note expect 0
+// Internal notes on a CLOSED line: Annotate commits and CHANGES the line's note set (TQ-7(c) one rung down; the point-defect fix).
+run unit_ord_lineNotesOnClosedLine {
+  some o: AnnotateLineOcc | committed[o] and lPre[o].sLineStatus = L_CLOSED and lPost[o].sInternalNotes != lPre[o].sInternalNotes
+} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      9 EntityId, 8 Snapshot, 2 Note expect 1
+// Annotate AFTER the line's retire is refused RLineClosed: terminality covers the line's notes (MP 2026-09-09).
+run unit_ord_annotateAfterRemoveRefused {
+  some r: RemoveLineOcc, o: AnnotateLineOcc | committed[r] and o.subject = r.subject and precedes[r.tick, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RLineClosed
+} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      9 EntityId, 8 Snapshot, 2 Note expect 1
+// Terminality, both logs: nothing commits on an order after its committed delete, nor on a line after its committed remove.
+assert unit_ord_nothingAfterRetire {
+  all r: DeleteOrderOcc, o: CreateOrderOcc + UpdateSupplierOcc + ResetToSupplierOcc + SubmitOcc + CloseOrderOcc + CancelOrderOcc + UpdateOrderDetailsOcc + AnnotateOrderOcc + DeleteOrderOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+  all r: RemoveLineOcc, o: AddLineOcc + UpdateLineOcc + AttachDemandOcc + DetachDemandOcc + RemoveLineOcc + RecordAcknowledgmentOcc + RecordReceiptOcc + ReverseReceiptOcc + CloseLineOcc + AnnotateLineOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+}
+check unit_ord_nothingAfterRetire for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      9 EntityId, 8 Snapshot, 2 Note expect 0

@@ -13,36 +13,31 @@ module reference_data/business_affiliate/business_affiliate_implementation
 open reference_data/business_affiliate/business_affiliate_contracts
 open reference_data/business_affiliate/business_affiliate_types as bat   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[bat/BusinessAffiliate, bat/BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
+open meta/subject_log/lifecycle[bat/BusinessAffiliate, bat/BusinessAffiliateState] as lc      // same params ⇒ the SAME shapes instance
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact BaChain { balog/chained }
 fact BaCommitPolicy { balog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────
-/** createBaViol — Create refuses only an already-created subject. */
-fun createBaViol[o: CreateBaOcc]: set Reason { (some o.pre => RBaExists else none) }
-/** baMutateViol — Update/Delete refuse an uncreated or retired subject. */
+/** createBaViol — Create refuses only an already-created subject (the generic create arm, the module's atom). */
+fun createBaViol[o: CreateBaOcc]: set Reason { lc/createViol[o, RBaExists] }
+/** baMutateViol — Update/Retire refuse an uncreated or already-retired subject (the generic liveness
+    conditions; the module's two atoms — the closed atom split in two). */
 fun baMutateViol[o: BaOcc]: set Reason {
-  ((no o.pre) => RBaNotCreated else none)
-  + ((some o.pre and (o.pre & BusinessAffiliateState).sStatus = RD_RETIRED) => RBaRetired else none)
+  ((not lc/startedBefore[o]) => RBaNotCreated else none)
+  + (lc/retiredBefore[o] => RBaRetired else none)
 }
 
 fact BaAdmissionWitnessed {
   all o: CreateBaOcc | (o.admission = Accepted iff no createBaViol[o]) and (o.admission in Rejected implies o.admission.because = createBaViol[o])
   all o: UpdateBaOcc | (o.admission = Accepted iff no baMutateViol[o]) and (o.admission in Rejected implies o.admission.because = baMutateViol[o])
-  all o: DeleteBaOcc | (o.admission = Accepted iff no baMutateViol[o]) and (o.admission in Rejected implies o.admission.because = baMutateViol[o])
+  all o: RetireBaOcc | (o.admission = Accepted iff no baMutateViol[o]) and (o.admission in Rejected implies o.admission.because = baMutateViol[o])
 }
 
-// ── effects (SET semantics on the write kinds; Delete carries content forward) ─────────────────
+// ── effects (SET semantics on the write kinds; the retire's tombstone is the lifecycle module's `RetireEffect`) ──
 fact BaEffects {
-  all o: BaWriteOcc | committed[o] implies {
-    (o.post & BusinessAffiliateState).sStatus = RD_LIVE
-    o.post.sRoles  = o.roles
-  }
-  all o: DeleteBaOcc | committed[o] implies {
-    (o.post & BusinessAffiliateState).sStatus = RD_RETIRED
-    o.post.sRoles  = o.pre.sRoles
-  }
+  all o: BaWriteOcc | committed[o] implies o.post.sRoles = o.roles
 }
 
 // ── the content axiom (C1 — see the contracts header for why this is a fact) ───────────────────

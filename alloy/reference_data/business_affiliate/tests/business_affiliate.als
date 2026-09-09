@@ -34,7 +34,7 @@ check unit_ba_roleOwnership {
 // The full arc: Create (live) → Update (live, roles changed) → Delete (retired). One
 // affiliate, three committed occurrences; the read API tracks the statuses.
 run unit_ba_lifecycleArc {
-  some b: BusinessAffiliate, c: CreateBaOcc, u: UpdateBaOcc, d: DeleteBaOcc {
+  some b: BusinessAffiliate, c: CreateBaOcc, u: UpdateBaOcc, d: RetireBaOcc {
     c.subject = b and u.subject = b and d.subject = b
     committed[c] and committed[u] and committed[d]
     precedes[c.tick, u.tick] and precedes[u.tick, d.tick]
@@ -48,7 +48,7 @@ check unit_ba_lifecycleShape { baLifecycleShape } for 6 but 6 Tick, 5 Snapshot, 
 
 // Reason-precise refusal: mutating a retired affiliate refuses with exactly RBaRetired.
 run unit_ba_retiredMutateRefused {
-  some d: DeleteBaOcc, u: UpdateBaOcc {
+  some d: RetireBaOcc, u: UpdateBaOcc {
     committed[d] and u.subject = d.subject and precedes[d.tick, u.tick]
     u.admission in Rejected and u.admission.because = RBaRetired
   }
@@ -77,3 +77,11 @@ run unit_ba_roleSelectorWitness {
   some p: BaOcc, r: BusinessRole, t: Tick |
     baPinnableAt[p, t] and roleSelectorAgrees[p, r, VENDOR]
 } for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 1
+
+// ── DT-030 retire cut (2026-09-09): terminality and the tombstone ────────────────────────────────
+assert unit_ba_nothingAfterRetire {
+  all r: RetireBaOcc, o: CreateBaOcc + UpdateBaOcc + RetireBaOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+}
+check unit_ba_nothingAfterRetire for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
+assert unit_ba_retireIsTombstone { all r: RetireBaOcc | committed[r] implies (r.post = r.pre and not baLiveAt[r.subject, r.tick]) }
+check unit_ba_retireIsTombstone for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0

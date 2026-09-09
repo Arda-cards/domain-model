@@ -29,6 +29,7 @@ module operations/demand/demand_types
 open meta/profiles/domain_log                        // PROFILE (DT-012): log anatomy + group/order premises
 open meta/kernel                                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[DemandItem, DemandState] as dlog   // the log SPINE (DT-015 Q5)
+open meta/subject_log/lifecycle[DemandItem, DemandState] as lc     // the SHAPES: Create / Mutate / Retire (DT-030, 2026-09-09)
 open meta/subject_log/subject_log[ProductionDelivery, PDState] as pdlog  // the SECOND subject (§8.1.2, DT-020 build cut 3)
 open shared/values                                   // Quantity
 open reference_data/item/item_types                  // Item (collation-key target; TYPES only)
@@ -118,66 +119,72 @@ fact PDStateExtensional { all disj a, b: PDState | a.sStatus != b.sStatus }
 
 // ── the kinds — the 15 operations (product-register names in comments) ─────────────────────────
 /** Create — start a card-less demand task (births the DemandItem OPEN, seeds the intent). */
-sig CreateDemandOcc extends dlog/SubjectOcc { qty: lone Quantity }
+sig CreateDemandOcc extends lc/CreateOcc { qty: lone Quantity }
   { bindings = subject + qty }   // item/station ride the ENTITY (immutable structure), not the payload
-/** MemberOcc — the abstract parent of the member-addressing kinds: `member` declared ONCE so
-    union quantifiers over these kinds stay unambiguous. */
-abstract sig MemberOcc extends dlog/SubjectOcc { member: one EntityId }
+/** MemberOcc — the member-addressing kinds' shared field, `member` declared ONCE so union quantifiers over
+    these kinds stay unambiguous. A SUBSET sig since 2026-09-09: CreateWithCycle is a Create shape, the other
+    three are Mutate shapes, so no `extends` parent can hold all four (the throwaway of that day: two
+    declarations of one field are refused over a union receiver; one field on a subset sig is not). */
+sig MemberOcc in dlog/SubjectOcc { member: one EntityId }
+fact MemberOccExtent {
+  MemberOcc = CreateWithCycleOcc + AddCycleOcc + RemoveCycleOcc + DetachWithdrawnOcc
+  all o: CreateWithCycleOcc | o.bindings = o.subject + o.qty + o.member
+  all o: AddCycleOcc + RemoveCycleOcc + DetachWithdrawnOcc | o.bindings = o.subject + o.member
+}
 /** CreateWithCycle — start a task from its first demand signal (births + attaches; C/OP
     call-first: the caller invokes the cycle's Accept FIRST, this commit is the saga's gate). */
-sig CreateWithCycleOcc extends MemberOcc { qty: lone Quantity }
-  { bindings = subject + qty + member }
+sig CreateWithCycleOcc extends lc/CreateOcc { qty: lone Quantity }
 /** AddCycle — collate a further signal (C/OP call-first, after the cycle's Accept). */
-sig AddCycleOcc extends MemberOcc {} { bindings = subject + member }
+sig AddCycleOcc extends lc/MutateOcc {}
 /** RemoveCycle — return a signal to the queue (C/OP call-first, after the cycle's Shelve). */
-sig RemoveCycleOcc extends MemberOcc {} { bindings = subject + member }
+sig RemoveCycleOcc extends lc/MutateOcc {}
 /** DetachWithdrawn — reconcile a withdrawn attachment (R7: the system reaction to the
     cycle-withdrawal notification — CONVERGENT/NOTIFICATION; the same kind is the manual repair). */
-sig DetachWithdrawnOcc extends MemberOcc {} { bindings = subject + member }
+sig DetachWithdrawnOcc extends lc/MutateOcc {}
 /** AdjustQty — SET the intent total (R3b). */
-sig AdjustQtyOcc extends dlog/SubjectOcc { qty: one Quantity } { bindings = subject + qty }
+sig AdjustQtyOcc extends lc/MutateOcc { qty: one Quantity } { bindings = subject + qty }
 /** ResetQty — snap the intent to the attached sum (THE arity-4 entrant — Σ semantics CONFINED to
     demand_reset.als + its dedicated root; elsewhere the effect frames everything else and leaves
     sDemandQty unconstrained — R3b confinement). */
-sig ResetQtyOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig ResetQtyOcc extends lc/MutateOcc {} { bindings = subject }
 /** Release — hand to the station; the freeze instant (R5). */
-sig ReleaseOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig ReleaseOcc extends lc/MutateOcc {} { bindings = subject }
 /** Reopen — take back a release (R5, PDEV-215; members are still REQUESTED — R8). */
-sig ReopenOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig ReopenOcc extends lc/MutateOcc {} { bindings = subject }
 /** StartProduction — begin the production run (R8): DS_RELEASED → DS_IN_PROCESS, attaches the
     holding pool. C/OP call-first: the caller moves each live member cycle → IN_PROCESS (cycle
     StartProcessing) first; this commit GATES on all of them being there. */
-sig StartProductionOcc extends dlog/SubjectOcc { holding: lone EntityId } { bindings = subject + holding }
+sig StartProductionOcc extends lc/MutateOcc { holding: lone EntityId } { bindings = subject + holding }
 /** RecordProduction — record a production delivery (⟲, R8; §8.1.2 re-based): `delivery` now
     references the ProductionDelivery ENTITY (the reified contribution — was the transient
     delivery pool pre-§8.1.2); the delivery pool's merge into the holding pool stays pool-log/
     runtime territory. Committed ONLY as the demand-side half of the ATOMIC Create composition
     (compose-don't-subsume — CreateComposesWithRecord in the implementation): the listener
     chain (ProductionRecorded → the order's receiptAccrues) rides THIS kind, untouched. */
-sig RecordProductionOcc extends dlog/SubjectOcc { delivery: lone EntityId } { bindings = subject + delivery }
+sig RecordProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bindings = subject + delivery }
 /** ExtractProduction — the demand-side extraction pairing Revoke (⟲, §8.1.2): reverses the
     recorded contribution on the target's log (the fulfillment fold ignores REVOKED deliveries;
     the holding pool's content movement is runtime, watched by the I3-family probe). Committed
     ONLY as the demand-side half of the ATOMIC Revoke composition. The listener chain
     (ProductionRevoked → the order's receiptReverses COMPENSATING posting) rides THIS kind
     (cut 9, MP 2026-08-14 — the received quantity is financially binding). */
-sig ExtractProductionOcc extends dlog/SubjectOcc { delivery: lone EntityId } { bindings = subject + delivery }
+sig ExtractProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bindings = subject + delivery }
 /** Distribute — allocate accumulated production (⟲, R8): a DATA-DRIVEN distribution matrix
     (per-member quantities) + the caller's fullness assertion `fills` (intent-capturing — the
     keyed-Quantity partial order may be INDETERMINATE). C/OP call-first: the caller moves each
     fill → READY (cycle CompleteProcessing) first; this commit gates on fills being READY. */
-sig DistributeOcc extends dlog/SubjectOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
+sig DistributeOcc extends lc/MutateOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
   { bindings = subject + allocation.Quantity + EntityId.allocation + fills }
 /** Complete — declare the production run done (R8): requires the holding pool EMPTY and every
     live member SETTLED. C/OP call-first: the caller settles each still-IN_PROCESS member first —
     inventory → CompleteProcessing (READY), none → ProductionFailure (REQUESTING, back in the
     queue); this commit gates on no member left IN_PROCESS. The resulting quantity MAY differ
     from the intent (R3b advisory). */
-sig CompleteOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig CompleteOcc extends lc/MutateOcc {} { bindings = subject }
 /** Cancel — abandon an OPEN task (R5: guard requires NO attached cycles — RHasCards). */
-sig CancelOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig CancelOcc extends lc/MutateOcc {} { bindings = subject }
 /** Delete — delete/retire the closed task (R7: terminal Delete/Retire; tombstoned, II precedent). */
-sig DeleteDemandOcc extends dlog/SubjectOcc {} { bindings = subject }
+sig DeleteDemandOcc extends lc/RetireOcc {} { bindings = subject }   // the Retire shape; the NAME stays (MP, row 5)
 
 // ── the kinds — ProductionDelivery subject (§8.1.2, cut 3) ─────────────────────────────────────
 /** CreateDelivery — PD genesis, the F7 accrual edge's demand-side commit (§8.1.2 ATOMIC:

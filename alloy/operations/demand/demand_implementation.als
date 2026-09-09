@@ -20,6 +20,7 @@ module operations/demand/demand_implementation
 open operations/demand/demand_contracts
 open operations/demand/demand_types as dt   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // same params ⇒ the SAME spine instance as demand_types
+open meta/subject_log/lifecycle[dt/DemandItem, dt/DemandState] as lc       // same params ⇒ the SAME shapes instance
 open meta/subject_log/subject_log[dt/ProductionDelivery, dt/PDState] as pdlog  // the second subject's spine (§8.1.2)
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
@@ -34,16 +35,10 @@ fact CreateComposesWithRecord  { createRecordsAtomically }
 fact RevokeComposesWithExtract { revokeExtractsAtomically }
 
 // ── guard-side reads ────────────────────────────────────────────────────────────────────────────
-/** liveAtOccD — the demand item is STARTED and LIVE as the operation reads it (pre-record). */
-pred liveAtOccD[o: dlog/SubjectOcc] { some o.pre and dPre[o].sStatus in liveStatuses }
-/** startedBeforeD — the subject has committed history strictly before `o`. */
-pred startedBeforeD[o: dlog/SubjectOcc] {
-  some b: dlog/SubjectOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
-/** deletedBeforeD — a committed Delete tombstone exists strictly before `o`. */
-pred deletedBeforeD[o: dlog/SubjectOcc] {
-  some b: DeleteDemandOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
+/** liveAtOccD — the demand item is STARTED, not retired (the lifecycle module's shape half) and in a LIVE status
+    (the domain half) as the operation reads it (pre-record). The former started/deleted-before preds are the
+    module's `lc/startedBefore` / `lc/retiredBefore` since 2026-09-09. */
+pred liveAtOccD[o: dlog/SubjectOcc] { lc/liveAt[o] and dPre[o].sStatus in liveStatuses }
 // (preMemberCycles / preLiveMemberRefs moved to demand_types — the contracts' commit-gate laws
 // read them too.)
 
@@ -51,8 +46,8 @@ pred deletedBeforeD[o: dlog/SubjectOcc] {
 /** createGenesisViol — the genesis conditions shared by both create kinds. (NO uniqueness check —
     R1 amended: multiple DemandItems per (Item, Source Station) are legal; single-OPEN, if a
     deployment wants it, is CALLER policy over the `demandsFor` read.) */
-fun createGenesisViol[o: dlog/SubjectOcc]: set Reason {
-  (startedBeforeD[o] => RDemandStarted else none)
+fun createGenesisViol[o: lc/CreateOcc]: set Reason {
+  lc/createViol[o, RDemandStarted]
   // (No item/station tenancy clause: stationRef is an ENTITY dataRef — kernel isolation makes a
   //  cross-tenant resolution UNREPRESENTABLE; the itemPin's tenancy is the DemandItemPinTenancy
   //  fact (DT-023 — same unrepresentable posture). RForeignRef remains for the RECORD-carried
@@ -210,24 +205,30 @@ fun cancelViol[o: CancelOcc]: set Reason {
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_OPEN and some dPre[o].sMembership) => RHasCards else none)
 }
 fun deleteViol[o: DeleteDemandOcc]: set Reason {
-  ((not startedBeforeD[o] or deletedBeforeD[o]) => RDemandClosed else none)
-  + ((startedBeforeD[o] and dPre[o].sStatus in liveStatuses) => RNotTerminal else none)
+  lc/retireViol[o, RDemandClosed]                                                      // not started, or already retired
+  + ((lc/startedBefore[o] and dPre[o].sStatus in liveStatuses) => RNotTerminal else none)   // delete requires a TERMINAL demand
+}
+/** demandDomainViol — the witness BY SHAPE (the lifecycle idiom): one dispatch over the Mutate kinds; each kind's
+    own violation set (its liveness arm included) is unchanged. */
+fun demandDomainViol[o: lc/MutateOcc]: set Reason {
+  (o in AddCycleOcc => addViol[o] else none) + (o in RemoveCycleOcc => removeViol[o] else none)
+  + (o in DetachWithdrawnOcc => detachWithdrawnViol[o] else none) + (o in AdjustQtyOcc => adjustViol[o] else none)
+  + (o in ResetQtyOcc => resetViol[o] else none) + (o in ReleaseOcc => releaseViol[o] else none)
+  + (o in ReopenOcc => reopenViol[o] else none) + (o in StartProductionOcc => startProductionViol[o] else none)
+  + (o in RecordProductionOcc => recordProductionViol[o] else none) + (o in ExtractProductionOcc => extractProductionViol[o] else none)
+  + (o in DistributeOcc => distributeViol[o] else none) + (o in CompleteOcc => completeViol[o] else none)
+  + (o in CancelOcc => cancelViol[o] else none)
 }
 
 fact DemandAdmissionWitness {
-  all o: CreateDemandOcc     | (o.admission = Accepted iff no createViol[o])           and (o.admission in Rejected implies o.admission.because = createViol[o])
-  all o: CreateWithCycleOcc  | (o.admission = Accepted iff no createWithViol[o])       and (o.admission in Rejected implies o.admission.because = createWithViol[o])
-  all o: AddCycleOcc         | (o.admission = Accepted iff no addViol[o])              and (o.admission in Rejected implies o.admission.because = addViol[o])
-  all o: RemoveCycleOcc      | (o.admission = Accepted iff no removeViol[o])           and (o.admission in Rejected implies o.admission.because = removeViol[o])
-  all o: DetachWithdrawnOcc  | (o.admission = Accepted iff no detachWithdrawnViol[o])  and (o.admission in Rejected implies o.admission.because = detachWithdrawnViol[o])
-  all o: AdjustQtyOcc        | (o.admission = Accepted iff no adjustViol[o])           and (o.admission in Rejected implies o.admission.because = adjustViol[o])
-  all o: ResetQtyOcc         | (o.admission = Accepted iff no resetViol[o])            and (o.admission in Rejected implies o.admission.because = resetViol[o])
-  all o: ReleaseOcc          | (o.admission = Accepted iff no releaseViol[o])          and (o.admission in Rejected implies o.admission.because = releaseViol[o])
-  all o: ReopenOcc           | (o.admission = Accepted iff no reopenViol[o])           and (o.admission in Rejected implies o.admission.because = reopenViol[o])
-  all o: StartProductionOcc  | (o.admission = Accepted iff no startProductionViol[o])  and (o.admission in Rejected implies o.admission.because = startProductionViol[o])
-  all o: RecordProductionOcc | (o.admission = Accepted iff no recordProductionViol[o]) and (o.admission in Rejected implies o.admission.because = recordProductionViol[o])
-  all o: DistributeOcc       | (o.admission = Accepted iff no distributeViol[o])       and (o.admission in Rejected implies o.admission.because = distributeViol[o])
-  all o: ExtractProductionOcc | (o.admission = Accepted iff no extractProductionViol[o]) and (o.admission in Rejected implies o.admission.because = extractProductionViol[o])
+  // the demand log, BY SHAPE (DT-030, 2026-09-09): one witness per shape; the kinds' violation sets are unchanged
+  all o: lc/CreateOcc | let v = (o in CreateDemandOcc => createViol[o] else createWithViol[o]) |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lc/MutateOcc | let v = demandDomainViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  all o: lc/RetireOcc | let v = deleteViol[o] |
+    (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
+  // the delivery log, per kind (not a lifecycle adopter)
   all o: CreateDeliveryOcc   | (o.admission = Accepted iff no createDeliveryViol[o])   and (o.admission in Rejected implies o.admission.because = createDeliveryViol[o])
   all o: RevokeDeliveryOcc   | (o.admission = Accepted iff no revokeDeliveryViol[o])   and (o.admission in Rejected implies o.admission.because = revokeDeliveryViol[o])
   all o: CompleteOcc         | (o.admission = Accepted iff no completeViol[o])         and (o.admission in Rejected implies o.admission.because = completeViol[o])
@@ -299,7 +300,7 @@ fact DemandEffectWitness {
     { dPost[o].sStatus = DS_COMPLETE and sameDemandButStatus[dPre[o], dPost[o]] }
   all o: CancelOcc | committed[o] implies
     { dPost[o].sStatus = DS_CANCELED and sameDemandButStatus[dPre[o], dPost[o]] }
-  all o: DeleteDemandOcc | committed[o] implies o.post = o.pre       // the tombstone (II precedent, R7)
+  // (DeleteDemandOcc's tombstone: the lifecycle module's `RetireEffect`, since 2026-09-09)
 }
 
 /** StartProductionHoldingPoolPin — M3.2 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the MINTED

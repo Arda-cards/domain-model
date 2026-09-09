@@ -421,7 +421,7 @@ run unit_dem_revokeRevokedRefused {
 // has since RETIRED. This is the anti-deadlock half of the cut-8 ruling: the scan workflow
 // must not strand on a mid-flight retirement.
 run unit_dem_scanDerivedRetiredAllowed {
-  some o: CreateWithCycleOcc, k: AcceptOcc, d: DeleteItemOcc | {
+  some o: CreateWithCycleOcc, k: AcceptOcc, d: RetireItemOcc | {
     committed[o] and committed[k] and committed[d]
     k.cycle = resolve[o.member] and precedes[k.tick, o.tick]
     d.subject = o.subject.itemPin.subject and precedes[d.tick, o.tick]
@@ -434,7 +434,7 @@ run unit_dem_scanDerivedRetiredAllowed {
 // INCEPTION stays gated: a DIRECT create (the caller chooses the item — F6/queue-add) of a
 // demand for a retired item refuses with exactly RRetiredRef.
 run unit_dem_directCreateRetiredRefused {
-  some o: CreateDemandOcc, d: DeleteItemOcc | {
+  some o: CreateDemandOcc, d: RetireItemOcc | {
     committed[d]
     d.subject = o.subject.itemPin.subject and precedes[d.tick, o.tick]
     refusedAtAdmission[o] and o.admission.because = RRetiredRef
@@ -442,3 +442,11 @@ run unit_dem_directCreateRetiredRefused {
 } for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem,
       10 EntityId, 7 Tick, 7 Snapshot, 7 Occurrence expect 1
+
+// ── DT-030 retire cut (2026-09-09): terminality ──────────────────────────────────────────────────
+// Nothing commits on a demand item after its committed delete (the tombstone is the end of history).
+assert unit_dem_nothingAfterRetire {
+  all r: DeleteDemandOcc, o: CreateDemandOcc + CreateWithCycleOcc + AddCycleOcc + RemoveCycleOcc + DetachWithdrawnOcc + AdjustQtyOcc + ResetQtyOcc + ReleaseOcc + ReopenOcc + StartProductionOcc + RecordProductionOcc + ExtractProductionOcc + DistributeOcc + CompleteOcc + CancelOcc + DeleteDemandOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+}
+check unit_dem_nothingAfterRetire for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot expect 0

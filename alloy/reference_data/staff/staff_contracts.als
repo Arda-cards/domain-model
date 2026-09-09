@@ -22,7 +22,7 @@ pred staffNameUnique {
 pred staffLifecycleShape {
   all o: StaffOcc | committed[o] implies {
     ((no stlog/priorOn[o]) iff o in CreateStaffOcc)
-    (some stlog/priorOn[o] implies (stlog/priorOn[o].post & StaffState).sStatus = RD_LIVE)
+    (some stlog/priorOn[o] implies stlog/priorOn[o] not in RetireStaffOcc)   // the prior head is never the tombstone (terminality)
   }
 }
 

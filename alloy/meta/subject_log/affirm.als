@@ -16,14 +16,15 @@ module meta/subject_log/affirm[Subject, Rec]
  *
  * SHAPE (the intent_log shape): open with the log's OWN parameters and this module rides the SAME spine instance:
  *   open meta/subject_log/affirm[InventoryPool, PoolState] as aff
- *   fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated] }   // the adopter names its not-created atom
- * WHAT STAYS WITH THE ADOPTER (the spine idiom, subject_log.als:59–74): the not-created atom (its own taxonomy).
+ *   fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // the adopter names its not-created and closed atoms
+ * WHAT STAYS WITH THE ADOPTER (the spine idiom, subject_log.als:59–74): the not-created and closed atoms (its own taxonomy).
  * The stale atom is the pattern layer's, declared once in meta/subject_log/affirm_reasons. No adoption in the tree
  * until MP's DT-010 word (inventory_pool first).
  */
 
 open meta/action/stateful                                // Snapshot, StatefulAction, committed, refusedAtAdmission, Reason
 open meta/subject_log/subject_log[Subject, Rec] as log   // the SPINE — same params ⇒ the adopter's instance (item_types precedent)
+open meta/subject_log/lifecycle[Subject, Rec] as lc     // retiredBefore — the third arm (2026-09-09: terminality covers affirmations)
 open meta/subject_log/affirm_reasons                     // RStaleAffirmation
 
 /** AffirmOcc — "I checked and it is so": `affirmed` is the VERSION the source affirms (the version-pin shape, DT-023):
@@ -36,12 +37,13 @@ fact AffirmEffect { all o: AffirmOcc | committed[o] implies o.post = o.pre }
 /** Guard CONDITIONS (general layer); the atoms follow the spine idiom. */
 pred affirmNoSubject[o: AffirmOcc] { no o.pre }                            // no record at this position: never created
 pred affirmStale[o: AffirmOcc]     { some o.pre and o.affirmed != o.pre }   // the affirmed version is not the current record
+pred affirmRetired[o: AffirmOcc]   { lc/retiredBefore[o] }                  // the subject's history has ended: nothing commits after a retire
 
-fun affirmViol[o: AffirmOcc, rNotCreated: Reason]: set Reason {
-  (affirmNoSubject[o] => rNotCreated else none) + (affirmStale[o] => RStaleAffirmation else none)
+fun affirmViol[o: AffirmOcc, rNotCreated, rClosed: Reason]: set Reason {
+  (affirmNoSubject[o] => rNotCreated else none) + (affirmRetired[o] => rClosed else none) + (affirmStale[o] => RStaleAffirmation else none)
 }
-/** The admission witness, once, parameterized by the adopter's not-created atom (the two-line idiom). */
-pred affirmAdmissionWitness[rNotCreated: Reason] {
-  all o: AffirmOcc | (o.admission = Accepted iff no affirmViol[o, rNotCreated])
-    and (o.admission in Rejected implies o.admission.because = affirmViol[o, rNotCreated])
+/** The admission witness, once, parameterized by the adopter's not-created and closed atoms (the two-line idiom). */
+pred affirmAdmissionWitness[rNotCreated, rClosed: Reason] {
+  all o: AffirmOcc | (o.admission = Accepted iff no affirmViol[o, rNotCreated, rClosed])
+    and (o.admission in Rejected implies o.admission.because = affirmViol[o, rNotCreated, rClosed])
 }

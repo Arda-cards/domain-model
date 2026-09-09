@@ -26,7 +26,8 @@ module reference_data/business_affiliate/business_affiliate_types
 open meta/profiles/domain_log        // PROFILE (DT-012): log anatomy + group/order premises
 open meta/kernel                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[BusinessAffiliate, BusinessAffiliateState] as balog  // the SPINE
-open reference_data/shared/lifecycle // RdStatus (RD_LIVE/RD_RETIRED) + RRetiredRef (DT-023)
+open meta/subject_log/lifecycle[BusinessAffiliate, BusinessAffiliateState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030, 2026-09-09)
+open reference_data/shared/lifecycle // RRetiredRef (DT-023)
 
 // ── the role vocabulary ─────────────────────────────────────────────────────────────────────────
 /** BusinessRoleType — the kind of role a business affiliate plays. */
@@ -51,33 +52,36 @@ fact BusinessAffiliateRefs { all b: BusinessAffiliate | no b.dataRefs }
 
 // ── the state record ────────────────────────────────────────────────────────────────────────────
 /** BusinessAffiliateState — one moment's versioned payload of an affiliate (a value;
-    extensional): the lifecycle status and the folded role membership. */
+    extensional): the folded role membership. The lifecycle (Live / Retired) is the LOG's shape
+    since 2026-09-09 — live while the head is not a Retire — not a field. */
 sig BusinessAffiliateState extends Snapshot {
-  sStatus: one RdStatus,        // Live / Retired (DT-023 R1)
   sRoles:  set BusinessRole     // the folded children (Q-C)
 }
 // Value semantics: a state IS its fields.
 fact BusinessAffiliateStateExtensional {
-  all disj a, b: BusinessAffiliateState | a.sStatus != b.sStatus or a.sRoles != b.sRoles
+  all disj a, b: BusinessAffiliateState | a.sRoles != b.sRoles
 }
 
 // ── the kinds — the reference-data lifecycle (DT-023 R1) ────────────────────────────────────────
 /** BaOcc — the affiliate log's occurrence family; the PIN TYPE (DT-023 R3): a version pin is
-    a reference to one of these atoms (the version it created). */
-abstract sig BaOcc extends balog/SubjectOcc {}
+    a reference to one of these atoms (the version it created). A SUBSET sig equal to the whole
+    log: the kinds sit under the lifecycle SHAPES, so the family cannot be their `extends` parent. */
+sig BaOcc in balog/SubjectOcc {}
+fact BaOccIsTheLog { BaOcc = balog/SubjectOcc }
 
 /** BaWriteOcc — the content-carrying kinds' shared payload (SET semantics): the full role
-    membership each write states. */
-abstract sig BaWriteOcc extends BaOcc {
-  roles: set BusinessRole
-} { bindings = subject + roles }
+    membership each write states. A SUBSET sig carrying the field (Create is a Create shape,
+    Update a Mutate shape — one field, no overload; the throwaway of 2026-09-09). */
+sig BaWriteOcc in balog/SubjectOcc { roles: set BusinessRole }
+fact BaWriteOccExtent { BaWriteOcc = CreateBaOcc + UpdateBaOcc and (all o: BaWriteOcc | o.bindings = o.subject + o.roles) }
 
-/** Create — births the BusinessAffiliate LIVE with its initial roles. */
-sig CreateBaOcc extends BaWriteOcc {}
-/** Update — SETs the role membership; the affiliate stays LIVE. */
-sig UpdateBaOcc extends BaWriteOcc {}
-/** Delete — retires the BusinessAffiliate (terminal; content carried forward for history). */
-sig DeleteBaOcc extends BaOcc {} { bindings = subject }
+/** Create — births the BusinessAffiliate with its initial roles (live: the head is not a retire). */
+sig CreateBaOcc extends lc/CreateOcc {}
+/** Update — SETs the role membership. */
+sig UpdateBaOcc extends lc/MutateOcc {}
+/** Retire — ends the affiliate's history (the tombstone; terminal; content carried forward). Was DeleteBaOcc;
+    MP's word 2026-09-09 (spelled `Ba` for consistency with CreateBaOcc / UpdateBaOcc). */
+sig RetireBaOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign atoms; RRetiredRef is shared via lifecycle) ───────────
 one sig RBaExists, RBaNotCreated, RBaRetired extends Reason {}
@@ -89,13 +93,13 @@ fun baStateAt[b: BusinessAffiliate, t: Tick]: lone BusinessAffiliateState { balo
     reference (DT-023 Q-A "compatible and current"). */
 fun baVersionAt[b: BusinessAffiliate, t: Tick]: lone BaOcc { balog/lastTouch[b, t] & BaOcc }
 /** baLiveAt — the affiliate exists and is Live at `t` (the reference-target guard read). */
-pred baLiveAt[b: BusinessAffiliate, t: Tick] { baStateAt[b, t].sStatus = RD_LIVE }
+pred baLiveAt[b: BusinessAffiliate, t: Tick] { lc/liveSubjectAt[b, t] }
 /** pinsCurrentBa — `p` is the current version of its own affiliate at `t` (pin currency). */
 pred pinsCurrentBa[p: BaOcc, t: Tick] { p = baVersionAt[p.subject, t] }
 /** baPinnableAt — the D2 guard in one read: `p` is current at `t` AND its version is Live —
     the version a committed introducing occurrence may pin; anything else refuses with
     `RRetiredRef` (retired-current) or is unrepresentable (stale pin). */
-pred baPinnableAt[p: BaOcc, t: Tick] { pinsCurrentBa[p, t] and (p.post & BusinessAffiliateState).sStatus = RD_LIVE }
+pred baPinnableAt[p: BaOcc, t: Tick] { pinsCurrentBa[p, t] and p not in lc/RetireOcc }
 
 /** roleSelectorAgrees — the shared shape of every consumer's pin + role-selector pair
     (the dissolved-handle form): the selector is a role of the pinned VERSION with the

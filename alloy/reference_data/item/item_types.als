@@ -30,7 +30,8 @@ module reference_data/item/item_types
 open meta/profiles/domain_log        // PROFILE (DT-012): log anatomy + group/order premises
 open meta/kernel                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[Item, ItemState] as ilog   // the log SPINE (DT-015 Q5)
-open reference_data/shared/lifecycle // RdStatus (RD_LIVE/RD_RETIRED) + RRetiredRef (DT-023)
+open meta/subject_log/lifecycle[Item, ItemState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030, 2026-09-09)
+open reference_data/shared/lifecycle // RRetiredRef (DT-023)
 open shared/values                   // Quantity, Money, Unit
 open reference_data/item/uom         // UomScheme, Each, toEach, units (internal vocabulary, DT-009)
 open reference_data/business_affiliate/business_affiliate_types   // BaOcc + BusinessRole — the supply rows' vendor PIN + role selector (DT-023 cut 7b)
@@ -74,10 +75,10 @@ pred inventoryTracked[i: Item] { some i.uom }
 // handle itself: pins are typed occurrence references, no orphan-closure obligation exists.)
 
 // ── the state record ────────────────────────────────────────────────────────────────────────────
-/** ItemState — one moment's versioned payload of an Item (a value; extensional): the
-    lifecycle status and the folded supply content. */
+/** ItemState — one moment's versioned payload of an Item (a value; extensional): the folded
+    supply content. The lifecycle (Live / Retired) is the LOG's shape since 2026-09-09 — live
+    while the head is not a Retire — not a field. */
 sig ItemState extends Snapshot {
-  sStatus:              one  RdStatus,    // Live / Retired (DT-023 R1)
   sSupplies:            set  ItemSupply,  // the folded children (Q-C)
   sDefaultSupply:       lone EntityId,    // soft ref → one of sSupplies
   sCardMinimumQuantity: lone Quantity     // card-issuance default (DT-022 TQ-4): pre-fills a
@@ -87,7 +88,7 @@ sig ItemState extends Snapshot {
 // Value semantics: a state IS its fields.
 fact ItemStateExtensional {
   all disj a, b: ItemState |
-    a.sStatus != b.sStatus or a.sSupplies != b.sSupplies
+    a.sSupplies != b.sSupplies
     or a.sDefaultSupply != b.sDefaultSupply or a.sCardMinimumQuantity != b.sCardMinimumQuantity
 }
 // Record-carried refs are TYPED (soft; tenancy/containment are law-side — item_contracts C1).
@@ -97,23 +98,31 @@ fact ItemStateRefIntegrity {
 
 // ── the kinds — the reference-data lifecycle (DT-023 R1) ────────────────────────────────────────
 /** ItemOcc — the item log's occurrence family; the PIN TYPE (DT-023 R3): a version pin is a
-    reference to one of these atoms (the version it created). */
-abstract sig ItemOcc extends ilog/SubjectOcc {}
+    reference to one of these atoms (the version it created). A SUBSET sig equal to the whole
+    log: the kinds sit under the lifecycle SHAPES, so the family cannot be their `extends` parent. */
+sig ItemOcc in ilog/SubjectOcc {}
+fact ItemOccIsTheLog { ItemOcc = ilog/SubjectOcc }
 
 /** ItemWriteOcc — the content-carrying kinds' shared payload (SET semantics — the
-    UpdateOrderDetails precedent): the full versioned content each write states. */
-abstract sig ItemWriteOcc extends ItemOcc {
+    UpdateOrderDetails precedent): the full versioned content each write states. A SUBSET sig
+    carrying the fields (Create is a Create shape, Update a Mutate shape — one field each, no
+    overload; the throwaway of 2026-09-09). */
+sig ItemWriteOcc in ilog/SubjectOcc {
   supplies:            set  ItemSupply,
   defaultSupply:       lone EntityId,
   cardMinimumQuantity: lone Quantity
-} { bindings = subject + supplies + defaultSupply + cardMinimumQuantity }
+}
+fact ItemWriteOccExtent {
+  ItemWriteOcc = CreateItemOcc + UpdateItemOcc
+  all o: ItemWriteOcc | o.bindings = o.subject + o.supplies + o.defaultSupply + o.cardMinimumQuantity
+}
 
-/** Create — births the Item LIVE with its initial content. */
-sig CreateItemOcc extends ItemWriteOcc {}
-/** Update — SETs the versioned content; the item stays LIVE. */
-sig UpdateItemOcc extends ItemWriteOcc {}
-/** Delete — retires the Item (terminal; content carried forward for history). */
-sig DeleteItemOcc extends ItemOcc {} { bindings = subject }
+/** Create — births the Item with its initial content (live: the head is not a retire). */
+sig CreateItemOcc extends lc/CreateOcc {}
+/** Update — SETs the versioned content. */
+sig UpdateItemOcc extends lc/MutateOcc {}
+/** Retire — ends the Item's history (the tombstone; terminal; content carried forward). Was DeleteItemOcc; MP's word 2026-09-09. */
+sig RetireItemOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign atoms; RRetiredRef is shared via lifecycle) ───────────
 one sig RItemExists, RItemNotCreated, RItemRetired extends Reason {}
@@ -125,10 +134,10 @@ fun itemStateAt[i: Item, t: Tick]: lone ItemState { ilog/recordAt[i, t] }
     reference (DT-023 Q-A "compatible and current"). */
 fun itemVersionAt[i: Item, t: Tick]: lone ItemOcc { ilog/lastTouch[i, t] & ItemOcc }
 /** itemLiveAt — the item exists and is Live at `t` (the reference-target guard read). */
-pred itemLiveAt[i: Item, t: Tick] { itemStateAt[i, t].sStatus = RD_LIVE }
+pred itemLiveAt[i: Item, t: Tick] { lc/liveSubjectAt[i, t] }
 /** pinsCurrentItem — `p` is the current version of its own item at `t` (pin currency). */
 pred pinsCurrentItem[p: ItemOcc, t: Tick] { p = itemVersionAt[p.subject, t] }
 /** itemPinnableAt — the D2 guard in one read: `p` is current at `t` AND its version is
     Live — the version a committed introducing occurrence may pin; anything else refuses
     with `RRetiredRef` (retired-current) or is unrepresentable (stale pin). */
-pred itemPinnableAt[p: ItemOcc, t: Tick] { pinsCurrentItem[p, t] and (p.post & ItemState).sStatus = RD_LIVE }
+pred itemPinnableAt[p: ItemOcc, t: Tick] { pinsCurrentItem[p, t] and p not in lc/RetireOcc }
