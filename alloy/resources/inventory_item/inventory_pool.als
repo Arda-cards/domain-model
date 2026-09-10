@@ -83,8 +83,8 @@ sig CreatePoolOcc extends lc/CreateOcc {} { bindings = subject }
 sig RetirePoolOcc extends lc/RetireOcc {} { bindings = subject }
 /** AffirmPoolOcc — the pool's AFFIRM kind (Q43; DT-030 §affirm, `touch-as-affirmation-act.md`): the caller affirms that `affirmed` is
     the pool's current record; commits inert (post = pre, the module's `AffirmEffect`). Refused `RStaleAffirmation` (the pattern's own
-    atom) when `affirmed` is not the current record; `RPoolClosed` when never created or retired (the adopter's ONE closed atom, passed
-    for both arms — D13 §7 Q-i; a distinct `RPoolNotCreated` is MP's to add). Runtime verb `affirm`, code `AFFIRM`. */
+    atom) when `affirmed` is not the current record; `RPoolNotCreated` when the pool never existed and `RPoolClosed` when it is retired
+    (Q45, MP: distinct atoms; `because` is a SET — a stale claim on a retired pool carries both). Runtime verb `affirm`, code `AFFIRM`. */
 sig AffirmPoolOcc extends aff/AffirmOcc {} { bindings = subject + affirmed }
 sig PoolAddOcc    extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 sig PoolRemoveOcc extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
@@ -125,6 +125,7 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
                          //   live pool (poolMembershipExclusive: at most one pool per item per tick)
         RSameTarget,     // M2b: transfer refused — `to` names the same pool as `from` (no-op move)
         RPoolStarted,    // cut 2 (Q29): genesis on a pool that already has committed history
+        RPoolNotCreated, // Q45 (MP, 2026-09-10: "Yes — distinguish them"): an AFFIRM of a pool that never existed — distinct from RPoolClosed (retired)
         RPoolClosed,     // cut 2: the pool is not live — never created, or already retired (the family's arm; also a transfer's DESTINATION)
         RPoolNotEmpty,   // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
         RDuplicateOrigin // B-mov (DT-029 E5 S-2 / S1 item 3): a movement citing an `arche` a COMMITTED row on this pool
@@ -174,7 +175,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
-fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolClosed, RPoolClosed] }   // Q43: the adopter names its atoms; stale is the pattern's
+fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // Q43 + Q45: never-created and retired are DISTINCT atoms; stale is the pattern's
 fact PoolAdmissionWitness {
   all o: CreatePoolOcc   | (o.admission = Accepted iff no createPoolViol[o])   and (o.admission in Rejected implies o.admission.because = createPoolViol[o])
   all o: RetirePoolOcc   | (o.admission = Accepted iff no retirePoolViol[o])   and (o.admission in Rejected implies o.admission.because = retirePoolViol[o])
