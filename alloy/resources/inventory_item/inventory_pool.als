@@ -36,6 +36,7 @@ open reference_data/item/item_types            // Item — the membership classi
 open resources/inventory_item/inventory_item_types     // InventoryItem (+ transitively keyed algebra, values)
 open meta/subject_log/subject_log[InventoryPool, PoolState] as plog
 open meta/subject_log/lifecycle[InventoryPool, PoolState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030 M2; cut 2, 2026-09-10)
+open meta/subject_log/affirm[InventoryPool, PoolState] as aff     // the AFFIRM act (Q43, 2026-09-10: the module's promised first adopter)
 
 /** InventoryPool — the IDENTITY of a tenant-scoped set of InventoryItems under one Item; its
     membership lives on PoolState records in the occurrence log. */
@@ -80,6 +81,11 @@ sig CreatePoolOcc extends lc/CreateOcc {} { bindings = subject }
     `RPoolNotEmpty` (Q17, MP: a pool retires EMPTY — members transfer out first; emptiness by LIVE membership). Effect: the
     tombstone (`lc/RetireEffect`). Runtime code `RETIRE`; `InventoryPoolOccurrenceKind implements Kind` lands with PDEV-1898 (D13 §6). */
 sig RetirePoolOcc extends lc/RetireOcc {} { bindings = subject }
+/** AffirmPoolOcc — the pool's AFFIRM kind (Q43; DT-030 §affirm, `touch-as-affirmation-act.md`): the caller affirms that `affirmed` is
+    the pool's current record; commits inert (post = pre, the module's `AffirmEffect`). Refused `RStaleAffirmation` (the pattern's own
+    atom) when `affirmed` is not the current record; `RPoolClosed` when never created or retired (the adopter's ONE closed atom, passed
+    for both arms — D13 §7 Q-i; a distinct `RPoolNotCreated` is MP's to add). Runtime verb `affirm`, code `AFFIRM`. */
+sig AffirmPoolOcc extends aff/AffirmOcc {} { bindings = subject + affirmed }
 sig PoolAddOcc    extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 sig PoolRemoveOcc extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 // B-mov (DT-029 E6 / SAMWISE-S1 as ruled, 2026-09-03): every movement row binds its causal signature `arche` (kernel field;
@@ -168,6 +174,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
+fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolClosed, RPoolClosed] }   // Q43: the adopter names its atoms; stale is the pattern's
 fact PoolAdmissionWitness {
   all o: CreatePoolOcc   | (o.admission = Accepted iff no createPoolViol[o])   and (o.admission in Rejected implies o.admission.because = createPoolViol[o])
   all o: RetirePoolOcc   | (o.admission = Accepted iff no retirePoolViol[o])   and (o.admission in Rejected implies o.admission.because = retirePoolViol[o])
