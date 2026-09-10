@@ -10,7 +10,10 @@ Exit 1 on any finding (a red gate, never a silent pass)."""
 import re, sys, pathlib
 
 ADOPTERS = {   # module path (relative to the alloy root) -> the lifecycle alias it opens. EDIT THIS LIST WHEN A LOG ADOPTS.
-    'operations/demand/demand_types.als': 'lc',
+    'operations/demand/demand_types.als': 'lc, pdlc',
+    'resources/kanban_card/kanban_card_types.als': 'lc',
+    'resources/kanban_card/kanban_card_implementation.als': 'lc',
+    'resources/inventory_item/inventory_pool.als': 'lc',
     'procurement/order/order_types.als': 'lco, lcl',
     'reference_data/item/item_types.als': 'lc',
     'reference_data/item/item_implementation.als': 'lc',
@@ -18,7 +21,7 @@ ADOPTERS = {   # module path (relative to the alloy root) -> the lifecycle alias
     'reference_data/staff/staff_implementation.als': 'lc',
     'reference_data/business_affiliate/business_affiliate_types.als': 'lc',
     'reference_data/business_affiliate/business_affiliate_implementation.als': 'lc',
-    'operations/demand/demand_implementation.als': 'lc',
+    'operations/demand/demand_implementation.als': 'lc, pdlc',
     'procurement/order/order_implementation.als': 'lco, lcl',
     'meta/subject_log/affirm.als': 'lc',
 }

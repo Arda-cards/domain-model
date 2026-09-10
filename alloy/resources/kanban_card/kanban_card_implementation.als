@@ -15,6 +15,9 @@ module resources/kanban_card/kanban_card_implementation
 
 open resources/kanban_card/kanban_card_types as kt
 open meta/subject_log/subject_log[kt/CardCycle, kt/CycleState] as clog
+open meta/subject_log/lifecycle[kt/CardCycle, kt/CycleState] as lc      // same params ⇒ the SAME shapes instance (cut 2)
+open resources/inventory_item/inventory_pool as ip                       // DIRECT (rule 10): the pool's shapes below are alias-qualified
+open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as plc   // the POOL's shapes (same params ⇒ inventory_pool's instance) — Q42
 
 // ── the spine adoption: chaining (unconditional — refusals read the real state) + v1 commit ────
 fact CycleChain         { clog/chained }
@@ -75,8 +78,9 @@ fun startViol[o: StartProcessingOcc]: set Reason {
      => RPoolInUse else none)
   + ((some p: resolve[o.pool] & InventoryPool | p.itemPin.subject != (cycles.(o.subject)).itemPin.subject)
      => RPoolWrongItem else none)
-  + ((some p: resolve[o.pool] & InventoryPool, b: PoolOcc | committed[b] and b.pool = p and precedes[b.tick, o.tick])
-     => RPoolNotFresh else none)
+  + ((some p: resolve[o.pool] & InventoryPool, b: plc/MutateOcc | committed[b] and b.subject = p and precedes[b.tick, o.tick])
+     => RPoolNotFresh else none)   // Q42 (cut 2): fresh = no committed MEMBERSHIP (Mutate) row before the attach — the pool's
+                                    //   genesis row (CreatePoolOcc) is its MINTING, not a use (M1's own words: "a USED pool is never re-attached")
 }
 /** shelveViol — the sanctioned backward operation: exactly REQUESTED → REQUESTING. */
 fun shelveViol[o: ShelveOcc]: set Reason {
@@ -84,8 +88,14 @@ fun shelveViol[o: ShelveOcc]: set Reason {
   + ((liveAtOcc[o] and o.pre.sStatus != REQUESTED) => RNotRequested else none)
   + ((REQUESTING not in LifecycleConfig.active) => RInactiveTarget else none)
 }
-/** withdrawViol — closing an open cycle. */
+/** withdrawViol — closing an open cycle (the ABANDON retire). */
 fun withdrawViol[o: WithdrawOcc]: set Reason { (not liveAtOcc[o]) => RClosed else none }
+/** retireCycleViol — the COMPLETION retire (cut 2, Q24 (a)): closed → RClosed; live but mid-trip (not rolloverEligible: open at a
+    NON-completable status) → RCardInCirculation, the existing atom from the other side. */
+fun retireCycleViol[o: RetireCycleOcc]: set Reason {
+  ((not liveAtOcc[o]) => RClosed else none)
+  + ((liveAtOcc[o] and not rolloverEligible[o.subject, o.tick]) => RCardInCirculation else none)
+}
 /** productionFailureViol — the SECOND sanctioned backward operation (R8, amended 2026-07-06):
     exactly IN_PROCESS → REQUESTING (the completing production run allocated this cycle nothing;
     it re-enters the waiting queue, attachable by a new DemandItem). */
@@ -101,6 +111,7 @@ fact CycleAdmissionWitness {
   all o: StartProcessingOcc | (o.admission = Accepted iff no startViol[o]) and (o.admission in Rejected implies o.admission.because = startViol[o])
   all o: ShelveOcc   | (o.admission = Accepted iff no shelveViol[o])   and (o.admission in Rejected implies o.admission.because = shelveViol[o])
   all o: WithdrawOcc | (o.admission = Accepted iff no withdrawViol[o]) and (o.admission in Rejected implies o.admission.because = withdrawViol[o])
+  all o: RetireCycleOcc | (o.admission = Accepted iff no retireCycleViol[o]) and (o.admission in Rejected implies o.admission.because = retireCycleViol[o])
   all o: ProductionFailureOcc | (o.admission = Accepted iff no productionFailureViol[o]) and (o.admission in Rejected implies o.admission.because = productionFailureViol[o])
 }
 
@@ -126,7 +137,7 @@ fact CycleEffectWitness {
   all o: ShelveOcc | committed[o] implies {
     o.post.sStatus = REQUESTING and sameCyclePayloadButStatus[o.pre, o.post]
   }
-  all o: WithdrawOcc | committed[o] implies o.post = o.pre      // the TOMBSTONE (closing; abandoned)
+  all o: WithdrawOcc | committed[o] implies o.post = o.pre      // the TOMBSTONE (closing; abandoned) — also the family's RetireEffect; RetireCycleOcc's is the family's alone
   all o: ProductionFailureOcc | committed[o] implies {          // back to the waiting queue (R8)
     o.post.sStatus = REQUESTING
     no o.post.sPool                            // the pool DETACHES — REQUESTED is the demand leg again

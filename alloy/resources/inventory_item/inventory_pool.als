@@ -35,13 +35,14 @@ open meta/kernel                                 // Scoped, Entity, EntityId, re
 open reference_data/item/item_types            // Item — the membership classifier (TYPES; laws via root mock/impl)
 open resources/inventory_item/inventory_item_types     // InventoryItem (+ transitively keyed algebra, values)
 open meta/subject_log/subject_log[InventoryPool, PoolState] as plog
+open meta/subject_log/lifecycle[InventoryPool, PoolState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030 M2; cut 2, 2026-09-10)
 
 /** InventoryPool — the IDENTITY of a tenant-scoped set of InventoryItems under one Item; its
     membership lives on PoolState records in the occurrence log. */
 sig InventoryPool extends Scoped {
   itemPin: one ItemOcc              // → Item VERSION PIN (DT-023 R3; was itemRef): constrains
                                     //   membership (immutable); entity-wise reads via `.subject`.
-                                    //   Genesis is runtime-side (no create kind), so pin CURRENCY
+                                    //   Genesis is `CreatePoolOcc` since cut 2 (Q29), so pin CURRENCY
                                     //   anchors at the minting process — as of M2a (DT-020
                                     //   §8.5.3 / SPEARHEAD-D1 A′-2) THREE minting holders:
                                     //   ReceivingLine at Receive, DemandItem at StartProduction
@@ -66,12 +67,21 @@ fact PoolStateExtensional { all disj a, b: PoolState | a.holds != b.holds }
 // ── the kinds ────────────────────────────────────────────────────────────────────────────────────
 /** PoolOcc — a pool-membership operation occurrence on the spine; `subject` is the pool (pre/post
     are its PoolState records — the spine's SubjectOccRecords). */
-abstract sig PoolOcc extends plog/SubjectOcc {}
+sig PoolOcc in plog/SubjectOcc {}                  // the WHOLE pool log, read by kind family (a SUBSET sig since cut 2: the kinds
+fact PoolOccIsTheLog { PoolOcc = plog/SubjectOcc }     //   extend the lifecycle SHAPES, and a sig cannot extend two parents)
 /** pool — the reading alias for the spine's `subject` field (receiver syntax: `o.pool`). */
 fun pool[o: PoolOcc]: one InventoryPool { o.subject }
 
-sig PoolAddOcc    extends PoolOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
-sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
+/** CreatePoolOcc — the pool's GENESIS in the model (Q29, 2026-09-09: the model catching up to the runtime's CREATE). A pool starts
+    EMPTY; refused `RPoolStarted` on a pool with committed history (genesis-once, the family's arm). Every membership kind below is
+    a Mutate shape and needs a started, unretired pool (`RPoolClosed` otherwise — the family's word, `ShapeAdmission`). */
+sig CreatePoolOcc extends lc/CreateOcc {} { bindings = subject }
+/** RetirePoolOcc — the pool's RETIRE (Q24 (a); DT-030 M2): refused `RPoolClosed` (never created / already retired) and
+    `RPoolNotEmpty` (Q17, MP: a pool retires EMPTY — members transfer out first; emptiness by LIVE membership). Effect: the
+    tombstone (`lc/RetireEffect`). Runtime code `RETIRE`; `InventoryPoolOccurrenceKind implements Kind` lands with PDEV-1898 (D13 §6). */
+sig RetirePoolOcc extends lc/RetireOcc {} { bindings = subject }
+sig PoolAddOcc    extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
+sig PoolRemoveOcc extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 // B-mov (DT-029 E6 / SAMWISE-S1 as ruled, 2026-09-03): every movement row binds its causal signature `arche` (kernel field;
 // the caller's RESERVE row id, or itself when self-minted — MP's Q7 rule: every row an act writes carries the act's `arche`)
 // and `reverses` — the row this movement UNDOES (a reversal is a NEW context: it carries its own `arche`; S1 item 2).
@@ -85,7 +95,7 @@ sig PoolRemoveOcc extends PoolOcc { item: one InventoryItem, reverses: lone Pool
     re-attach). `subject` (the spine field, read via `pool[o]`/`o.pool`) is the SOURCE pool
     (`from`); atomic remove-then-add. `to` is the destination. This is the model seat of R2 —
     "take inventory from Inventory-at-Rest into a new DemandItem without receiving". */
-sig PoolTransferOcc extends PoolOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone PoolOcc }
+sig PoolTransferOcc extends lc/MutateOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone PoolOcc }
   { bindings = subject + item + to + arche + reverses }
 /** ReversalDiscipline — B-mov: `reverses` names a COMMITTED row on the SAME pool, EARLIER, of the INVERSE kind and the same
     item — an add reversing a remove, a remove reversing an add, a transfer reversing a transfer whose `to` is this one's
@@ -108,6 +118,9 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
         RHeldElsewhere,  // M2b (DT-020 §8.5.3): add refused — the item is already held by ANOTHER
                          //   live pool (poolMembershipExclusive: at most one pool per item per tick)
         RSameTarget,     // M2b: transfer refused — `to` names the same pool as `from` (no-op move)
+        RPoolStarted,    // cut 2 (Q29): genesis on a pool that already has committed history
+        RPoolClosed,     // cut 2: the pool is not live — never created, or already retired (the family's arm; also a transfer's DESTINATION)
+        RPoolNotEmpty,   // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
         RDuplicateOrigin // B-mov (DT-029 E5 S-2 / S1 item 3): a movement citing an `arche` a COMMITTED row on this pool
                          //   already carries — the idempotent callee's typed refusal ("already landed"); the runtime's
                          //   typed duplicate refusal. LOCAL atom: this module opens no pattern layer, and the pattern's
@@ -120,8 +133,15 @@ fact PoolChaining      { plog/chained }
 // (no o.pre = the pool has no committed history: membership reads empty — `none.holds = none`.)
 
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ────────────────────
+/** createPoolViol / retirePoolViol — cut 2: the family's arms + the domain's emptiness rule (Q17). */
+fun createPoolViol[o: CreatePoolOcc]: set Reason { lc/createViol[o, RPoolStarted] }
+fun retirePoolViol[o: RetirePoolOcc]: set Reason {
+  lc/retireViol[o, RPoolClosed]
+  + ((lc/liveAt[o] and some o.pre.holds) => RPoolNotEmpty else none)
+}
 fun poolAddViol[o: PoolAddOcc]: set Reason {
-  ((o.item.itemPin.subject != o.pool.itemPin.subject) => RWrongItem else none)
+  lc/liveViol[o, RPoolClosed]                                 // cut 2: never created / retired — the family's arm
+  + ((o.item.itemPin.subject != o.pool.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.pool.tenantId) => RWrongTenant   else none)
   + ((o.item in o.pre.holds)              => RAlreadyMember else none)
   // M2b (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): poolMembershipExclusive as a GUARD-DERIVED
@@ -131,7 +151,8 @@ fun poolAddViol[o: PoolAddOcc]: set Reason {
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov: a re-sent origin on this pool is refused, typed (the module FACT `ArcheUnique` needs the refusal — Q8)
 }
 fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
-  ((o.item not in o.pre.holds) => RNotMember else none)
+  lc/liveViol[o, RPoolClosed]                                 // cut 2
+  + ((o.item not in o.pre.holds) => RNotMember else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
 /** poolTransferViol — M2b: RSameTarget (a no-op move), RNotMember (the item isn't at the
@@ -139,13 +160,17 @@ fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
     same item-agreement shape `poolAddViol` uses, since the destination gain IS an ordinary
     add (`transferPairing`). */
 fun poolTransferViol[o: PoolTransferOcc]: set Reason {
-  ((o.to = o.subject) => RSameTarget else none)
+  lc/liveViol[o, RPoolClosed]                                 // cut 2: the SOURCE must be live …
+  + ((not lc/liveSubjectAt[o.to, o.tick]) => RPoolClosed else none)   // … and so must the DESTINATION (its paired add is a Mutate on `to`)
+  + ((o.to = o.subject) => RSameTarget else none)
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + ((o.item.itemPin.subject != o.to.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
 }
 fact PoolAdmissionWitness {
+  all o: CreatePoolOcc   | (o.admission = Accepted iff no createPoolViol[o])   and (o.admission in Rejected implies o.admission.because = createPoolViol[o])
+  all o: RetirePoolOcc   | (o.admission = Accepted iff no retirePoolViol[o])   and (o.admission in Rejected implies o.admission.because = retirePoolViol[o])
   all o: PoolAddOcc      | (o.admission = Accepted iff no poolAddViol[o])      and (o.admission in Rejected implies o.admission.because = poolAddViol[o])
   all o: PoolRemoveOcc   | (o.admission = Accepted iff no poolRemoveViol[o])   and (o.admission in Rejected implies o.admission.because = poolRemoveViol[o])
   all o: PoolTransferOcc | (o.admission = Accepted iff no poolTransferViol[o]) and (o.admission in Rejected implies o.admission.because = poolTransferViol[o])
@@ -155,6 +180,7 @@ fact PoolCommitAccepts { plog/commitAlwaysAccepts }
 
 // ── effects ──────────────────────────────────────────────────────────────────────────────────────
 fact PoolEffectWitness {
+  all o: CreatePoolOcc   | committed[o] implies no o.post.holds                     // cut 2: a pool starts EMPTY (the retire's is the family's RetireEffect)
   all o: PoolAddOcc      | committed[o] implies o.post.holds = o.pre.holds + o.item
   all o: PoolRemoveOcc   | committed[o] implies o.post.holds = o.pre.holds - o.item
   all o: PoolTransferOcc | committed[o] implies o.post.holds = o.pre.holds - o.item   // the SOURCE half

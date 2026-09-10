@@ -22,6 +22,7 @@ open operations/demand/demand_types as dt   // rule 10: the parameter below was 
 open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // same params ⇒ the SAME spine instance as demand_types
 open meta/subject_log/lifecycle[dt/DemandItem, dt/DemandState] as lc       // same params ⇒ the SAME shapes instance
 open meta/subject_log/subject_log[dt/ProductionDelivery, dt/PDState] as pdlog  // the second subject's spine (§8.1.2)
+open meta/subject_log/lifecycle[dt/ProductionDelivery, dt/PDState] as pdlc     // same params ⇒ the SAME shapes instance (cut 2)
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
 fact DemandChaining      { dlog/chained }
@@ -156,16 +157,13 @@ fun extractProductionViol[o: ExtractProductionOcc]: set Reason {
      => RForeignRef else none)
 }
 // ── the PD subject's guards (§8.1.2/§8.1.4) ────────────────────────────────────────────────────
-/** startedBeforePD — the delivery has committed history strictly before `o` (genesis-once). */
-pred startedBeforePD[o: pdlog/SubjectOcc] {
-  some b: pdlog/SubjectOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick]
-}
+// startedBeforePD retired at cut 2: the family's `pdlc/startedBefore` is the same reading, declared once.
 /** createDeliveryViol — the §8.1.4 target gates. The demandRef is an ENTITY dataRef: kernel
     isolation makes a cross-tenant resolution UNREPRESENTABLE (the entity-lift precedent), so
     there is no tenancy clause; a DANGLING or non-IN_PROCESS target refuses conservatively via
     the status read. Both clauses may fire together (reason-precise = the SET). */
 fun createDeliveryViol[o: CreateDeliveryOcc]: set Reason {
-  (startedBeforePD[o] => RDeliveryStarted else none)
+  pdlc/createViol[o, RDeliveryStarted]                       // genesis-once — the family's arm (cut 2)
   + ((demandStatusAt[resolve[o.subject.demandRef] & DemandItem, o.tick] != DS_IN_PROCESS)
      => RTargetNotInProcess else none)
   // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): re-based from a caller-asserted item to the
@@ -179,9 +177,16 @@ fun createDeliveryViol[o: CreateDeliveryOcc]: set Reason {
     contributed) is RUNTIME enforcement + probe — the standing I3 arity-4 exclusion; the
     caller's own source-state check (RL allows) is the CALLER's leg, ordinary call-first. */
 fun revokeDeliveryViol[o: RevokeDeliveryOcc]: set Reason {
-  ((no o.pre or pdPre[o].sStatus = PD_REVOKED) => RDeliveryClosed else none)
+  pdlc/liveViol[o, RDeliveryClosed]                          // never created / already RETIRED — the family's arm (cut 2)
+  + ((pdlc/liveAt[o] and pdPre[o].sStatus = PD_REVOKED) => RDeliveryClosed else none)   // already revoked — the domain's arm, same atom
   + ((let d = resolve[o.subject.demandRef] & DemandItem | no d or not liveDemandAt[d, o.tick])
      => RDemandClosed else none)
+}
+/** retireDeliveryViol — cut 2 (Q24 (a)): the family's arm (never created / already retired → RDeliveryClosed) + the
+    domain's terminality arm: a delivery still CREATED is not terminal — Revoke first (RNotTerminal, the demand's atom). */
+fun retireDeliveryViol[o: RetireDeliveryOcc]: set Reason {
+  pdlc/retireViol[o, RDeliveryClosed]
+  + ((pdlc/liveAt[o] and pdPre[o].sStatus = PD_CREATED) => RNotTerminal else none)
 }
 fun distributeViol[o: DistributeOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
@@ -228,9 +233,10 @@ fact DemandAdmissionWitness {
     (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
   all o: lc/RetireOcc | let v = deleteViol[o] |
     (o.admission = Accepted iff no v) and (o.admission in Rejected implies o.admission.because = v)
-  // the delivery log, per kind (not a lifecycle adopter)
+  // the delivery log, per kind (a lifecycle adopter since cut 2: pdlc)
   all o: CreateDeliveryOcc   | (o.admission = Accepted iff no createDeliveryViol[o])   and (o.admission in Rejected implies o.admission.because = createDeliveryViol[o])
   all o: RevokeDeliveryOcc   | (o.admission = Accepted iff no revokeDeliveryViol[o])   and (o.admission in Rejected implies o.admission.because = revokeDeliveryViol[o])
+  all o: RetireDeliveryOcc   | (o.admission = Accepted iff no retireDeliveryViol[o])   and (o.admission in Rejected implies o.admission.because = retireDeliveryViol[o])
   all o: CompleteOcc         | (o.admission = Accepted iff no completeViol[o])         and (o.admission in Rejected implies o.admission.because = completeViol[o])
   all o: CancelOcc           | (o.admission = Accepted iff no cancelViol[o])           and (o.admission in Rejected implies o.admission.because = cancelViol[o])
   all o: DeleteDemandOcc     | (o.admission = Accepted iff no deleteViol[o])           and (o.admission in Rejected implies o.admission.because = deleteViol[o])
@@ -296,6 +302,7 @@ fact DemandEffectWitness {
   all o: DistributeOcc       | committed[o] implies o.post = o.pre   // ⟲ — allocation moves pools + cycles, not this record
   all o: CreateDeliveryOcc   | committed[o] implies pdPost[o].sStatus = PD_CREATED
   all o: RevokeDeliveryOcc   | committed[o] implies pdPost[o].sStatus = PD_REVOKED
+  // RetireDeliveryOcc: the tombstone is the family's `pdlc/RetireEffect` (post = pre) — no effect line here (cut 2)
   all o: CompleteOcc | committed[o] implies
     { dPost[o].sStatus = DS_COMPLETE and sameDemandButStatus[dPre[o], dPost[o]] }
   all o: CancelOcc | committed[o] implies

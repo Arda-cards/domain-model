@@ -31,6 +31,7 @@ open meta/kernel                                     // Scoped, EntityId, resolv
 open meta/subject_log/subject_log[DemandItem, DemandState] as dlog   // the log SPINE (DT-015 Q5)
 open meta/subject_log/lifecycle[DemandItem, DemandState] as lc     // the SHAPES: Create / Mutate / Retire (DT-030, 2026-09-09)
 open meta/subject_log/subject_log[ProductionDelivery, PDState] as pdlog  // the SECOND subject (§8.1.2, DT-020 build cut 3)
+open meta/subject_log/lifecycle[ProductionDelivery, PDState] as pdlc    // the SHAPES for the delivery log (DT-030 M2; cut 2, 2026-09-10)
 open shared/values                                   // Quantity
 open reference_data/item/item_types                  // Item (collation-key target; TYPES only)
 open resources/processing_network/processing_network_types   // Station (collation-key target; TYPES only)
@@ -197,13 +198,19 @@ sig DeleteDemandOcc extends lc/RetireOcc {} { bindings = subject }   // the Reti
     `item: lone EntityId`, a caller-ASSERTED Item compared directly to the demand's item;
     with typed pools (I3a) the caller supplies the POOL instead and the guard reads its
     `itemPin` — the pool's pin is authoritative, no separate item assertion needed. */
-sig CreateDeliveryOcc extends pdlog/SubjectOcc { pool: lone EntityId } { bindings = subject + pool }
+sig CreateDeliveryOcc extends pdlc/CreateOcc { pool: lone EntityId } { bindings = subject + pool }
 /** RevokeDelivery — terminal reversal (§8.1.1 reversing-entry): the delivery contributes
     nothing from here on; corrections are Revoke + recreate. The caller (the producing
     process) checks its OWN source state per ordinary call-first; the content clause
     (holding ≥ contributed) is RUNTIME + probe (the I3 exclusion). Pairs ATOMICALLY with
     ExtractProduction on the target's log. */
-sig RevokeDeliveryOcc extends pdlog/SubjectOcc {} { bindings = subject }
+sig RevokeDeliveryOcc extends pdlc/MutateOcc {} { bindings = subject }   // a status transition (terminal on the ladder), NOT the retire
+/** RetireDelivery — the delivery's RETIRE kind (DT-030 M2: mandatory for every Universe-managed entity; Q24 (a)): the
+    end of the delivery's history after its Revoke — the demand's two-step (Complete/Cancel then Delete) on the second
+    subject. Admitted only on a REVOKED delivery (`RNotTerminal` while CREATED); refused `RDeliveryClosed` when never
+    created or already retired (the family's arm). Effect: the tombstone (`pdlc/RetireEffect`). Runtime code `RETIRE`
+    (D13 §6). Revoke stays a Mutate: REVOKED is a status, not the end of history. */
+sig RetireDeliveryOcc extends pdlc/RetireOcc {} { bindings = subject }
 
 /** demandMutators — the composition/intent mutators under the R5 freeze (OPEN-only, RFrozen). */
 fun demandMutators: set dlog/SubjectOcc {

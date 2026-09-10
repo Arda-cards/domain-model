@@ -22,6 +22,7 @@ open reference_data/item/item_types           // Item (soft-ref target; TYPES on
 open resources/processing_network/processing_network_types  // Loop (soft-ref target; TYPES only — DT-017) [KC-MH-5]
 open resources/inventory_item/inventory_pool  // InventoryPool — the sPool soft-ref target
 open meta/subject_log/subject_log[CardCycle, CycleState] as clog
+open meta/subject_log/lifecycle[CardCycle, CycleState] as lc      // the SHAPES: Create / Mutate / Retire (DT-030 M2; cut 2, 2026-09-10)
 
 // ── the operational status vocabulary (a plain enum — the op machine retired at DT-015 B) ──────
 /** KanbanCardStatus — the operational lifecycle states. The 8 CORE states are cycle states;
@@ -102,28 +103,35 @@ fact ConfigWellFormed { LifecycleConfig.active in (KanbanCardStatus - AVAILABLE)
 // ── the kinds — the PUBLIC operation surface (one per Operation, `<Operation>Occ`; L9) ──────────
 /** CycleOcc — a CardCycle operation occurrence on the spine; `subject` is the cycle (pre/post are
     its CycleState records — the spine's SubjectOccRecords). */
-abstract sig CycleOcc extends clog/SubjectOcc {}
+sig CycleOcc in clog/SubjectOcc {}                 // the WHOLE cycle log, read by kind family (a SUBSET sig since cut 2: the kinds
+fact CycleOccIsTheLog { CycleOcc = clog/SubjectOcc }   //   extend the lifecycle SHAPES, and a sig cannot extend two parents)
 /** cycle — the reading alias for the spine's `subject` field (receiver syntax: `o.cycle`). */
 fun cycle[o: CycleOcc]: one CardCycle { o.subject }
 
-sig RequestOcc            extends CycleOcc { qtyOverride: lone Quantity } { bindings = subject + qtyOverride }
+sig RequestOcc            extends lc/CreateOcc { qtyOverride: lone Quantity } { bindings = subject + qtyOverride }   // the GENESIS (Create shape)
 // `AcceptOcc` / `StartProcessingOcc` / `ShelveOcc` cite the claim chain's RESERVE / ACT_RESERVE (`arche`) when the act is a
 // demand saga's leg (DT-029 E6, chain A) — kanban stays HOLDER-BLIND: the citation discipline is the demand module's fact
 // (`operations/demand/demand_claim.als`, `CycleCitations`), never a kanban law.
-sig AcceptOcc             extends CycleOcc {} { bindings = subject }
-sig ShelveOcc             extends CycleOcc {} { bindings = subject }
-sig StartProcessingOcc    extends CycleOcc { pool: one EntityId } { bindings = subject + pool }   // ATTACHES the pool (exclusive while the cycle lives).
+sig AcceptOcc             extends lc/MutateOcc {} { bindings = subject }
+sig ShelveOcc             extends lc/MutateOcc {} { bindings = subject }
+sig StartProcessingOcc    extends lc/MutateOcc { pool: one EntityId } { bindings = subject + pool }   // ATTACHES the pool (exclusive while the cycle lives).
   // M1 annotation (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2, MINESWEEPER model-deltas M1): `pool` is
   // the pool the act MINTS for this cycle (ownership-by-genesis) — NEVER a pre-existing pool
   // being attached. See `startViol` (kanban_card_implementation.als) for the freshness guard
   // this annotation implies.
-sig CompleteProcessingOcc extends CycleOcc {} { bindings = subject }
-sig FulfillOcc            extends CycleOcc {} { bindings = subject }
-sig ReceiveOcc            extends CycleOcc {} { bindings = subject }   // status-only: material arrivals are PoolAddOcc events on the attached pool
-sig UseOcc                extends CycleOcc {} { bindings = subject }
-sig DepleteOcc            extends CycleOcc {} { bindings = subject }
-sig WithdrawOcc           extends CycleOcc {} { bindings = subject }
-sig ProductionFailureOcc  extends CycleOcc {} { bindings = subject }   // IN_PROCESS → REQUESTING (2nd sanctioned backward, R8): the run closed with no inventory for this cycle; the pool DETACHES (back to the demand leg)
+sig CompleteProcessingOcc extends lc/MutateOcc {} { bindings = subject }
+sig FulfillOcc            extends lc/MutateOcc {} { bindings = subject }
+sig ReceiveOcc            extends lc/MutateOcc {} { bindings = subject }   // status-only: material arrivals are PoolAddOcc events on the attached pool
+sig UseOcc                extends lc/MutateOcc {} { bindings = subject }
+sig DepleteOcc            extends lc/MutateOcc {} { bindings = subject }   // the ladder's LAST forward status — a transition, not the retire (Q24)
+sig WithdrawOcc           extends lc/RetireOcc {} { bindings = subject }   // the ABANDON — the existing tombstone, now a Retire shape (Q24 (a))
+/** RetireCycleOcc — the COMPLETION retire (Q24 (a); DT-030 M2): the cycle finished its trip and its history closes. Admitted on a
+    cycle open at a COMPLETABLE status (or refused `RCardInCirculation` mid-trip: a cycle mid-trip is withdrawn or it finishes);
+    refused `RClosed` when never started or already withdrawn / retired. Effect: the tombstone (`lc/RetireEffect`). Runtime code
+    `RETIRE` (D13 §6); `WITHDRAW` keeps its own code. The rollover's closure of the predecessor (a successor's genesis) stays as it
+    is until Q25 rules whether it writes this row. */
+sig RetireCycleOcc        extends lc/RetireOcc {} { bindings = subject }
+sig ProductionFailureOcc  extends lc/MutateOcc {} { bindings = subject }   // IN_PROCESS → REQUESTING (2nd sanctioned backward, R8): the run closed with no inventory for this cycle; the pool DETACHES (back to the demand leg)
 
 /** targetOf — the operation's CANONICAL target status (none for the closing Withdraw). */
 fun targetOf[o: CycleOcc]: lone KanbanCardStatus {
@@ -167,12 +175,12 @@ fun statusAt[c: CardCycle, t: Tick]: lone KanbanCardStatus { stateOfCycleAt[c, t
 /** closedStrictlyBefore — the cycle was closed before `t`: withdrawn, or its successor's genesis
     committed (the rollover closes the predecessor). */
 pred closedStrictlyBefore[c: CardCycle, t: Tick] {
-  (some w: WithdrawOcc | committed[w] and w.subject = c and precedes[w.tick, t])
+  (some w: lc/RetireOcc | committed[w] and w.subject = c and precedes[w.tick, t])   // withdrawn OR retired (cut 2)
   or (some r: RequestOcc | committed[r] and r.subject.precededBy = c and precedes[r.tick, t])
 }
 /** closedAt — the cycle is closed as of `t` (withdrawn or rolled over). */
 pred closedAt[c: CardCycle, t: Tick] {
-  (some w: WithdrawOcc | committed[w] and w.subject = c and notAfter[w.tick, t])
+  (some w: lc/RetireOcc | committed[w] and w.subject = c and notAfter[w.tick, t])   // withdrawn OR retired (cut 2)
   or (some r: RequestOcc | committed[r] and r.subject.precededBy = c and notAfter[r.tick, t])
 }
 /** liveCycleAt — started and open as of `t` (the SQ-8 "live" reading). */
