@@ -1,6 +1,7 @@
 module resources/inventory_item/tests/unit/inventory_item
 
 open resources/inventory_item/inventory_item_implementation
+open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
 open resources/inventory_item/inventory_item_contracts
 open reference_data/item/item_mock                 // the LOWER LAYER as its CONTRACT (DT-017 two-layer PoC)
 
@@ -41,7 +42,7 @@ check unit_ii_contract_readBack for 5 but 3 Scalar, 5 Int, 8 Quantity expect 0
 // ── SAT witnesses ─────────────────────────────────────────────────────────────────────────────────
 // A committed Create: read back through the projections — live, with its born record.
 run unit_occ_createReadsBack {
-  some o: CreateOcc | committed[o]
+  some o: inventory_item_types/CreateOcc | committed[o]
     and liveAt[o.target, o.tick]
     and stateAt[o.target, o.tick] = o.post
     and o.post.sActual = o.qty
@@ -49,7 +50,7 @@ run unit_occ_createReadsBack {
 
 // A committed chain create → replenish → consume on one item, each reading the prior record.
 run unit_occ_lifecycleChain {
-  some ii: InventoryItem, c: CreateOcc, r: ReplenishOcc, k: ConsumeOcc | {
+  some ii: InventoryItem, c: inventory_item_types/CreateOcc, r: ReplenishOcc, k: ConsumeOcc | {
     c.target = ii and r.target = ii and k.target = ii
     precedes[c.tick, r.tick] and precedes[r.tick, k.tick]
     committed[c] and committed[r] and committed[k]
@@ -65,7 +66,7 @@ run unit_occ_overdrawRefused {
 
 // Resurrection is REFUSED: a Create over a deleted item's history carries RAlreadyExists.
 run unit_occ_resurrectionRefused {
-  some d: DeleteOcc, c: CreateOcc | {
+  some d: DeleteOcc, c: inventory_item_types/CreateOcc | {
     committed[d] and d.target = c.target and precedes[d.tick, c.tick]
     refusedAtAdmission[c] and RAlreadyExists in c.admission.because
   }
@@ -111,7 +112,7 @@ check unit_occ_noCommittedOverdraw for 5 but 3 Scalar, 5 Int expect 0
 // LPN terminality: a committed Create never lands on an item with ANY committed history
 // (delete tombstones included — no resurrection).
 assert unit_occ_noResurrection {
-  all o: CreateOcc | committed[o] implies no priorOn[o, o.target]
+  all o: inventory_item_types/CreateOcc | committed[o] implies no priorOn[o, o.target]
 }
 check unit_occ_noResurrection for 5 but 3 Scalar, 5 Int expect 0
 
@@ -167,7 +168,7 @@ run unit_occ_depleteThenRevive {
 
 // D17 as a theorem: no committed operation ever LENGTHENS an expiry (creates aside — they set it).
 assert unit_occ_expiryNeverLengthens {
-  all o: IIOcc - CreateOcc | committed[o] implies
+  all o: IIOcc - inventory_item_types/CreateOcc | committed[o] implies
     (some o.pre.sExpiration implies (some o.post.sExpiration and o.post.sExpiration <= o.pre.sExpiration))
 }
 check unit_occ_expiryNeverLengthens for 5 but 3 Scalar, 5 Int expect 0
@@ -259,7 +260,7 @@ run unit_occ_consumeToDisabled {
 
 // D17 witnesses: create sets the expiry; merge takes the earlier of the two.
 run unit_occ_createWithExpiration {
-  some o: CreateOcc | committed[o] and o.exp = 4 and o.post.sExpiration = 4
+  some o: inventory_item_types/CreateOcc | committed[o] and o.exp = 4 and o.post.sExpiration = 4
 } for 5 but 3 Scalar, 5 Int expect 1
 run unit_occ_mergeMinExpiration {
   some o: MergeOcc | committed[o]
@@ -290,7 +291,7 @@ run unit_occ_lockAlreadyLockedRefused {
   some o: LockOcc | refusedAtAdmission[o] and o.admission.because = RNotApplicable
 } for 5 but 3 Scalar, 5 Int expect 1
 run unit_occ_nonPositiveRefused {
-  some o: CreateOcc | refusedAtAdmission[o] and o.admission.because = RNonPositive
+  some o: inventory_item_types/CreateOcc | refusedAtAdmission[o] and o.admission.because = RNonPositive
 } for 5 but 3 Scalar, 5 Int expect 1
 run unit_occ_notLiveRefused {
   some o: ConsumeOcc | refusedAtAdmission[o] and RNotLive in o.admission.because
@@ -312,7 +313,7 @@ run unit_occ_crossTenantClassifierImpossible {
 // End-to-end lifecycle (the legacy lifecycle suite's spine): create → consume-to-zero (LIVE husk) →
 // replenish (revived) → consume-to-zero → delete (retired forever).
 run unit_occ_endToEnd {
-  some ii: InventoryItem, c: CreateOcc, k1: ConsumeOcc, r: ReplenishOcc, k2: ConsumeOcc, d: DeleteOcc | {
+  some ii: InventoryItem, c: inventory_item_types/CreateOcc, k1: ConsumeOcc, r: ReplenishOcc, k2: ConsumeOcc, d: DeleteOcc | {
     c.target = ii and k1.target = ii and r.target = ii and k2.target = ii and d.target = ii
     precedes[c.tick, k1.tick] and precedes[k1.tick, r.tick]
     precedes[r.tick, k2.tick] and precedes[k2.tick, d.tick]

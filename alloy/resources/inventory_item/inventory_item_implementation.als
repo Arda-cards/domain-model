@@ -56,7 +56,7 @@ pred liveBefore[o: IIOcc, ii: InventoryItem] {
 }
 
 // ── reason-precise admission guards (violation sets; Accepted ⟺ ∅; because = EXACTLY the set) ────
-fun createViol[o: CreateOcc]: set Reason {
+fun createViol[o: inventory_item_types/CreateOcc]: set Reason {
   ((some priorOn[o, o.target]) => RAlreadyExists else none)      // incl. tombstones: LPN never resurrects
   + ((not gPositive[o.qty.byUnit]) => RNonPositive else none)
   + ((not unitsOk[o.qty.byUnit, o.target]) => RInvalidUnit else none)
@@ -67,7 +67,7 @@ fun createViol[o: CreateOcc]: set Reason {
 // births; at-rest stock of a retired item is legal). The new-commitment gates live in
 // demand/order/receiving/kanban. A birth after retirement simply pins the retired version.
 fact ItemPinCurrency {
-  all o: CreateOcc | committed[o] implies pinsCurrentItem[o.target.itemPin, o.tick]
+  all o: inventory_item_types/CreateOcc | committed[o] implies pinsCurrentItem[o.target.itemPin, o.tick]
 }
 fun deleteViol[o: DeleteOcc]: set Reason {
   ((not liveBefore[o, o.target]) => RNotLive else none)
@@ -185,7 +185,7 @@ fun unsealViol[o: UnsealOcc]: set Reason {
 
 // ── witnessing: verdicts ⟺ violation sets; Effects ⟺ the cores; per-kind record frames ───────────
 fact IIAdmissionWitness {
-  all o: CreateOcc         | (o.admission = Accepted iff no createViol[o])         and (o.admission in Rejected implies o.admission.because = createViol[o])
+  all o: inventory_item_types/CreateOcc         | (o.admission = Accepted iff no createViol[o])         and (o.admission in Rejected implies o.admission.because = createViol[o])
   all o: DeleteOcc         | (o.admission = Accepted iff no deleteViol[o])         and (o.admission in Rejected implies o.admission.because = deleteViol[o])
   all o: WriteOffOcc       | (o.admission = Accepted iff no writeOffViol[o])       and (o.admission in Rejected implies o.admission.because = writeOffViol[o])
   all o: ReplenishOcc      | (o.admission = Accepted iff no replenishViol[o])      and (o.admission in Rejected implies o.admission.because = replenishViol[o])
@@ -214,7 +214,7 @@ pred sameDescriptors[b, a: InventoryItemState] {
 pred sameAdminExp[b, a: InventoryItemState] { a.sAdmin = b.sAdmin and a.sExpiration = b.sExpiration }
 
 fact IIEffectWitness {
-  all o: CreateOcc | committed[o] implies {
+  all o: inventory_item_types/CreateOcc | committed[o] implies {
     createE[o.qty.byUnit, o.exp, o.post.sActual.byUnit, o.post.sDegraded.byUnit, o.post.sLots,
             o.post.sFill, o.post.sAdmin, o.post.sExpiration]
     no o.post.sLocator and no o.post.sNotes and no o.post.sColorCode

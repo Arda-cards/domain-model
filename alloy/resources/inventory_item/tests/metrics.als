@@ -1,6 +1,7 @@
 module resources/inventory_item/tests/metrics
 
 open resources/inventory_item/metrics
+open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
 
 /*
  * Suite for the INVENTORY-COUNT METRICS module (DT-007 / PDEV-680 — the read side). group/order
@@ -120,7 +121,7 @@ check unit_invmet_quietPeriodRepeats for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Un
 // counts a committed member — B is A sampled at the close.
 run unit_invmet_periodSeriesLoads {
   clocksAligned and calendarAxioms
-  some cal: CalendarSpec, c: CountCell, o: CreateOcc | {
+  some cal: CalendarSpec, c: CountCell, o: inventory_item_types/CreateOcc | {
     committed[o]
     no c.cLevel
     c.cAsOf = endOfPeriod[cal, o.at]

@@ -1,6 +1,7 @@
 module resources/inventory_item/tests/integration/inventory_item
 
 open resources/inventory_item/inventory_item_implementation
+open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
 open resources/inventory_item/inventory_item_contracts
 open reference_data/item/item_implementation       // the LOWER LAYER for real (DT-017 two-layer PoC)
 
@@ -17,7 +18,7 @@ open reference_data/item/item_implementation       // the LOWER LAYER for real (
 // A committed Create on an item whose classifier resolves to a TRACKED Item under the full real
 // item laws — the composition actually loads.
 run int_ii_loads {
-  some o: CreateOcc | committed[o]
+  some o: inventory_item_types/CreateOcc | committed[o]
     and some o.target.itemPin.subject.uom
     and liveAt[o.target, o.tick]
 } for 5 but 3 Scalar, 5 Int expect 1
@@ -29,7 +30,7 @@ run int_ii_supplyChainLoads {
     // the default supply is VERSION-CARRIED since DT-023 cut 7a: read it off the item's state
     resolve[itemStateAt[i, t].sDefaultSupply] = s
     some s.supplierPin   // the vendor VERSION pin (DT-023 cut 7b — was resolve[s.supplier.vendorRef])
-    some o: CreateOcc | committed[o] and o.target = ii
+    some o: inventory_item_types/CreateOcc | committed[o] and o.target = ii
   }
 } for 6 but 3 Scalar, 5 Int, 11 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence expect 1
 
