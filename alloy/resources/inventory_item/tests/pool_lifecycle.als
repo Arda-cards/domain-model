@@ -2,6 +2,7 @@ module resources/inventory_item/tests/pool_lifecycle
 
 open resources/inventory_item/inventory_pool as ip            // aliased (rule 10): the parameters below are qualified
 open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as lc   // the SHAPES for the pool log (the cut's adoption)
+open meta/subject_log/affirm[ip/InventoryPool, ip/PoolState] as aff     // the AFFIRM act on the pool log (Q43: the module's promised first adopter)
 
 /*
  * RED-FIRST witnesses for the inventory pool under the lifecycle family (Q29: `CreatePoolOcc extends lc/CreateOcc` enters
@@ -64,3 +65,28 @@ run unit_plc_addAfterRetireRefused {
 // ── the theorem ────────────────────────────────────────────────────────────────────────────────
 assert unit_plc_nothingAfterRetire { lc/nothingAfterRetire }
 check unit_plc_nothingAfterRetire for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
+
+// ── Q43: the pool adopts `affirm` (red-first: parse fails on `aff` / `AffirmPoolOcc` until the adoption lands) ────
+// ── affirm on a live pool whose affirmed version IS the current record: commits, post = pre ───
+run unit_plc_affirmCurrentCommits {
+  some o: AffirmPoolOcc | committed[o] and o.affirmed = o.pre and o.post = o.pre
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+
+// complement: a stale affirmation (the affirmed version is not the current record) → RStaleAffirmation
+run unit_plc_affirmStaleRefused {
+  some o: AffirmPoolOcc | refusedAtAdmission[o] and o.admission.because = RStaleAffirmation and some o.pre and o.affirmed != o.pre
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+
+// ── never created → the adopter's closed atom; retired → the same atom ─────────────────────────
+run unit_plc_affirmNeverCreatedRefused {
+  some o: AffirmPoolOcc | refusedAtAdmission[o] and RPoolClosed in o.admission.because and no o.pre
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+
+run unit_plc_affirmAfterRetireRefused {
+  some r: RetirePoolOcc, o: AffirmPoolOcc | committed[r] and o.subject = r.subject and precedes[r.tick, o.tick]
+    and refusedAtAdmission[o] and RPoolClosed in o.admission.because
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+
+// ── the affirm never writes a new record ───────────────────────────────────────────────────────
+assert unit_plc_affirmIsInert { all o: AffirmPoolOcc | committed[o] implies o.post = o.pre }
+check unit_plc_affirmIsInert for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
