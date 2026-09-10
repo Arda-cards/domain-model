@@ -77,9 +77,22 @@ run unit_plc_affirmStaleRefused {
   some o: AffirmPoolOcc | refusedAtAdmission[o] and o.admission.because = RStaleAffirmation and some o.pre and o.affirmed != o.pre
 } for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
 
-// ── never created → the adopter's closed atom; retired → the same atom ─────────────────────────
+// ── Q45 (MP, 2026-09-10: "Yes — distinguish them"): never created → RPoolNotCreated, a DISTINCT atom; retired → RPoolClosed ──
+// Red-first: parse fails on `RPoolNotCreated` until the atom lands.
 run unit_plc_affirmNeverCreatedRefused {
-  some o: AffirmPoolOcc | refusedAtAdmission[o] and RPoolClosed in o.admission.because and no o.pre
+  some o: AffirmPoolOcc | refusedAtAdmission[o] and o.admission.because = RPoolNotCreated and no o.pre
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+
+// complement: a never-created affirm does NOT carry the closed atom (the two conditions are told apart on the wire)
+assert unit_plc_affirmNeverCreatedIsNotClosed {
+  all o: AffirmPoolOcc | (refusedAtAdmission[o] and no o.pre) implies RPoolClosed not in o.admission.because
+}
+check unit_plc_affirmNeverCreatedIsNotClosed for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
+
+// Q45 (a) (MP: "A set — several reasons"): a stale affirmation of a RETIRED subject carries BOTH atoms — `because` is a set
+run unit_plc_affirmStaleOnRetiredCarriesBoth {
+  some r: RetirePoolOcc, o: AffirmPoolOcc | committed[r] and o.subject = r.subject and precedes[r.tick, o.tick]
+    and refusedAtAdmission[o] and o.affirmed != o.pre and o.admission.because = RPoolClosed + RStaleAffirmation
 } for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
 
 run unit_plc_affirmAfterRetireRefused {
