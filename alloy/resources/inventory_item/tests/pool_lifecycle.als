@@ -1,7 +1,7 @@
 module resources/inventory_item/tests/pool_lifecycle
 
-open resources/inventory_item/inventory_pool
-open meta/subject_log/lifecycle[InventoryPool, PoolState] as lc   // the SHAPES for the pool log (the cut's adoption)
+open resources/inventory_item/inventory_pool as ip            // aliased (rule 10): the parameters below are qualified
+open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as lc   // the SHAPES for the pool log (the cut's adoption)
 
 /*
  * RED-FIRST witnesses for the inventory pool under the lifecycle family (Q29: `CreatePoolOcc extends lc/CreateOcc` enters

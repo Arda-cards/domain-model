@@ -65,3 +65,22 @@ assert unit_cyr_abandonedIsWithdrawn {
 }
 check unit_cyr_abandonedIsWithdrawn for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 0
+
+// ── Q42 (cut 2): a CREATED pool is fresh — the genesis row is the minting, not a use ───────────
+// Written AFTER cycle_occurrences solved 29/29 with 0 mismatches (the existing witnesses never add to an attached pool):
+// the collision is in the text, not in those witnesses. RED under the pre-Q42 text (the create row counts as history →
+// RPoolNotFresh at the attach); GREEN once freshness reads MUTATE history only.
+run unit_cyr_attachCreatedPoolThenAdd {
+  some c: CreatePoolOcc, s: StartProcessingOcc, a: PoolAddOcc |
+    committed[c] and committed[s] and committed[a]
+    and resolve[s.pool] = c.subject and a.subject = c.subject
+    and precedes[c.tick, s.tick] and precedes[s.tick, a.tick]
+} for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot expect 1
+
+// complement: a USED pool (a committed add before the attach) is still refused RPoolNotFresh after Q42
+run unit_cyr_attachUsedPoolRefused {
+  some a: PoolAddOcc, s: StartProcessingOcc | committed[a] and resolve[s.pool] = a.subject and precedes[a.tick, s.tick]
+    and refusedAtAdmission[s] and RPoolNotFresh in s.admission.because
+} for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot expect 1
