@@ -17,6 +17,9 @@ open resources/kanban_card/kanban_card_mock
  */
 
 // R-02 (FM-DEM-01) — the merge arc: originator → RESERVE on the holding pool → the add cites it → CONFIRM moved-by-this.
+// cut 2b (2026-09-15): `for` raised by ONE — the fix. Since cut 2 the genesis row is mandatory before any mutation (DT-030 M2), one more
+//   top-level atom than the old scope allowed (controls: top+1 with the original ticks SAT; wider ticks at the old top UNSAT; `no <genesis>` at the
+//   SAT scope UNSAT). The stated CreatePoolOcc row below makes the reason legible; it is not what fixes the witness.
 run mov_mergeArc {
   some d: DemandItem, p: InventoryPool, g: RecordProductionOcc, r: movement/ReserveOcc, a: PoolAddOcc, f: movement/ConfirmOcc | {
     committed[g] and committed[r] and committed[a] and committed[f]
@@ -24,8 +27,9 @@ run mov_mergeArc {
     r.holder = d.eId and f.holder = d.eId and r.arche = g and a.arche = r and f.peerRid = a
     precedes[g.tick, r.tick] and precedes[r.tick, a.tick] and precedes[a.tick, f.tick]
     f.peerView = sem/PV_MOVED_BY_THIS
+    some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot expect 1
 
 // R-02 — the idempotent callee: a re-sent merge citing the SAME leg on the SAME pool is refused RDuplicateOrigin.
@@ -56,6 +60,9 @@ run mov_revokeRaceSerializes {
 
 // R-05 (FM-DEM-04) — the interrupted distribute: the extract landed and cites its leg, the demand's DISTRIBUTE is lost;
 // the re-drive reads RESERVE × moved-by-this from the citation (`citedAt`) and CONFIRMs without a second extract.
+// cut 2b (2026-09-15): `for` raised by ONE — the fix. Since cut 2 the genesis row is mandatory before any mutation (DT-030 M2), one more
+//   top-level atom than the old scope allowed (controls: top+1 with the original ticks SAT; wider ticks at the old top UNSAT; `no <genesis>` at the
+//   SAT scope UNSAT). The stated CreatePoolOcc row below makes the reason legible; it is not what fixes the witness.
 run mov_interruptedDistributeRedrives {
   some p: InventoryPool, g: DistributeOcc, r: movement/ReserveOcc, x: PoolRemoveOcc, f: movement/ConfirmOcc, t: Tick | {
     committed[g] and committed[r] and committed[x] and committed[f]
@@ -64,8 +71,9 @@ run mov_interruptedDistributeRedrives {
     movement/phaseAt[p, t] = sem/I_RESERVED and movement/citedAt[p, t]
     movement/redrive[movement/phaseAt[p, t], sem/PV_MOVED_BY_THIS] = sem/RD_CONFIRM
     no y: PoolRemoveOcc - x | committed[y] and y.arche = r
+    some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot expect 1
 
 // Q7 = A — the transfer composite: ONE leg keyed on the source, its two pool rows on two pools carry ONE arche; the
@@ -133,14 +141,18 @@ run mov_lateMovementDetected {
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
 
 // The reversal exclusion: a committed remove naming the late add takes it out of the detector.
+// cut 2b (2026-09-15): `for` raised by ONE — the fix. Since cut 2 the genesis row is mandatory before any mutation (DT-030 M2), one more
+//   top-level atom than the old scope allowed (controls: top+1 with the original ticks SAT; wider ticks at the old top UNSAT; `no <genesis>` at the
+//   SAT scope UNSAT). The stated CreatePoolOcc row below makes the reason legible; it is not what fixes the witness.
 run mov_reversalExcluded {
   some p: InventoryPool, r: movement/ReserveOcc, rel: movement/ReleaseOcc, a: PoolAddOcc, x: PoolRemoveOcc | {
     committed[r] and committed[rel] and committed[a] and committed[x]
     r.subject = p and rel.subject = p and a.pool = p and a.arche = r and x.pool = p and x.reverses = a
     precedes[r.tick, rel.tick] and precedes[rel.tick, a.tick] and precedes[a.tick, x.tick]
     not lateMovement[a]
+    some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
       // ORIGINAL scope restored: the six-occurrence count was right; the first-execution UNSAT was the LAW TEXT (lateMovement's split
       // nested its quantifiers by precedence and never saw the remove) — found by the bisection probe, fixed in the module

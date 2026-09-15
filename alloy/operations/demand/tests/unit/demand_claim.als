@@ -152,14 +152,18 @@ run dem_sameOwnerRetryRefused {
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 7 Tick, 8 EntityId, 7 Snapshot expect 1
 
 // The guard still bites at HELD: while OUR accept is the head, a RELEASE is refused RLanded (the HELD rule's other way).
+// cut 2b (2026-09-15): `for` raised by ONE — the fix. Since cut 2 the genesis row is mandatory before any mutation (DT-030 M2), one more
+//   top-level atom than the old scope allowed (controls: top+1 with the original ticks SAT; wider ticks at the old top UNSAT; `no <genesis>` at the
+//   SAT scope UNSAT). The stated RequestOcc row below makes the reason legible; it is not what fixes the witness.
 run dem_releaseAtHeldWhileOursRefused {
   some c: CardCycle, k: AcceptOcc, f: claim/ConfirmOcc, x: claim/ReleaseOcc | {
     committed[k] and committed[f]
     k.subject = c and f.subject = c and x.subject = c and k.arche in claim/ReserveOcc and f.peerRid = k
     precedes[k.tick, f.tick] and precedes[f.tick, x.tick]
     claim/prePhase[x] = sem/I_HELD and x.admission in Rejected and sem/RLanded in x.admission.because
+    some q: RequestOcc | committed[q] and q.subject = c and precedes[q.tick, k.tick]   // the cycle's genesis, STATED for legibility (not needed by the witness)
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot expect 1
 
 // ── the laws ──────────────────────────────────────────────────────────────────────────────────────────────────
