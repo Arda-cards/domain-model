@@ -51,7 +51,9 @@ pred poolProvenance {
 
 /** poolExclusiveWhileLive — at any moment, a pool has at most one LIVE holding cycle — derived
     from the attach guard + the frozen frames + closure semantics. Dismissal is implicit: when
-    the holder closes (rollover/withdraw), the pool becomes attachable again. */
+    the holder closes (rollover/withdraw), the pool is no longer HELD — exclusivity counts live
+    holders only. It does NOT become attachable again: `poolAttachedOnce` below (2026-10-01) binds
+    a pool to its one committed attach for all time; a closed holder's pool is a USED pool. */
 pred poolExclusiveWhileLive {
   all p: InventoryPool, t: Tick |
     lone { c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p }
