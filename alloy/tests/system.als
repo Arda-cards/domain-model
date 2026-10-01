@@ -23,12 +23,12 @@ fact ScalarPremises { groupAxioms and orderAxioms }   // group suffices: domain 
 // Smoke: the union of the live modules admits a consistent instance.
 pred sys_modelLoads {}
 run sys_modelLoads
-  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar expect 1
+  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 1
 
 // Cross-domain: a card references an Item — and by kernel isolation they share a tenant.
 pred sys_cardReferencesItem { some c: KanbanCard, i: Item | c.itemPin.subject = i }
 run sys_cardReferencesItem
-  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar expect 1
+  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 1
 
 // Cross-domain composition: a card and an InventoryItem classified by the SAME Item coexist
 // (the KanbanCard ↔ InventoryItem seam meets at reference data).
@@ -36,7 +36,7 @@ pred sys_cardAndHoldingShareItem {
   some k: KanbanCard, ii: InventoryItem, i: Item | k.itemPin.subject = i and ii.itemPin.subject = i
 }
 run sys_cardAndHoldingShareItem
-  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar expect 1
+  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 1
 
 // Cross-domain isolation: a committed bin attach can never bind a pool of another tenant (the
 // RForeignPool attach guard, exercised across the composed modules; materials are pool-mediated
@@ -46,7 +46,7 @@ pred sys_crossTenantMaterial {
     and (some p: resolve[o.pool] & InventoryPool | p.tenantId != o.cycle.tenantId)
 }
 run sys_crossTenantMaterial
-  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar expect 0
+  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 0
 
 // Pools participate in the composed model: a pool holding a member whose Item resolves in-tenant
 // (membership read via the log projection — the pool is log-carried since 2026-07-02).
@@ -55,4 +55,4 @@ pred sys_poolHoldsClassifiedMember {
     some ii: heldAt[p, t] | ii.itemPin.subject = i and p.tenantId = i.tenantId
 }
 run sys_poolHoldsClassifiedMember
-  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar expect 1
+  for 6 but 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 1
