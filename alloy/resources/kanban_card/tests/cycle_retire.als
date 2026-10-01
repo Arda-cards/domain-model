@@ -144,7 +144,8 @@ run unit_cyr_reattachAfterFailureRefused {
 // ── attached-once admission control: a REFUSED attach commits nothing, so a retry naming the same pool is admitted ──
 run unit_cyr_retryAfterRefusedAttachAdmitted {
   some disj s1, s2: StartProcessingOcc | refusedAtAdmission[s1] and committed[s2]
-    and resolve[s2.pool] = resolve[s1.pool] and precedes[s1.tick, s2.tick]
+    and s2.pool = s1.pool and precedes[s1.tick, s2.tick]   // the SAME pool id (payload identity): two dangling ids both resolve to none,
+                                                           //   so `resolve[s2.pool] = resolve[s1.pool]` alone did not pin the retry (Copilot, PR #2)
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 
