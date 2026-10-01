@@ -89,3 +89,19 @@ fact ShapeAdmission {
 pred nothingAfterRetire { all o: log/SubjectOcc | committed[o] implies not retiredBefore[o] }
 /** mutateHasPre — a committed mutation is never the first row and never the tombstone (a consequence of the arms, stated). */
 pred mutateHasPre { all o: MutateOcc | committed[o] implies some o.pre }
+
+// ── the RECORDING law (COORDINATOR-Q199 R7, MP 2026-09-25; model cut 2026-10-01, MPBOT-11 M2) ───────────────────────────────
+/** recorded — what a runtime PERSISTS of an occurrence: it committed, or it was refused while dispatched to a LIVE subject
+    (`some o.pre`: the subject has a record to carry the refusal row). A refused genesis is never recorded — a first genesis has no
+    subject row yet, and a refused SECOND genesis is a 409 with no row (Q179 D7) — nor is a refusal on a subject that never started. REFUSED (admission) and RECORDED (the log's persisted content) are
+    thereby two predicates: every refusal is `refusedAtAdmission`; only those with a host are `recorded`. The D13 mapping row
+    reads "a REFUSED row is written iff recorded[o]". The `some o.pre` clause is option (ii) of Q199 — live at the time; option
+    (i) would read `startedBefore[o]` (any started subject, closed included). Generic on purpose: kanban, pool, delivery, order
+    and every other adopter get the same word. */
+pred recorded[o: log/SubjectOcc] { committed[o] or (refusedAtAdmission[o] and o not in CreateOcc and some o.pre) }
+//   `o not in CreateOcc`: a refused GENESIS is never recorded — not even a refused SECOND genesis, which has a `pre`
+//   (the subject's record) but no row of its own: the runtime answers 409 and writes nothing (COORDINATOR-Q179 D7;
+//   MBOT-11 M2's prose). Found by the generic root's witness II at the first green run (2026-10-01).
+/** noRecordedRefusalWithoutGenesis — a recorded refusal sits on a subject with committed history before it (`some o.pre` is the
+    spine's record before `o`, which exists only after a committed row) — the theorem every adopter checks. */
+pred noRecordedRefusalWithoutGenesis { all o: log/SubjectOcc | (recorded[o] and not committed[o]) implies startedBefore[o] }
