@@ -152,3 +152,23 @@ run unit_cyr_retryAfterRefusedAttachAdmitted {
 assert unit_cyr_poolAttachedOnce { poolAttachedOnce }
 check unit_cyr_poolAttachedOnce for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 0
+
+// ══ MPBOT-11 M2 (2026-10-01) — the recording law on the cycle log: refused vs recorded (COORDINATOR-Q199 R7) ═══════════
+check unit_cyr_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State,
+      8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
+// witness I: a refused forward op on a never-started cycle is NOT recorded (Q199 R2′: the AVAILABLE card writes no row)
+run unit_cyr_refusedOnNeverStartedNotRecorded {
+  some o: AcceptOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]
+} for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+// witness II: a refused genesis is NOT recorded — even over a live predecessor (Q199 R3: no row on the predecessor)
+run unit_cyr_refusedGenesisNotRecorded {
+  some o: RequestOcc | refusedAtAdmission[o] and not lc/recorded[o] and some o.subject.precededBy
+    and liveCycleAt[o.subject.precededBy, o.tick]
+} for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+// witness III: a refused forward op on a LIVE cycle IS recorded (Q199 R2: the cycle's REFUSED row)
+run unit_cyr_refusedOnLiveRecorded {
+  some o: ShelveOcc | refusedAtAdmission[o] and liveAtOcc[o] and lc/recorded[o]
+} for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1

@@ -103,3 +103,20 @@ run unit_plc_affirmAfterRetireRefused {
 // ── the affirm never writes a new record ───────────────────────────────────────────────────────
 assert unit_plc_affirmIsInert { all o: AffirmPoolOcc | committed[o] implies o.post = o.pre }
 check unit_plc_affirmIsInert for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
+
+// ── MPBOT-11 M2 (2026-10-01) — the recording law on the pool log: refused vs recorded ──────────
+check unit_plc_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
+// witness I: an add refused on a never-created pool is NOT recorded (no host row)
+run unit_plc_refusedAddBeforeCreateNotRecorded {
+  some o: PoolAddOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+// witness II: a refused second genesis is NOT recorded (the runtime's 409 with no row, COORDINATOR-Q179 D7)
+run unit_plc_refusedSecondGenesisNotRecorded {
+  some disj a, b: CreatePoolOcc | committed[a] and b.subject = a.subject and precedes[a.tick, b.tick]
+    and refusedAtAdmission[b] and not lc/recorded[b]
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
+// witness III: a refusal on a LIVE pool IS recorded — the REFUSED row the ledger persists
+run unit_plc_refusedOnLiveRecorded {
+  some c: CreatePoolOcc, o: RetirePoolOcc | committed[c] and o.subject = c.subject and precedes[c.tick, o.tick]
+    and refusedAtAdmission[o] and lc/recorded[o]
+} for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1

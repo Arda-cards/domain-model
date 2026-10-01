@@ -8,6 +8,9 @@ open reference_data/business_affiliate/business_affiliate_mock
 open resources/processing_network/processing_network_mock
 open resources/kanban_card/kanban_card_mock
 open reference_data/staff/staff_mock                          // StaffMember as CONTRACT (cut 6 — the sAssignee target)
+open procurement/order/order_types as ot                       // DIRECT (rule 10): the parameters below are alias-qualified (MPBOT-11 M2, 2026-10-01)
+open meta/subject_log/lifecycle[ot/Order, ot/OrderState] as lco           // the SHAPES, same params ⇒ order_types' instance
+open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl   // the SHAPES, same params ⇒ order_types' instance
 
 /*
  * UNIT suite for the order module (DT-018; TWO subjects on the spine). Every demand-side state
@@ -653,3 +656,16 @@ assert unit_ord_nothingAfterRetire {
 check unit_ord_nothingAfterRetire for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 0
+
+// ── MPBOT-11 M2 (2026-10-01) — the recording law on both order logs: refused vs recorded ──────
+check unit_ord_noRecordedRefusalWithoutGenesis { lco/noRecordedRefusalWithoutGenesis and lcl/noRecordedRefusalWithoutGenesis } for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      9 EntityId, 8 Snapshot, 2 Note expect 0
+// witness: a refused order genesis is NOT recorded; a refused line act on a LIVE line IS
+run unit_ord_refusedGenesisNotRecordedLineRefusalRecorded {
+  some c: CreateOrderOcc, u: UpdateLineOcc |
+    refusedAtAdmission[c] and not lco/recorded[c]
+    and refusedAtAdmission[u] and lcl/liveAt[u] and lcl/recorded[u]
+} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      9 EntityId, 8 Snapshot, 2 Note expect 1

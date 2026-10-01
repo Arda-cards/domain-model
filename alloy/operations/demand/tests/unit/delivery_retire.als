@@ -66,3 +66,16 @@ assert unit_pdr_nothingAfterRetire { pdlc/nothingAfterRetire }
 check unit_pdr_nothingAfterRetire for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 0
+
+// ── MPBOT-11 M2 (2026-10-01) — the recording law on the delivery log: refused vs recorded ─────
+check unit_pdr_noRecordedRefusalWithoutGenesis { pdlc/noRecordedRefusalWithoutGenesis } for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
+      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 0
+// witness: a refused delivery genesis is NOT recorded; a refused revoke on a CREATED delivery IS
+run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
+  some c: CreateDeliveryOcc, r: RevokeDeliveryOcc |
+    refusedAtAdmission[c] and not pdlc/recorded[c]
+    and refusedAtAdmission[r] and pdlc/liveAt[r] and pdlc/recorded[r]
+} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery,
+      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
