@@ -57,6 +57,21 @@ pred poolExclusiveWhileLive {
     lone { c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p }
 }
 
+/** poolAttachedOnce — a pool is named by at most one COMMITTED StartProcessing, across all cycles and all time
+    (DT-020 §8.5.3 "pools never re-attach"; the runtime's V019 index, 2026-10-01). A theorem of the attach guard's
+    freshness arm, which since 2026-10-01 counts a prior committed attach as USE — before that arm the guard admitted
+    re-attaching an EMPTY pool whose holder had closed or detached it, a gap between the guard and the design. */
+pred poolAttachedOnce {
+  all p: InventoryPool | lone { o: StartProcessingOcc | committed[o] and resolve[o.pool] = p }
+}
+
+/** closedBeforeSuccessorGenesis — a successor's genesis commits only after its predecessor's retire row (Q25 resolved,
+    COORDINATOR-Q199 M1: the rollover is `rolloverPair` — retire, then genesis, adjacent; a genesis never closes). A theorem
+    of `requestViol`'s `RCardInCirculation` arm. */
+pred closedBeforeSuccessorGenesis {
+  all g: RequestOcc | (committed[g] and some g.subject.precededBy) implies closedStrictlyBefore[g.subject.precededBy, g.tick]
+}
+
 /** closureIsTerminal — nothing commits on a closed cycle (terminality of closure). */
 pred closureIsTerminal {
   all o: CycleOcc | closedStrictlyBefore[o.subject, o.tick] implies not committed[o]
@@ -79,6 +94,8 @@ pred guarantees {
   poolFrozenOnceAttached
   poolProvenance
   poolExclusiveWhileLive
+  poolAttachedOnce
+  closedBeforeSuccessorGenesis
   closureIsTerminal
   quantityFixedAtGenesis
 }
