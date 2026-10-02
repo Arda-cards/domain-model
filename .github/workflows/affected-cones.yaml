@@ -1,14 +1,18 @@
-# Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
-# Tier 2 — cone-aware PR gate: run every test root whose open-cone touches an alloy
-# file the PR changed (make check-affected). Bounded by the job timeout — an over-cap
-# failure means "this PR's cones are too heavy for CI; run the full gate locally"
-# (the same budget-cap philosophy as the soak watchdog, PDEV-1610). NOT the full gate:
-# `make check-alloy` remains the local push discipline, and full-gate.yaml the CI form.
-# Escape valve (MP ruling 2026-08-15): the `heavy-cone` label short-circuits the solve —
-# for PRs whose cones exceed the CI budget by construction (e.g. anything reaching the
-# receiver unit root). The label is an operator assertion that the local full gate ran
-# green on the PR head; cite the run in the PR body. The check stays required for every
-# unlabeled PR.
+# Registered on GitHub by the R02-D13 (A) touch (MP 2026-10-02); budget + advisory comment per MP's R02-D13 follow-up ruling (2026-10-02).
+# Tier 2 — cone-aware PR gate, REQUIRED on every PR: run every test root whose open-cone
+# touches an alloy file the PR changed (make check-affected). Two paths:
+#   * `heavy-cone` label set — the solve is skipped (escape valve, MP ruling 2026-08-15: for
+#     PRs whose cones exceed the CI budget by construction, e.g. anything reaching the
+#     receiver unit root). The label is an operator ASSERTION that the local full gate
+#     (`make check-alloy`) ran green on the PR head; the job posts an ADVISORY COMMENT on the
+#     PR saying so, and the PR body must cite that run (its label, end line and SHA).
+#   * label not set — the cone runs under the CONE_BUDGET wall budget (15 minutes) inside a
+#     20-minute job; on exhaustion the job posts the advisory comment and FAILS EXPLICITLY
+#     (error annotation + exit 1), never a silent timeout.
+# NOT the full gate: `make check-alloy` remains the local push discipline; the CI form of the
+# whole suite is full-regression.yaml — on demand, not a gate.
+# The advisory is ONE comment per PR, keyed by a hidden marker and updated in place on every
+# run (never a new comment per synchronize).
 name: affected-cones
 
 on:
@@ -19,16 +23,54 @@ concurrency:
   group: affected-cones-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write # the advisory comment, on both paths
+
+env:
+  CONE_BUDGET: 15m # wall budget for the cone run (MP: "At the 15 minute mark, if not complete, place an advisory comment in the PR and fail the build explicitly")
+
 jobs:
   check-affected:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20 # MP: "Limit to 20 minutes in GHA" — setup + CONE_BUDGET + the comment fit inside
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - name: heavy-cone escape valve (label = operator assertion of a green local full gate)
+      - name: advisory-comment helper (create or update the one marker-keyed comment on this PR)
+        run: |
+          cat > "$RUNNER_TEMP/advisory.sh" <<'SH'
+          #!/usr/bin/env bash
+          # advisory.sh <body-file> — create or update the single affected-cones advisory comment on the PR.
+          set -euo pipefail
+          marker='<!-- affected-cones-advisory -->'
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+                 --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$1" > /dev/null
+            echo "advisory comment updated: #$id"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@"$1" > /dev/null
+            echo "advisory comment posted"
+          fi
+          SH
+          chmod +x "$RUNNER_TEMP/advisory.sh"
+      - name: heavy-cone escape valve — skip the solve, post the advisory (label = operator assertion of a green local full gate)
         if: contains(github.event.pull_request.labels.*.name, 'heavy-cone')
         run: |
-          echo "heavy-cone label set — this PR's cones exceed the CI budget by construction."
-          echo "Evidence discipline: the local 'make check-alloy' full gate ran green on the PR head (see the PR body)."
+          echo "heavy-cone label set — this PR's cones exceed the CI budget by construction; the CI cone run is skipped."
+          cat > "$RUNNER_TEMP/advisory.md" <<MD
+          <!-- affected-cones-advisory -->
+          > [!note]
+          > **affected-cones: the CI cone run was skipped on the \`heavy-cone\` label** — head \`$HEAD_SHA\`, [run]($RUN_URL).
+          > The label is an operator assertion, not evidence. Before merge, the PR body must cite the green local \`make check-alloy\` run on this head: its label, its end line and the SHA it ran at.
+          >
+          > *Posted by the affected-cones workflow; updated in place on every run.*
+          MD
+          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md"
       - uses: actions/checkout@v4
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         with:
@@ -59,9 +101,26 @@ jobs:
             echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"
             echo "solver: SAT4J (glucose native failed to load on this runner)"
           fi
-      - name: run the roots whose cones this PR touched
+      - name: run the roots whose cones this PR touched (CONE_BUDGET wall budget; explicit failure on exhaustion)
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         run: |
           files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- alloy | tr '\n' ' ')"
-          echo "changed alloy files: ${files:-none}"
-          make check-affected FILES="$files"
+          echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET (job limit 20 min)"
+          set +e
+          timeout -k 20s "$CONE_BUDGET" make check-affected FILES="$files"
+          rc=$?
+          set -e
+          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+            cat > "$RUNNER_TEMP/advisory.md" <<MD
+          <!-- affected-cones-advisory -->
+          > [!warning]
+          > **affected-cones: the cone run exceeded its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)); the check was failed explicitly.
+          > Run \`make check-alloy\` locally on this head (or \`make check-affected\` for the cone), cite the green run in the PR body (its label, end line and SHA), and apply the \`heavy-cone\` label; the check then passes through the label and this advisory is updated.
+          >
+          > *Posted by the affected-cones workflow; updated in place on every run.*
+          MD
+            "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md"
+            echo "::error::affected-cones: the cone run exceeded its $CONE_BUDGET budget on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
+            exit 1
+          fi
+          exit "$rc"
