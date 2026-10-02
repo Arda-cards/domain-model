@@ -59,13 +59,15 @@ pred poolExclusiveWhileLive {
     lone { c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p }
 }
 
-/** poolAttachedOnce — a pool is named by at most one COMMITTED StartProcessing, across all cycles and all time
-    (DT-020 §8.5.3 "pools never re-attach"; the runtime's V019 index, 2026-10-01). A theorem of the attach guard's
-    freshness arm, which since 2026-10-01 counts a prior committed attach as USE — before that arm the guard admitted
-    re-attaching an EMPTY pool whose holder had closed or detached it, a gap between the guard and the design. */
+/** poolAttachedOnce — a pool ID is named by at most one COMMITTED StartProcessing, across all cycles and all time, whether or
+    not the id resolves to a pool (DT-020 §8.5.3 "pools never re-attach"; the runtime's V019 index is unique on the stored
+    `s_pool` VALUE, 2026-10-01; stated over the `EntityId` payload since 2026-10-02, R02-D12 — before that the law ranged over
+    resolved pools and was vacuous for a dangling id, Copilot's PR #2 finding). A theorem of the attach guard's freshness arm,
+    which since 2026-10-01 counts a prior committed attach as USE — before that arm the guard admitted re-attaching an EMPTY
+    pool whose holder had closed or detached it, a gap between the guard and the design. */
 pred poolAttachedOnce {
-  all p: InventoryPool | lone { o: StartProcessingOcc | committed[o] and resolve[o.pool] = p }
-}
+  all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e }   // over the PAYLOAD (R02-D12, 2026-10-02): resolved or not,
+}                                                                                  //   as V019 is unique on the stored `s_pool` value
 
 /** closedBeforeSuccessorGenesis — a successor's genesis commits only after its predecessor's retire row (Q25 resolved,
     COORDINATOR-Q199 M1: the rollover is `rolloverPair` — retire, then genesis, adjacent; a genesis never closes). A theorem

@@ -87,14 +87,16 @@ fun startViol[o: StartProcessingOcc]: set Reason {
      => RPoolInUse else none)
   + ((some p: resolve[o.pool] & InventoryPool | p.itemPin.subject != (cycles.(o.subject)).itemPin.subject)
      => RPoolWrongItem else none)
-  + ((some p: resolve[o.pool] & InventoryPool |
-        (some b: plc/MutateOcc | committed[b] and b.subject = p and precedes[b.tick, o.tick])
-        or (some s: StartProcessingOcc - o | committed[s] and resolve[s.pool] = p and precedes[s.tick, o.tick]))
+  + (((some p: resolve[o.pool] & InventoryPool, b: plc/MutateOcc | committed[b] and b.subject = p and precedes[b.tick, o.tick])
+      or (some s: StartProcessingOcc - o | committed[s] and s.pool = o.pool and precedes[s.tick, o.tick]))
      => RPoolNotFresh else none)   // Q42 (cut 2): fresh = no committed MEMBERSHIP (Mutate) row before the attach — the pool's
                                     //   genesis row (CreatePoolOcc) is its MINTING, not a use (M1's own words: "a USED pool is never re-attached");
                                     //   ATTACHED-ONCE (2026-10-01, DT-020 §8.5.3 / the runtime's V019 index): a pool a committed StartProcessing
                                     //   already named is USED even if never stocked — a closed or detached (ProductionFailure) holder does not
                                     //   make it fresh again. A refused attach commits nothing, so a retry re-using its own orphan is admitted.
+                                    //   OVER THE ID (2026-10-02, R02-D12 — Copilot PR #2 #4158242505): the attached-once disjunct compares the
+                                    //   `pool` PAYLOAD (`s.pool = o.pool`) outside the resolution nesting, so a dangling id is USED too — as V019
+                                    //   is unique on the stored value; only the membership-row disjunct needs the resolved pool.
 }
 /** shelveViol — the sanctioned backward operation: exactly REQUESTED → REQUESTING. */
 fun shelveViol[o: ShelveOcc]: set Reason {
