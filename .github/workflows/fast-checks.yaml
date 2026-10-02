@@ -1,3 +1,4 @@
+# Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
 # Tier 1 — fast PR checks (seconds to minutes): the layering lint, shell hygiene,
 # and the pinned-tools checksum. No solver work here; that is affected-cones.yaml.
 name: fast-checks
