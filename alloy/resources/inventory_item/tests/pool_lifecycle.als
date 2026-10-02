@@ -118,5 +118,9 @@ run unit_plc_refusedSecondGenesisNotRecorded {
 // witness III: a refusal on a LIVE pool IS recorded — the REFUSED row the ledger persists
 run unit_plc_refusedOnLiveRecorded {
   some c: CreatePoolOcc, o: RetirePoolOcc | committed[c] and o.subject = c.subject and precedes[c.tick, o.tick]
+    and lc/liveAt[o]                        // the pool is LIVE at o (the only live-pool retire refusal is RPoolNotEmpty): without this
+                                            //   the formula was also satisfied by a retire after a second, committed retire — refused
+                                            //   RPoolClosed with `some o.pre`, so recorded — a closed-subject refusal passing as the
+                                            //   live one (Copilot, PR #2 d5b06a7)
     and refusedAtAdmission[o] and lc/recorded[o]
 } for 6 but 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1

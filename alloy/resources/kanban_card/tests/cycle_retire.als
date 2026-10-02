@@ -134,7 +134,9 @@ run unit_cyr_forwardOnWithdrawnIsClosed {
 run unit_cyr_reattachAfterFailureRefused {
   some s1, s2: StartProcessingOcc, f: ProductionFailureOcc |
     committed[s1] and committed[f] and f.subject = s1.subject and precedes[s1.tick, f.tick] and precedes[f.tick, s2.tick]
-    and resolve[s2.pool] = resolve[s1.pool]
+    and s2.pool = s1.pool and some resolve[s1.pool]   // the SAME pool id AND it resolves: `resolve[s2.pool] = resolve[s1.pool]` alone holds for
+                                                       //   two dangling ids (both resolve to none) once the arm ranges over the id (8dbd6ef), so
+                                                       //   the RESOLVED-pool path was no longer pinned here (Copilot, PR #2 d5b06a7)
     and (no b: plc/MutateOcc | committed[b] and b.subject in resolve[s1.pool])   // no membership row: cut 2's freshness arm has nothing to refuse
                                                                                 //   on — only ATTACHED-ONCE refuses here (RED under bc58aa6). PARENTHESES: a
                                                                                 //   quantifier's body runs to the end of the formula; unparenthesized it swallowed
