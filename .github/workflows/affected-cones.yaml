@@ -1,3 +1,4 @@
+# Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
 # Tier 2 — cone-aware PR gate: run every test root whose open-cone touches an alloy
 # file the PR changed (make check-affected). Bounded by the job timeout — an over-cap
 # failure means "this PR's cones are too heavy for CI; run the full gate locally"

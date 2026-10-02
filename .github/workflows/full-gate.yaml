@@ -1,3 +1,4 @@
+# Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
 # Tier 3 — the FULL gate in CI, on demand (workflow_dispatch only, per MP 2026-08-14:
 # no schedule). Shards `make check-alloy` by top-level alloy family across matrix jobs
 # so each stays under the 6-hour job limit on 2-core hosted runners, plus the cookbook
