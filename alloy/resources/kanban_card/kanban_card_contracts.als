@@ -51,10 +51,29 @@ pred poolProvenance {
 
 /** poolExclusiveWhileLive — at any moment, a pool has at most one LIVE holding cycle — derived
     from the attach guard + the frozen frames + closure semantics. Dismissal is implicit: when
-    the holder closes (rollover/withdraw), the pool becomes attachable again. */
+    the holder closes (rollover/withdraw), the pool is no longer HELD — exclusivity counts live
+    holders only. It does NOT become attachable again: `poolAttachedOnce` below (2026-10-01) binds
+    a pool to its one committed attach for all time; a closed holder's pool is a USED pool. */
 pred poolExclusiveWhileLive {
   all p: InventoryPool, t: Tick |
     lone { c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p }
+}
+
+/** poolAttachedOnce — a pool ID is named by at most one COMMITTED StartProcessing, across all cycles and all time, whether or
+    not the id resolves to a pool (DT-020 §8.5.3 "pools never re-attach"; the runtime's V019 index is unique on the stored
+    `s_pool` VALUE, 2026-10-01; stated over the `EntityId` payload since 2026-10-02, R02-D12 — before that the law ranged over
+    resolved pools and was vacuous for a dangling id, Copilot's PR #2 finding). A theorem of the attach guard's freshness arm,
+    which since 2026-10-01 counts a prior committed attach as USE — before that arm the guard admitted re-attaching an EMPTY
+    pool whose holder had closed or detached it, a gap between the guard and the design. */
+pred poolAttachedOnce {
+  all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e }   // over the PAYLOAD (R02-D12, 2026-10-02): resolved or not,
+}                                                                                  //   as V019 is unique on the stored `s_pool` value
+
+/** closedBeforeSuccessorGenesis — a successor's genesis commits only after its predecessor's retire row (Q25 resolved,
+    COORDINATOR-Q199 M1: the rollover is `rolloverPair` — retire, then genesis, adjacent; a genesis never closes). A theorem
+    of `requestViol`'s `RCardInCirculation` arm. */
+pred closedBeforeSuccessorGenesis {
+  all g: RequestOcc | (committed[g] and some g.subject.precededBy) implies closedStrictlyBefore[g.subject.precededBy, g.tick]
 }
 
 /** closureIsTerminal — nothing commits on a closed cycle (terminality of closure). */
@@ -79,6 +98,8 @@ pred guarantees {
   poolFrozenOnceAttached
   poolProvenance
   poolExclusiveWhileLive
+  poolAttachedOnce
+  closedBeforeSuccessorGenesis
   closureIsTerminal
   quantityFixedAtGenesis
 }

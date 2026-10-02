@@ -94,7 +94,7 @@ run e7_seeded_start {
   some o: StartProcessingOcc | committed[o] and some o.pool
 } for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 1
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
 
 /** Two simultaneously live cycles — the lone-holder facet's interesting configuration
     is realizable (the check is not vacuously UNSAT-by-starvation). */
@@ -102,45 +102,45 @@ run e7_two_live {
   some t: Tick, disj c1, c2: CardCycle | liveCycleAt[c1, t] and liveCycleAt[c2, t]
 } for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 1
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
 
 check e7_slice_faithful for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 check e7_prov_faithful for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 check e7_base for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 check e7_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 check e7_law for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 // ── W-scope escalation (THIS window's adoption gate — MP 2026-08-26) ───────────────────
 e7_step_w: check e7_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
 
 e7_law_w: check e7_law for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
 
 // ── soak-matched entity scopes (authored, NOT launched — awaits MP's post-W ruling) ────
 e7_step_s: check e7_step for 6 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
-      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 e7_law_s: check e7_law for 6 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
-      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 // ── ladder rung 2a — the provenance row's OWN verdict (DT-024 priority 2; NIGHTWATCH 2026-08-27) ──
 // `soak_cyc_poolProvenance` is the retained trace row. Its formal induction verdict:
@@ -160,16 +160,16 @@ assert e7_prov_step {
 
 check e7_prov_base for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 check e7_prov_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
 e7_prov_step_w: check e7_prov_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
 
 e7_prov_step_s: check e7_prov_step for 6 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
-      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0

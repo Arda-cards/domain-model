@@ -22,11 +22,11 @@ run unit_demr_resetSnapsToSum {
   }
 } for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem,
-      10 Tick, 12 EntityId, 6 Quantity, 12 Snapshot expect 1
+      10 Tick, 12 EntityId, 6 Quantity, 12 Snapshot, 2 Note expect 1
 
 // Emptied-demand reset: with no live members the Σ is the keyed zero (the demand PERSISTS — R3b).
 run unit_demr_resetEmptyIsZero {
   some o: ResetQtyOcc | committed[o] and no preMemberCycles[o]
     and no qtyMap[dPost[o].sDemandQty]
 } for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Tick, 6 EntityId, 4 Quantity expect 1
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Tick, 6 EntityId, 4 Quantity, 2 Note expect 1
