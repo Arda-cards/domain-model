@@ -14,6 +14,8 @@ open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as plc   // the 
  * `RCardInCirculation` (live and mid-trip: open at a NON-completable status).
  * Q25 RESOLVED (COORDINATOR-Q199 R3 + R3.1(ii), MP 2026-09-25; model cut 2026-10-01, MPBOT-11 M1): the rollover WRITES this row —
  * `rolloverPair` (retire, then the successor's genesis, adjacent); a genesis is admitted only over a CLOSED predecessor.
+ * The 2026-10-02 witnesses (R02-D12: attached-once over the pool ID) are RED-FIRST on VERDICTS: three commands against expectation
+ * at their tests commit, green after the model commit — see the block near the end.
  * The 2026-10-01 witnesses below (M1, M3, attached-once) are RED-FIRST: at the tests-only commit the root fails to parse on
  * `RNotStarted` / `rolloverPair` / `poolAttachedOnce` / `closedBeforeSuccessorGenesis`; GREEN once the model commit lands.
  * Run RED at 1e79b89 before any sig lands: the root fails to parse on `RetireCycleOcc` / `lc`.
@@ -153,6 +155,33 @@ run unit_cyr_retryAfterRefusedAttachAdmitted {
 assert unit_cyr_poolAttachedOnce { poolAttachedOnce }
 check unit_cyr_poolAttachedOnce for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 0
+
+// ══ 2026-10-02 — R02-D12 (MP: "Option (B), fix now … Test First applied to the model"): attached-once over the POOL ID ══
+// Copilot's PR #2 findings #4158242418 / #4158242505: the law and the arm ranged over RESOLVED pools, so two committed attaches
+// naming the same UNRESOLVED pool id satisfied them vacuously (probe at a7417a0: SAT, SAT; resolved control UNSAT). RED-FIRST:
+// at the tests commit the three commands below are AGAINST expectation (the old arm admits the second attach; the old law has a
+// counterexample); the model commit (law over `EntityId`, the attached-once disjunct outside the resolution nesting) turns them.
+// ── a second committed attach naming the same UNRESOLVED id is refused RPoolNotFresh (RED at tests-4: admitted) ──
+run unit_cyr_secondAttachSameDanglingIdRefused {
+  some disj s1, s2: StartProcessingOcc | committed[s1] and s1.pool = s2.pool and no resolve[s1.pool] and precedes[s1.tick, s2.tick]
+    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
+} for 7 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
+// ── re-attach with the same UNRESOLVED id after a committed ProductionFailure is refused (RED at tests-4: it committed) ──
+run unit_cyr_reattachSameDanglingIdAfterFailureRefused {
+  some s1, s2: StartProcessingOcc, f: ProductionFailureOcc |
+    committed[s1] and committed[f] and f.subject = s1.subject and precedes[s1.tick, f.tick] and precedes[f.tick, s2.tick]
+    and s2.pool = s1.pool and no resolve[s1.pool]
+    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
+} for 7 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
+// ── the law over the PAYLOAD, stated inline so it does not depend on the model's own `poolAttachedOnce` text: at most one
+//    committed StartProcessing per pool id, resolved or not (RED at tests-4: a counterexample with a dangling id) ──
+assert unit_cyr_attachedOnceById { all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e } }
+check unit_cyr_attachedOnceById for 7 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 0
+// (controls kept above: `unit_cyr_reattachAfterFailureRefused` — the RESOLVED pool, refused today and after; `unit_cyr_retryAfterRefusedAttachAdmitted` —
+//  a refused attach commits nothing, so the retry is admitted today and after.)
 
 // ══ MPBOT-11 M2 (2026-10-01) — the recording law on the cycle log: refused vs recorded (COORDINATOR-Q199 R7) ═══════════
 check unit_cyr_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State,
