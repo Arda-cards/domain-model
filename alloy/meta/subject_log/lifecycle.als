@@ -102,7 +102,7 @@ pred mutateHasPre { all o: MutateOcc | committed[o] implies some o.pre }
 pred recorded[o: log/SubjectOcc] { committed[o] or (refusedAtAdmission[o] and o not in CreateOcc and some o.pre) }
 //   `o not in CreateOcc`: a refused GENESIS is never recorded — not even a refused SECOND genesis, which has a `pre`
 //   (the subject's record) but no row of its own: the runtime answers 409 and writes nothing (COORDINATOR-Q179 D7;
-//   MBOT-11 M2's prose). Found by the generic root's witness II at the first green run (2026-10-01).
+//   MPBOT-11 M2's prose). Found by the generic root's witness II at the first green run (2026-10-01).
 /** noRecordedRefusalWithoutGenesis — a recorded refusal sits on a subject with committed history before it (`some o.pre` is the
     spine's record before `o`, which exists only after a committed row) — the theorem every adopter checks. */
 pred noRecordedRefusalWithoutGenesis { all o: log/SubjectOcc | (recorded[o] and not committed[o]) implies startedBefore[o] }
