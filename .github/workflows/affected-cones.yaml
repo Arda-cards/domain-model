@@ -32,19 +32,24 @@ permissions:
   contents: read # the workflow default; only the advisory job raises pull-requests: write, for itself
 
 env:
+  JOB_LIMIT_S: 1200 # COUPLED: must equal check-affected's `timeout-minutes` × 60 (the cone step fails the run if they differ)
+  DEADLINE_MARGIN_S: 60 # the cone's effective timeout ends this long before the job deadline: 20 s SIGKILL grace after the cone's SIGTERM, the seconds between the job's own clock and the clock step (observed 2–5 s), the step's wrap-up (outputs, the error annotation) and slack for the runner's deadline check
   CONE_BUDGET: 15m # wall budget for the cone run (MP: "At the 15 minute mark, if not complete, place an advisory comment in the PR and fail the build explicitly")
 
 jobs:
   check-affected: # the REQUIRED check — PR-controlled code runs here, with no write-capable token in reach
     runs-on: ubuntu-latest
-    timeout-minutes: 20 # MP: "Limit to 20 minutes in GHA" — setup + CONE_BUDGET fit inside
+    timeout-minutes: 20 # MP: "Limit to 20 minutes in GHA" — COUPLED to env.JOB_LIMIT_S (1200 s): the cone step fails the run if they differ
     permissions:
       contents: read
     outputs:
       outcome: ${{ steps.label.outputs.outcome || steps.cone.outputs.outcome }} # label | within-budget | exhausted | verdict-failed
+      budget: ${{ steps.cone.outputs.budget }} # the effective cone timeout actually applied, for the advisory text
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
+      - name: job clock (the cone's timeout is bounded by the job budget remaining when the cone starts)
+        run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
       - name: heavy-cone escape valve — skip the solve (label = operator assertion of a green local full gate)
         id: label
         if: contains(github.event.pull_request.labels.*.name, 'heavy-cone')
@@ -91,15 +96,26 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         run: |
           files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- alloy | tr '\n' ' ')"
-          echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET (job limit 20 min)"
+          # the effective timeout = min(CONE_BUDGET, job budget remaining at cone start − DEADLINE_MARGIN_S), so the explicit
+          # exhaustion error and the 'exhausted' outcome always fire before the job deadline (Copilot, PR #4; MP Q284)
+          declared=$(awk '/^  check-affected:/{f=1} f && /timeout-minutes:/{print $2; exit}' .github/workflows/affected-cones.yaml)
+          [ "$(( declared * 60 ))" -eq "$JOB_LIMIT_S" ] || { echo "::error::affected-cones: env.JOB_LIMIT_S ($JOB_LIMIT_S s) must equal check-affected's timeout-minutes ($declared min) — the two are coupled; fix the workflow"; exit 1; }
+          to_s() { case "$1" in *ms) awk "BEGIN{print ${1%ms}/1000}";; *m) echo $(( ${1%m} * 60 ));; *h) echo $(( ${1%h} * 3600 ));; *s) echo "${1%s}";; *) echo "$1";; esac; }
+          nominal=$(to_s "$CONE_BUDGET")
+          elapsed=$(( $(date +%s) - JOB_START ))
+          remaining=$(( JOB_LIMIT_S - elapsed ))
+          avail=$(( remaining - DEADLINE_MARGIN_S )); [ "$avail" -lt 1 ] && avail=1
+          budget=$(awk -v n="$nominal" -v a="$avail" 'BEGIN{ print (n < a) ? n : a }')
+          echo "budget=${budget}s" >> "$GITHUB_OUTPUT"
+          echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET nominal, ${budget}s effective (setup took ${elapsed}s; job budget remaining ${remaining}s of ${JOB_LIMIT_S}s; margin ${DEADLINE_MARGIN_S}s)"
           set +e
-          timeout -k 20s "$CONE_BUDGET" sleep 3600 # WITNESS ONLY — a cone that outlives its budget stands in for make check-affected FILES="$files"; removed by the restore commit
+          timeout -k 20s "${budget}s" sleep 3600 # WITNESS ONLY — a cone that outlives its budget stands in for make check-affected FILES="$files"; removed by the restore commit
           rc=$?
           set -e
           # the outcome word only selects the advisory's text; the verdict is this step's exit status, which PR code cannot alter
           if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
             echo "outcome=exhausted" >> "$GITHUB_OUTPUT"
-            echo "::error::affected-cones: the cone run exceeded its $CONE_BUDGET budget on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
+            echo "::error::affected-cones: the cone run exceeded its budget (${budget}s effective of $CONE_BUDGET nominal; setup took ${elapsed}s of the ${JOB_LIMIT_S}s job limit) on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
             exit 1
           elif [ "$rc" -eq 0 ]; then
             echo "outcome=within-budget" >> "$GITHUB_OUTPUT"
@@ -122,6 +138,7 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       OUTCOME: ${{ needs.check-affected.outputs.outcome }}
+      BUDGET: ${{ needs.check-affected.outputs.budget }} # the effective cone timeout applied (empty on the label path)
     steps:
       - name: create or update the one marker-keyed advisory comment, by outcome
         run: |
@@ -136,7 +153,7 @@ jobs:
           > The label is an operator assertion, not evidence. Before merge, the PR body must cite the green local \`make check-alloy\` run on this head: its label, its end line and the SHA it ran at." ;;
             exhausted)
               body="> [!warning]
-          > **affected-cones: the cone run exceeded its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)); the check was failed explicitly.
+          > **affected-cones: the cone run exceeded its budget** (${BUDGET:-?} effective of $CONE_BUDGET nominal) on head \`$HEAD_SHA\` ([run]($RUN_URL)); the check was failed explicitly.
           > Run \`make check-alloy\` locally on this head (or \`make check-affected\` for the cone), cite the green run in the PR body (its label, end line and SHA), and apply the \`heavy-cone\` label; the check then passes through the label and this advisory is updated." ;;
             within-budget)
               mode=update
