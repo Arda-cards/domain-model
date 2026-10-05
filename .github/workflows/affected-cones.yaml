@@ -44,7 +44,8 @@ jobs:
         run: |
           cat > "$RUNNER_TEMP/advisory.sh" <<'SH'
           #!/usr/bin/env bash
-          # advisory.sh <body-file> — create or update the single affected-cones advisory comment on the PR.
+          # advisory.sh <body-file> [--if-exists] — create or update the single affected-cones advisory comment
+          # on the PR; with --if-exists, only update one that already exists (a clean PR never gets one).
           set -euo pipefail
           marker='<!-- affected-cones-advisory -->'
           id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
@@ -52,6 +53,8 @@ jobs:
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$1" > /dev/null
             echo "advisory comment updated: #$id"
+          elif [ "${2:-}" = "--if-exists" ]; then
+            echo "no advisory comment on this PR; nothing to update"
           else
             gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@"$1" > /dev/null
             echo "advisory comment posted"
@@ -123,4 +126,24 @@ jobs:
             echo "::error::affected-cones: the cone run exceeded its $CONE_BUDGET budget on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
             exit 1
           fi
+          # not an exhaustion: refresh a stale advisory left by an earlier head (budget or label), if there is one —
+          # never create one on a clean PR, and never let the refresh itself decide the check
+          if [ "$rc" -eq 0 ]; then
+            cat > "$RUNNER_TEMP/advisory.md" <<MD
+          <!-- affected-cones-advisory -->
+          > [!note]
+          > **affected-cones: the cone run completed within its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)). No local evidence or \`heavy-cone\` label is needed for this head; earlier advisories on this PR are superseded.
+          >
+          > *Posted by the affected-cones workflow; updated in place on every run.*
+          MD
+          else
+            cat > "$RUNNER_TEMP/advisory.md" <<MD
+          <!-- affected-cones-advisory -->
+          > [!warning]
+          > **affected-cones: the cone run FAILED on a verdict** (exit $rc — not the budget) on head \`$HEAD_SHA\` ([run]($RUN_URL)). See the run's Alloy output; local evidence or the \`heavy-cone\` label does not answer a verdict failure.
+          >
+          > *Posted by the affected-cones workflow; updated in place on every run.*
+          MD
+          fi
+          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" --if-exists || echo "::warning::affected-cones: could not refresh the advisory comment"
           exit "$rc"
