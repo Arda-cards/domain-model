@@ -83,6 +83,9 @@ jobs:
             echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"
             echo "solver: SAT4J (glucose native failed to load on this runner)"
           fi
+      - name: WITNESS ONLY — late cone start (330 s of extra setup; removed by the restore commit)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
+        run: sleep 330
       - name: run the roots whose cones this PR touched (CONE_BUDGET wall budget; explicit failure on exhaustion)
         id: cone
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
@@ -90,7 +93,7 @@ jobs:
           files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- alloy | tr '\n' ' ')"
           echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET (job limit 20 min)"
           set +e
-          timeout -k 20s "$CONE_BUDGET" make check-affected FILES="$files"
+          timeout -k 20s "$CONE_BUDGET" sleep 3600 # WITNESS ONLY — a cone that outlives its budget stands in for make check-affected FILES="$files"; removed by the restore commit
           rc=$?
           set -e
           # the outcome word only selects the advisory's text; the verdict is this step's exit status, which PR code cannot alter
