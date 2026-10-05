@@ -4,15 +4,20 @@
 #   * `heavy-cone` label set — the solve is skipped (escape valve, MP ruling 2026-08-15: for
 #     PRs whose cones exceed the CI budget by construction, e.g. anything reaching the
 #     receiver unit root). The label is an operator ASSERTION that the local full gate
-#     (`make check-alloy`) ran green on the PR head; the job posts an ADVISORY COMMENT on the
-#     PR saying so, and the PR body must cite that run (its label, end line and SHA).
+#     (`make check-alloy`) ran green on the PR head; the advisory job posts a comment saying
+#     so, and the PR body must cite that run (its label, end line and SHA).
 #   * label not set — the cone runs under the CONE_BUDGET wall budget (15 minutes) inside a
-#     20-minute job; on exhaustion the job posts the advisory comment and FAILS EXPLICITLY
-#     (error annotation + exit 1), never a silent timeout.
+#     20-minute job; on exhaustion the job FAILS EXPLICITLY (error annotation + exit 1, never a
+#     silent timeout) and the advisory job says what to do.
 # NOT the full gate: `make check-alloy` remains the local push discipline; the CI form of the
 # whole suite is full-regression.yaml — on demand, not a gate.
-# The advisory is ONE comment per PR, keyed by a hidden marker and updated in place on every
-# run (never a new comment per synchronize).
+# TWO JOBS, by design (Copilot on PR #4): `check-affected` runs PR-controlled code (make tools,
+# the solver probe, make check-affected) with a READ-ONLY token and no persisted credentials,
+# and decides the verdict; `advisory` is the only job with `pull-requests: write` — a fresh
+# runner, no checkout, no PR code; only the outcome word crosses the job boundary, and it only
+# selects the comment's TEXT (the verdict is the first job's exit status). The advisory is ONE
+# comment per PR, keyed by a hidden marker and authored by the Actions bot, updated in place on
+# every run (never a new comment per synchronize); a clean PR never gets one.
 name: affected-cones
 
 on:
@@ -24,64 +29,34 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
-  pull-requests: write # the advisory comment, on both paths
+  contents: read # the workflow default; only the advisory job raises pull-requests: write, for itself
 
 env:
   CONE_BUDGET: 0.001s # WITNESS ONLY — reverted in the next commit; was 15m # wall budget for the cone run (MP: "At the 15 minute mark, if not complete, place an advisory comment in the PR and fail the build explicitly")
 
 jobs:
-  check-affected:
+  check-affected: # the REQUIRED check — PR-controlled code runs here, with no write-capable token in reach
     runs-on: ubuntu-latest
-    timeout-minutes: 20 # MP: "Limit to 20 minutes in GHA" — setup + CONE_BUDGET + the comment fit inside
-    env: # no token here: PR-controlled commands (make tools, the solver probe, make check-affected) must not find one (Copilot, PR #4)
-      PR_NUMBER: ${{ github.event.pull_request.number }}
+    timeout-minutes: 20 # MP: "Limit to 20 minutes in GHA" — setup + CONE_BUDGET fit inside
+    permissions:
+      contents: read
+    outputs:
+      outcome: ${{ steps.label.outputs.outcome || steps.cone.outputs.outcome }} # label | within-budget | exhausted | verdict-failed
+    env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - name: advisory-comment helper (create or update the one marker-keyed comment on this PR)
-        run: |
-          cat > "$RUNNER_TEMP/advisory.sh" <<'SH'
-          #!/usr/bin/env bash
-          # advisory.sh <body-file> [--if-exists] — create or update the single affected-cones advisory comment
-          # on the PR; with --if-exists, only update one that already exists (a clean PR never gets one).
-          # Only a comment AUTHORED BY THE ACTIONS BOT counts: the marker alone is user-controlled text, and a
-          # participant's comment that starts with it must never be selected or overwritten (Copilot, PR #4).
-          set -euo pipefail
-          marker='<!-- affected-cones-advisory -->'
-          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
-                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$1" > /dev/null
-            echo "advisory comment updated: #$id"
-          elif [ "${2:-}" = "--if-exists" ]; then
-            echo "no advisory comment on this PR; nothing to update"
-          else
-            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@"$1" > /dev/null
-            echo "advisory comment posted"
-          fi
-          SH
-          chmod +x "$RUNNER_TEMP/advisory.sh"
-      - name: heavy-cone escape valve — skip the solve, post the advisory (label = operator assertion of a green local full gate)
+      - name: heavy-cone escape valve — skip the solve (label = operator assertion of a green local full gate)
+        id: label
         if: contains(github.event.pull_request.labels.*.name, 'heavy-cone')
-        env:
-          GH_TOKEN: ${{ github.token }} # step-scoped: this step runs no PR code
         run: |
           echo "heavy-cone label set — this PR's cones exceed the CI budget by construction; the CI cone run is skipped."
-          cat > "$RUNNER_TEMP/advisory.md" <<MD
-          <!-- affected-cones-advisory -->
-          > [!note]
-          > **affected-cones: the CI cone run was skipped on the \`heavy-cone\` label** — head \`$HEAD_SHA\`, [run]($RUN_URL).
-          > The label is an operator assertion, not evidence. Before merge, the PR body must cite the green local \`make check-alloy\` run on this head: its label, its end line and the SHA it ran at.
-          >
-          > *Posted by the affected-cones workflow; updated in place on every run.*
-          MD
-          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" || echo "::warning::affected-cones: could not post the advisory comment (a read-only token, e.g. a fork PR); the label still stands as the operator's assertion"
+          echo "Evidence discipline: the PR body must cite the green local 'make check-alloy' run on the PR head (the advisory job says so on the PR)."
+          echo "outcome=label" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         with:
           fetch-depth: 0
-          persist-credentials: false # the PR-controlled commands below must not find the write-capable token in .git/config
+          persist-credentials: false # the PR-controlled commands below must not find a token in .git/config
       - uses: actions/setup-java@v4
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         with:
@@ -108,7 +83,7 @@ jobs:
             echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"
             echo "solver: SAT4J (glucose native failed to load on this runner)"
           fi
-      - name: run the roots whose cones this PR touched (CONE_BUDGET wall budget; PR-controlled code — no token in reach)
+      - name: run the roots whose cones this PR touched (CONE_BUDGET wall budget; explicit failure on exhaustion)
         id: cone
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         run: |
@@ -118,46 +93,68 @@ jobs:
           timeout -k 20s "$CONE_BUDGET" make check-affected FILES="$files"
           rc=$?
           set -e
-          echo "rc=$rc" >> "$GITHUB_OUTPUT"
-          echo "cone exit code: $rc (124/137 = budget exhausted) — the verdict and the advisory are the next step's"
-      - name: verdict + advisory (the only step with the write token; runs no PR code; explicit failure on exhaustion)
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
-        env:
-          GH_TOKEN: ${{ github.token }} # step-scoped
-          RC: ${{ steps.cone.outputs.rc }}
-        run: |
-          rc="${RC:-1}"
+          # the outcome word only selects the advisory's text; the verdict is this step's exit status, which PR code cannot alter
           if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-            cat > "$RUNNER_TEMP/advisory.md" <<MD
-          <!-- affected-cones-advisory -->
-          > [!warning]
-          > **affected-cones: the cone run exceeded its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)); the check was failed explicitly.
-          > Run \`make check-alloy\` locally on this head (or \`make check-affected\` for the cone), cite the green run in the PR body (its label, end line and SHA), and apply the \`heavy-cone\` label; the check then passes through the label and this advisory is updated.
-          >
-          > *Posted by the affected-cones workflow; updated in place on every run.*
-          MD
-            "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" || echo "::warning::affected-cones: could not post the advisory comment (a read-only token, e.g. a fork PR); the explicit failure below still stands"
+            echo "outcome=exhausted" >> "$GITHUB_OUTPUT"
             echo "::error::affected-cones: the cone run exceeded its $CONE_BUDGET budget on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
             exit 1
-          fi
-          # not an exhaustion: refresh a stale advisory left by an earlier head (budget or label), if there is one —
-          # never create one on a clean PR, and never let the refresh itself decide the check
-          if [ "$rc" -eq 0 ]; then
-            cat > "$RUNNER_TEMP/advisory.md" <<MD
-          <!-- affected-cones-advisory -->
-          > [!note]
-          > **affected-cones: the cone run completed within its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)). No local evidence or \`heavy-cone\` label is needed for this head; earlier advisories on this PR are superseded.
-          >
-          > *Posted by the affected-cones workflow; updated in place on every run.*
-          MD
+          elif [ "$rc" -eq 0 ]; then
+            echo "outcome=within-budget" >> "$GITHUB_OUTPUT"
           else
-            cat > "$RUNNER_TEMP/advisory.md" <<MD
-          <!-- affected-cones-advisory -->
-          > [!warning]
-          > **affected-cones: the cone run FAILED on a verdict** (exit $rc — not the budget) on head \`$HEAD_SHA\` ([run]($RUN_URL)). See the run's Alloy output; local evidence or the \`heavy-cone\` label does not answer a verdict failure.
-          >
-          > *Posted by the affected-cones workflow; updated in place on every run.*
-          MD
+            echo "outcome=verdict-failed" >> "$GITHUB_OUTPUT"
           fi
-          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" --if-exists || echo "::warning::affected-cones: could not refresh the advisory comment"
           exit "$rc"
+
+  advisory: # the ONLY job with a write token — a fresh runner, no checkout, no PR code; advisory only, never the verdict
+    needs: check-affected
+    if: ${{ always() && needs.check-affected.outputs.outcome != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    continue-on-error: true # a failed post (e.g. a read-only token on a fork PR) never colours the PR; the verdict is check-affected's
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      OUTCOME: ${{ needs.check-affected.outputs.outcome }}
+    steps:
+      - name: create or update the one marker-keyed advisory comment, by outcome
+        run: |
+          marker='<!-- affected-cones-advisory -->'
+          footer='*Posted by the affected-cones workflow; updated in place on every run.*'
+          mode=create # create-or-update; "update" = only an existing comment is refreshed (a clean PR never gets one)
+          case "$OUTCOME" in
+            label)
+              body="> [!note]
+          > **affected-cones: the CI cone run was skipped on the \`heavy-cone\` label** — head \`$HEAD_SHA\`, [run]($RUN_URL).
+          > The label is an operator assertion, not evidence. Before merge, the PR body must cite the green local \`make check-alloy\` run on this head: its label, its end line and the SHA it ran at." ;;
+            exhausted)
+              body="> [!warning]
+          > **affected-cones: the cone run exceeded its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)); the check was failed explicitly.
+          > Run \`make check-alloy\` locally on this head (or \`make check-affected\` for the cone), cite the green run in the PR body (its label, end line and SHA), and apply the \`heavy-cone\` label; the check then passes through the label and this advisory is updated." ;;
+            within-budget)
+              mode=update
+              body="> [!note]
+          > **affected-cones: the cone run completed within its $CONE_BUDGET budget** on head \`$HEAD_SHA\` ([run]($RUN_URL)). No local evidence or \`heavy-cone\` label is needed for this head; earlier advisories on this PR are superseded." ;;
+            verdict-failed)
+              mode=update
+              body="> [!warning]
+          > **affected-cones: the cone run FAILED on a verdict** (not the budget) on head \`$HEAD_SHA\` ([run]($RUN_URL)). See the run's Alloy output; local evidence or the \`heavy-cone\` label does not answer a verdict failure." ;;
+            *)
+              echo "unknown outcome '$OUTCOME' — nothing posted"; exit 0 ;;
+          esac
+          printf '%s\n%s\n>\n> %s\n' "$marker" "$body" "$footer" > advisory.md
+          # only a comment AUTHORED BY THE ACTIONS BOT counts: the marker alone is user-controlled text
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@advisory.md > /dev/null
+            echo "advisory comment updated: #$id ($OUTCOME)"
+          elif [ "$mode" = "update" ]; then
+            echo "no advisory comment on this PR; nothing to update ($OUTCOME)"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@advisory.md > /dev/null
+            echo "advisory comment posted ($OUTCOME)"
+          fi
