@@ -28,7 +28,7 @@ permissions:
   pull-requests: write # the advisory comment, on both paths
 
 env:
-  CONE_BUDGET: 15m # wall budget for the cone run (MP: "At the 15 minute mark, if not complete, place an advisory comment in the PR and fail the build explicitly")
+  CONE_BUDGET: 0.001s # WITNESS ONLY — reverted in the next commit; was 15m # wall budget for the cone run (MP: "At the 15 minute mark, if not complete, place an advisory comment in the PR and fail the build explicitly")
 
 jobs:
   check-affected:
