@@ -46,10 +46,12 @@ jobs:
           #!/usr/bin/env bash
           # advisory.sh <body-file> [--if-exists] — create or update the single affected-cones advisory comment
           # on the PR; with --if-exists, only update one that already exists (a clean PR never gets one).
+          # Only a comment AUTHORED BY THE ACTIONS BOT counts: the marker alone is user-controlled text, and a
+          # participant's comment that starts with it must never be selected or overwritten (Copilot, PR #4).
           set -euo pipefail
           marker='<!-- affected-cones-advisory -->'
           id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
-                 --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$1" > /dev/null
             echo "advisory comment updated: #$id"
@@ -73,7 +75,7 @@ jobs:
           >
           > *Posted by the affected-cones workflow; updated in place on every run.*
           MD
-          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md"
+          "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" || echo "::warning::affected-cones: could not post the advisory comment (a read-only token, e.g. a fork PR); the label still stands as the operator's assertion"
       - uses: actions/checkout@v4
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         with:
@@ -122,7 +124,7 @@ jobs:
           >
           > *Posted by the affected-cones workflow; updated in place on every run.*
           MD
-            "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md"
+            "$RUNNER_TEMP/advisory.sh" "$RUNNER_TEMP/advisory.md" || echo "::warning::affected-cones: could not post the advisory comment (a read-only token, e.g. a fork PR); the explicit failure below still stands"
             echo "::error::affected-cones: the cone run exceeded its $CONE_BUDGET budget on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
             exit 1
           fi
