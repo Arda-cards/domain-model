@@ -107,7 +107,7 @@ jobs:
 
   advisory: # the ONLY job with a write token — a fresh runner, no checkout, no PR code; advisory only, never the verdict
     needs: check-affected
-    if: ${{ always() && needs.check-affected.outputs.outcome != '' }}
+    if: ${{ always() && needs.check-affected.result != 'cancelled' }} # every completed run, including a pre-cone setup failure (empty outcome)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -125,6 +125,7 @@ jobs:
           marker='<!-- affected-cones-advisory -->'
           footer='*Posted by the affected-cones workflow; updated in place on every run.*'
           mode=create # create-or-update; "update" = only an existing comment is refreshed (a clean PR never gets one)
+          warn() { echo "::warning::affected-cones: could not $1 the advisory comment (see this step's log); the verdict is check-affected's"; exit 0; }
           case "$OUTCOME" in
             label)
               body="> [!note]
@@ -142,19 +143,23 @@ jobs:
               mode=update
               body="> [!warning]
           > **affected-cones: the cone run FAILED on a verdict** (not the budget) on head \`$HEAD_SHA\` ([run]($RUN_URL)). See the run's Alloy output; local evidence or the \`heavy-cone\` label does not answer a verdict failure." ;;
+            "")
+              mode=update # check-affected ended before the cone ran (a setup step failed or the job hit its limit): refresh a stale advisory, never create one
+              body="> [!warning]
+          > **affected-cones: the check ended before the cone ran** on head \`$HEAD_SHA\` ([run]($RUN_URL)) — a setup step failed or the job hit its limit; no verdict on the cone. See the run; earlier advisories on this PR are superseded." ;;
             *)
               echo "unknown outcome '$OUTCOME' — nothing posted"; exit 0 ;;
           esac
           printf '%s\n%s\n>\n> %s\n' "$marker" "$body" "$footer" > advisory.md
           # only a comment AUTHORED BY THE ACTIONS BOT counts: the marker alone is user-controlled text
           id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
-                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
+                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1) || warn "look up"
           if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@advisory.md > /dev/null
-            echo "advisory comment updated: #$id ($OUTCOME)"
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@advisory.md > /dev/null || warn "update"
+            echo "advisory comment updated: #$id (${OUTCOME:-setup-failed})"
           elif [ "$mode" = "update" ]; then
-            echo "no advisory comment on this PR; nothing to update ($OUTCOME)"
+            echo "no advisory comment on this PR; nothing to update (${OUTCOME:-setup-failed})"
           else
-            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@advisory.md > /dev/null
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@advisory.md > /dev/null || warn "create"
             echo "advisory comment posted ($OUTCOME)"
           fi

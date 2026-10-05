@@ -35,7 +35,7 @@ jobs:
           echo "families=$fams" >> "$GITHUB_OUTPUT"
           echo "shards: $fams"
 
-  gate:
+  regression: # the matrix job (was `gate`: renamed with the workflow — not a gate)
     needs: shard
     runs-on: ubuntu-latest
     timeout-minutes: 350
