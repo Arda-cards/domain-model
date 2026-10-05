@@ -20,7 +20,7 @@ run unit_cyc_genesisBirths {
     and liveCycleAt[o.cycle, o.tick]
     and no stateOfCycleAt[o.cycle, o.tick].sPool
 } for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // The demand leg progresses: Request → Accept → StartProcessing, each reading the prior record.
 run unit_cyc_demandLegChain {
@@ -31,7 +31,7 @@ run unit_cyc_demandLegChain {
     statusAt[c, s.tick] = IN_PROCESS
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // KQ-S9 in action: with REQUESTED inactive, StartProcessing SKIPS it straight from REQUESTING.
 run unit_cyc_skipsInactiveStatus {
@@ -41,7 +41,7 @@ run unit_cyc_skipsInactiveStatus {
     committed[r] and committed[s] and s.pre.sStatus = REQUESTING
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // Shelve — the sanctioned backward step: REQUESTED → REQUESTING.
 run unit_cyc_shelveStepsBack {
@@ -51,7 +51,7 @@ run unit_cyc_shelveStepsBack {
     statusAt[sh.cycle, sh.tick] = REQUESTING
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // The pool story (KD12 revised): StartProcessing attaches a pool; a PoolAddOcc on the pool's own
 // log (interleaved on the shared Tick order) fills it — pool-present-but-empty and pool-with-stock
@@ -65,7 +65,7 @@ run unit_cyc_poolAttachesThenFills {
     some stateOfCycleAt[sp.cycle, a.tick].sPool                  // still attached on the cycle side
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
 // TOMBSTONE: `unit_cyc_residuePoolAttaches` stood here (RESIDUE ALLOWED — a pool with
 // left-over stock could attach DIRECTLY). RETIRED — reverses the 2026-07-03 residue-at-attach
@@ -81,7 +81,7 @@ run unit_start_usedPoolRefused {
     refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
 // The POSITIVE companion: a FRESH pool (no committed history before the attach tick) is
 // accepted normally — freshness does not block an ordinary first attach.
@@ -89,13 +89,13 @@ run unit_start_freshPoolAccepted {
   some sp: StartProcessingOcc | committed[sp]
     and no b: PoolOcc | committed[b] and b.pool = (resolve[sp.pool] & InventoryPool) and precedes[b.tick, sp.tick]
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
 // EXCLUSIVITY: attaching a pool held by another LIVE cycle is refused with RPoolInUse.
 run unit_cyc_poolInUseRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and RPoolInUse in o.admission.because
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
 // HOMOGENEITY (DT-015 R1, MP 2026-07-16): attaching a pool of a DIFFERENT Item than the card
 // demands is refused with exactly RPoolWrongItem (the sight-of-card guard — the admission reads
@@ -104,37 +104,36 @@ run unit_cyc_poolInUseRefused {
 run unit_cyc_poolWrongItemRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and o.admission.because = RPoolWrongItem
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
-// ROLLOVER closes the predecessor: the successor's genesis commits over the STILL-OPEN
-// predecessor at a completable status and reads it back as COMPLETED, not live. The
-// `no WithdrawOcc` conjunct is load-bearing (review 2026-07-08): without it the solver
-// satisfied this witness by withdrawing c1 first — concealing that the pre-ruling guard made
-// rollover-over-an-open-predecessor UNSAT.
+// ROLLOVER completes the predecessor — as TWO rows since Q25 resolved (COORDINATOR-Q199 R3, model cut 2026-10-01, M1):
+// the completion retire on the still-open predecessor at a completable status, then the successor's genesis, adjacent
+// (`rolloverPair`); the predecessor reads back COMPLETED, not live. The `no WithdrawOcc` conjunct stays load-bearing
+// (review 2026-07-08): without it the solver satisfied the witness by withdrawing c1 first.
 run unit_cyc_rolloverCompletesPredecessor {
-  some disj c1, c2: CardCycle, r2: RequestOcc | {
-    c2.precededBy = c1 and r2.cycle = c2 and committed[r2]
+  some disj c1, c2: CardCycle, r1: RetireCycleOcc, r2: RequestOcc | {
+    c2.precededBy = c1 and r1.cycle = c1 and r2.cycle = c2 and rolloverPair[r1, r2]
     no w: WithdrawOcc | committed[w] and w.cycle = c1
     completedAt[c1, r2.tick] and not liveCycleAt[c1, r2.tick] and liveCycleAt[c2, r2.tick]
   }
-} for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+} for 7 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 
 // The FLUSH rollover (MP ruling 2026-07-08): the predecessor is mid-inventory at IN_USE and
 // still holds its pool when the successor's genesis rolls it over — the pool is implicitly
 // released (no live holder afterward; exclusivity counts LIVE cycles only), its items staying
 // wherever they were.
 run unit_cyc_rolloverFlushReleasesPool {
-  some disj c1, c2: CardCycle, r2: RequestOcc, p: InventoryPool | {
-    c2.precededBy = c1 and r2.cycle = c2 and committed[r2]
+  some disj c1, c2: CardCycle, r1: RetireCycleOcc, r2: RequestOcc, p: InventoryPool | {
+    c2.precededBy = c1 and r1.cycle = c1 and r2.cycle = c2 and rolloverPair[r1, r2]
     no w: WithdrawOcc | committed[w] and w.cycle = c1
-    statusAt[c1, r2.tick] = IN_USE    // LOCF of c1's own records — the genesis writes only c2's
+    statusAt[c1, r1.tick] = IN_USE    // LOCF of c1's own records at the retire — the tombstone keeps them (post = pre)
     resolve[stateOfCycleAt[c1, r2.tick].sPool] = p
     completedAt[c1, r2.tick]
     no c: CardCycle | liveCycleAt[c, r2.tick] and resolve[stateOfCycleAt[c, r2.tick].sPool] = p
   }
-} for 7 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+} for 8 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 9 Tick, 9 Occurrence, 9 Snapshot, 2 Note expect 1
 
 // A genesis over a MID-TRIP predecessor (before any inventory association — here REQUESTED)
 // is refused with exactly RCardInCirculation: aborting mid-trip stays an explicit Withdraw.
@@ -145,14 +144,14 @@ run unit_cyc_genesisMidTripRefused {
     refusedAtAdmission[o] and o.admission.because = RCardInCirculation
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      3 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // WITHDRAW closes the cycle: read back as ABANDONED, not live (the tombstone).
 run unit_cyc_withdrawAbandons {
   some w: WithdrawOcc | committed[w]
     and abandonedAt[w.cycle, w.tick] and not liveCycleAt[w.cycle, w.tick]
 } for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // PRODUCTION FAILURE steps back (R8 — the 2nd sanctioned backward operation): IN_PROCESS →
 // REQUESTING, the pool detached (back to the demand-leg queue), the cycle live and attachable by a new DemandItem (R8 amended 2026-07-06).
@@ -163,20 +162,20 @@ run unit_cyc_productionFailureRequeues {
     and no stateOfCycleAt[o.cycle, o.tick].sPool
     and liveCycleAt[o.cycle, o.tick]
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
 
 // ── reason-precise refusals ─────────────────────────────────────────────────────────────────────
 // A backward jump (Accept after IN_PROCESS) is refused with exactly RBackward.
 run unit_cyc_backwardRefused {
   some o: AcceptOcc | refusedAtAdmission[o] and o.admission.because = RBackward
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // Skipping an ACTIVE status is refused with exactly RSkippedActive.
 run unit_cyc_skippedActiveRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and o.admission.because = RSkippedActive
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // Operating on a withdrawn (closed) cycle is refused with RClosed among the reasons.
 run unit_cyc_closedRefused {
@@ -185,60 +184,60 @@ run unit_cyc_closedRefused {
     refusedAtAdmission[o] and RClosed in o.admission.because
   }
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // A second genesis while the predecessor is still open is refused with exactly RCardInCirculation.
 run unit_cyc_genesisWhileOpenRefused {
   some o: RequestOcc | refusedAtAdmission[o] and o.admission.because = RCardInCirculation
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      3 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // Shelve from a status other than REQUESTED is refused with exactly RNotRequested.
 run unit_cyc_shelveWrongSourceRefused {
   some o: ShelveOcc | refusedAtAdmission[o] and o.admission.because = RNotRequested
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // ProductionFailure from a status other than IN_PROCESS is refused with exactly RNotInProcess (R8).
 run unit_cyc_productionFailureWrongSourceRefused {
   some o: ProductionFailureOcc | refusedAtAdmission[o] and o.admission.because = RNotInProcess
 } for 6 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
 
 // ── theorems (check; UNSAT = holds) — the PUBLISHED CONTRACT (kanban_card_contracts.als),
 // discharged here by name against the real implementation (DT-017 co-change, 2026-07-08).
 assert unit_cyc_oneLiveCyclePerCard { oneLiveCyclePerCard }
 check unit_cyc_oneLiveCyclePerCard for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem expect 0
+      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 assert unit_cyc_forwardMonotone { forwardMonotone }
 check unit_cyc_forwardMonotone for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem expect 0
+      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 assert unit_cyc_noPoolBeforeInProcess { noPoolBeforeInProcess }
 check unit_cyc_noPoolBeforeInProcess for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 0
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 0
 
 assert unit_cyc_poolFrozenOnceAttached { poolFrozenOnceAttached }
 check unit_cyc_poolFrozenOnceAttached for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool expect 0
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 0
 
 assert unit_cyc_poolProvenance { poolProvenance }
 check unit_cyc_poolProvenance for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool,
-      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note expect 0
 
 assert unit_cyc_poolExclusiveWhileLive { poolExclusiveWhileLive }
 check unit_cyc_poolExclusiveWhileLive for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool expect 0
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool, 2 Note expect 0
 
 assert unit_cyc_closureIsTerminal { closureIsTerminal }
 check unit_cyc_closureIsTerminal for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem expect 0
+      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 assert unit_cyc_quantityFixedAtGenesis { quantityFixedAtGenesis }
 check unit_cyc_quantityFixedAtGenesis for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem expect 0
+      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 // HOMOGENEITY theorem (DT-015 R1 — SUITE-LEVEL by ruling, not a published contract law; promote
 // per L9 when a consumer stages reliance, e.g. demand's Distribute): a cycle's resolved pool
@@ -249,4 +248,4 @@ assert unit_cyc_poolItemHomogeneous {
     some p implies p.itemPin.subject = (cycles.c).itemPin.subject
 }
 check unit_cyc_poolItemHomogeneous for 5 but 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool expect 0
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool, 2 Note expect 0

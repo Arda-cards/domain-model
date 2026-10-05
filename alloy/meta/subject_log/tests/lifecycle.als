@@ -90,3 +90,18 @@ check unit_lc_createIsFirst for 5 but 4 Int expect 0
 // A refused occurrence of any shape writes nothing.
 assert unit_lc_refusalWritesNothing { all o: wl/SubjectOcc | refusedAtAdmission[o] implies no o.post }
 check unit_lc_refusalWritesNothing for 5 but 4 Int expect 0
+
+// ── the RECORDING law (MPBOT-11 M2, 2026-10-01; COORDINATOR-Q199 R7): refused vs recorded ──────
+check unit_lc_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 5 but 4 Int expect 0
+// witness I: a refused mutate on a never-started subject is NOT recorded (the runtime writes no row — no host)
+run unit_lc_refusedMutateOnUnstartedNotRecorded {
+  some o: SetLevelOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]
+} for 5 but 4 Int expect 1
+// witness II: a refused genesis is NOT recorded (a refused CREATE leaves no subject behind)
+run unit_lc_refusedGenesisNotRecorded {
+  some o: CreateWidgetOcc | refusedAtAdmission[o] and not lc/recorded[o]
+} for 5 but 4 Int expect 1
+// witness III: a refused mutate on a LIVE subject IS recorded — the REFUSED row the runtime persists
+run unit_lc_refusedMutateOnLiveRecorded {
+  some o: SetLevelOcc | refusedAtAdmission[o] and lc/liveAt[o] and lc/recorded[o] and not committed[o]
+} for 5 but 4 Int expect 1

@@ -6,7 +6,7 @@ module shared/note
  * presence/equality, so Note atoms are pure solve-time cost to every cone that carries
  * them — a seat in `shared/values` (every domain cone) made ~40 unrelated roots pay
  * default-scope Note atoms. Open this ONLY from modules whose records carry notes
- * (order, receiver); commands in those cones pin `2 Note` (1 to exist + 1 to witness
+ * (order, receiver, kanban_card); commands in those cones pin `2 Note` (1 to exist + 1 to witness
  * replace-with-different — add/remove/replace is all a counterexample can do).
  *
  * The OCCURRENCE-level note is NOT a Note: it is the inert `note: lone String` on the

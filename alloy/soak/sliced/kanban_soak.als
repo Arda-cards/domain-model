@@ -14,7 +14,7 @@ open resources/kanban_card/kanban_card_contracts
 assert soak_cyc_poolProvenance { poolProvenance }
 check soak_cyc_poolProvenance for 6 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
-      11 Occurrence, 14 EntityId, 9 Tick, 11 Snapshot expect 0
+      11 Occurrence, 14 EntityId, 9 Tick, 11 Snapshot, 2 Note expect 0
 
 // RETIRED (MP signoff 2026-08-27, DT-024 E7 ladder): `soak_cyc_poolExclusive` — the law
 // is PROVEN INDUCTIVE in cycle_pool_inductive.als (base + step + law, state-local; both

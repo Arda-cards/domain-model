@@ -17,6 +17,7 @@ module resources/kanban_card/kanban_card_types
 open meta/profiles/domain_log                 // PROFILE (DT-012): the log anatomy (StatefulAction, Tick, verdicts)
 open meta/kernel                              // Scoped, Entity, EntityId, resolve
 open shared/values                            // Quantity, PhysicalLocator
+open shared/note                              // Note — the card's administrative notes (MPBOT-31); the OCCURRENCE note is the Occurrence's own `note: lone String`
 open meta/state_machine/machine               // State/Signal (the print vocabulary's parents)
 open reference_data/item/item_types           // Item (soft-ref target; TYPES only — DT-017)
 open resources/processing_network/processing_network_types  // Loop (soft-ref target; TYPES only — DT-017) [KC-MH-5]
@@ -127,9 +128,11 @@ sig DepleteOcc            extends lc/MutateOcc {} { bindings = subject }   // th
 sig WithdrawOcc           extends lc/RetireOcc {} { bindings = subject }   // the ABANDON — the existing tombstone, now a Retire shape (Q24 (a))
 /** RetireCycleOcc — the COMPLETION retire (Q24 (a); DT-030 M2): the cycle finished its trip and its history closes. Admitted on a
     cycle open at a COMPLETABLE status (or refused `RCardInCirculation` mid-trip: a cycle mid-trip is withdrawn or it finishes);
-    refused `RClosed` when never started or already withdrawn / retired. Effect: the tombstone (`lc/RetireEffect`). Runtime code
-    `RETIRE` (D13 §6); `WITHDRAW` keeps its own code. The rollover's closure of the predecessor (a successor's genesis) stays as it
-    is until Q25 rules whether it writes this row. */
+    refused `RNotStarted` when never started, `RClosed` when already withdrawn / retired. Effect: the tombstone (`lc/RetireEffect`).
+    Runtime code `COMPLETE` (COORDINATOR-Q214, MP 2026-09-25); `WITHDRAW` keeps its own code. Q25 RESOLVED (COORDINATOR-Q199 R3 +
+    R3.1(ii), MP 2026-09-25): THE ROLLOVER WRITES THIS ROW — the card act commits the completion retire on the predecessor and then
+    the successor's genesis, two occurrences adjacent on the tick order (`rolloverPair`, below); a genesis never closes a
+    predecessor by itself (`requestViol` admits it only over a CLOSED predecessor). */
 sig RetireCycleOcc        extends lc/RetireOcc {} { bindings = subject }
 sig ProductionFailureOcc  extends lc/MutateOcc {} { bindings = subject }   // IN_PROCESS → REQUESTING (2nd sanctioned backward, R8): the run closed with no inventory for this cycle; the pool DETACHES (back to the demand leg)
 
@@ -149,19 +152,22 @@ fun cycleForwardOps: set CycleOcc {
 }
 
 // ── refusal reasons (the taxonomy — public surface) ─────────────────────────────────────────────
-one sig RClosed,            // the cycle is not live (never started, withdrawn, or rolled over)
+one sig RClosed,            // the cycle is CLOSED: withdrawn or retired (the rollover retires — Q25 resolved); never-started is RNotStarted
+        RNotStarted,        // the cycle has no committed history (never started) — the cycle's RPoolNotCreated (COORDINATOR-Q199 M3)
         RBackward,          // target is not strictly forward on the region order
         RInactiveTarget,    // the deployment does not use the target status
         RSkippedActive,     // the jump skips a status the deployment DOES use
         RAlreadyStarted,    // genesis on a cycle that already has committed history
-        RCardInCirculation, // genesis while the predecessor cycle is mid-trip (open at a NON-completable status)
+        RCardInCirculation, // genesis while the predecessor cycle is not yet CLOSED (the rollover's completion retire commits first — Q25);
+                            //   also the completion retire itself mid-trip (open at a NON-completable status)
         RNotRequested,      // Shelve from a status other than REQUESTED
         RPoolInUse,         // attach: another LIVE cycle currently holds this pool (exclusivity)
         RForeignPool,       // attach: the pool must be in the cycle's tenant
         RPoolWrongItem,     // attach: the pool's Item must be the card's demanded Item (homogeneity — DT-015 R1)
         RPoolNotFresh,      // attach: `o.pool` already has committed pool-log history strictly
                             //   before `o.tick` (M1, DT-020 §8.5.3 — ownership-by-genesis: a
-                            //   minted pool is fresh; a used pool is never re-attached)
+                            //   minted pool is fresh; a used pool is never re-attached) — or a committed
+                            //   StartProcessing already named it (attached-once: DT-020 §8.5.3, the runtime's V019 index, 2026-10-01)
         RNotInProcess       // ProductionFailure from a status other than IN_PROCESS (R8)
         extends Reason {}
 
@@ -172,22 +178,21 @@ fun lastCycleTouch[c: CardCycle, t: Tick]: lone CycleOcc { clog/lastTouch[c, t] 
 fun stateOfCycleAt[c: CardCycle, t: Tick]: lone CycleState { clog/recordAt[c, t] }
 /** statusAt — the cycle's operational status as of `t`. */
 fun statusAt[c: CardCycle, t: Tick]: lone KanbanCardStatus { stateOfCycleAt[c, t].sStatus }
-/** closedStrictlyBefore — the cycle was closed before `t`: withdrawn, or its successor's genesis
-    committed (the rollover closes the predecessor). */
+/** closedStrictlyBefore — the cycle was closed before `t`: a committed RETIRE shape — withdrawn (the abandon) or retired (the
+    completion; the rollover's first row — Q25 resolved, COORDINATOR-Q199 M1, 2026-09-25). A successor's genesis closes nothing:
+    it is admitted only AFTER the predecessor's retire (`requestViol`). */
 pred closedStrictlyBefore[c: CardCycle, t: Tick] {
-  (some w: lc/RetireOcc | committed[w] and w.subject = c and precedes[w.tick, t])   // withdrawn OR retired (cut 2)
-  or (some r: RequestOcc | committed[r] and r.subject.precededBy = c and precedes[r.tick, t])
+  some w: lc/RetireOcc | committed[w] and w.subject = c and precedes[w.tick, t]
 }
-/** closedAt — the cycle is closed as of `t` (withdrawn or rolled over). */
+/** closedAt — the cycle is closed as of `t` (withdrawn or retired). */
 pred closedAt[c: CardCycle, t: Tick] {
-  (some w: lc/RetireOcc | committed[w] and w.subject = c and notAfter[w.tick, t])   // withdrawn OR retired (cut 2)
-  or (some r: RequestOcc | committed[r] and r.subject.precededBy = c and notAfter[r.tick, t])
+  some w: lc/RetireOcc | committed[w] and w.subject = c and notAfter[w.tick, t]
 }
 /** liveCycleAt — started and open as of `t` (the SQ-8 "live" reading). */
 pred liveCycleAt[c: CardCycle, t: Tick] { some lastCycleTouch[c, t] and not closedAt[c, t] }
 
-/** completableStatuses — the statuses from which a cycle may be ROLLED OVER by its successor's
-    genesis (MP ruling 2026-07-08): once INVENTORY ASSOCIATION IS COMPLETE (READY and beyond),
+/** completableStatuses — the statuses from which the COMPLETION retire is admitted — the rollover's first row
+    (MP ruling 2026-07-08; Q25 resolved 2026-09-25): once INVENTORY ASSOCIATION IS COMPLETE (READY and beyond),
     any real-world event may flush that inventory (damage, fire, consumption off the books), so
     the new demand signal MUST be admissible — the system cannot insist on the remaining
     statuses being walked. Mid-trip is different in kind: through IN_PROCESS the card is under
@@ -197,31 +202,24 @@ pred liveCycleAt[c: CardCycle, t: Tick] { some lastCycleTouch[c, t] and not clos
     `poolExclusiveWhileLive`); the pool's items stay at their last known locators (the pool is
     informational, never a locator writer). */
 fun completableStatuses: set KanbanCardStatus { READY + FULFILLING + FULFILLED + IN_USE + DEPLETED }
-/** rolloverEligible — the predecessor does not block a successor's genesis: already closed, or
-    STARTED and open at a completable status (the genesis itself then closes it as COMPLETED —
-    rollover). The `some` conjunct is load-bearing: an unstarted predecessor has empty statusAt
-    and `∅ in S` is vacuously true (the subset trap, solver-limits) — without it a genesis
-    could close a predecessor that never started, breaking closure terminality. */
-pred rolloverEligible[c: CardCycle, t: Tick] {
-  closedStrictlyBefore[c, t]
-  or (some statusAt[c, t] and statusAt[c, t] in completableStatuses)
+/** rolloverPair — the ROLLOVER as the model renders the card's one act (COORDINATOR-Q199 R3, MP 2026-09-25: "the dispatch
+    actually involves two separate Occurrences … This logic belongs in the Card and it cannot be adjudicated to either Cycle"):
+    a committed completion retire `r` on the predecessor and a committed genesis `g` on the successor, ADJACENT on the tick
+    order (the inventory transfer's pairing idiom, `adjacentCommit`), `g.subject.precededBy = r.subject`. A READING, not a
+    fact: a completion retire with no successor (the card leaves circulation) and a genesis long after a closed predecessor
+    are both legal on their own; what is never legal is a genesis over a predecessor not yet closed (`requestViol`). */
+pred rolloverPair[r: RetireCycleOcc, g: RequestOcc] {
+  committed[r] and committed[g] and g.subject.precededBy = r.subject and adjacentCommit[r, g]
 }
 
-/** completedAt / abandonedAt — the SQ-8 "done" readings, DERIVED from how the cycle closed:
-    completed = rolled over (successor genesis, no withdraw); abandoned = withdrawn. Disjoint —
-    a withdrawn-then-re-requested predecessor reads ABANDONED only.
-    PRECONDITION (guard-dependence): these readings are faithful only over histories admitted
-    under `rolloverEligible` — the genesis guard (RCardInCirculation) is what makes
-    "rolled over ⇒ completed" sound. On a history containing a committed MID-TRIP rollover
-    (inadmissible here, but producible by a runtime deployed without the guard) the honest
-    reading is ABANDONED, which this derivation cannot express. The runtime additionally
-    STORES the reading at closure (`cycle_closure`, operations PR #288) as a read-side
-    denormalization from the status the cycle actually held; under the guard the stored and
-    derived readings coincide (deployment ruling 2026-08-20: the storing increment never
-    deploys without the guard increment). */
+/** completedAt / abandonedAt — the SQ-8 "done" readings, read DIRECTLY off the closing row's KIND (Q25 resolved):
+    completed = a committed completion retire (`RetireCycleOcc`) on `c`; abandoned = a committed withdraw. Disjoint by
+    terminality (one retire row closes a cycle; a second is refused `RClosed`). The former guard-dependence — "rolled over
+    ⇒ completed" was sound only under `RCardInCirculation` — is gone with the genesis-closes reading: the runtime's stored
+    closure (`cycle_closure`, operations PR #288) and this derivation now name the same row, the one carrying its own kind
+    (runtime `COMPLETE`, COORDINATOR-Q214). */
 pred completedAt[c: CardCycle, t: Tick] {
-  (some r: RequestOcc | committed[r] and r.subject.precededBy = c and notAfter[r.tick, t])
-  and (no w: WithdrawOcc | committed[w] and w.subject = c)
+  some r: RetireCycleOcc | committed[r] and r.subject = c and notAfter[r.tick, t]
 }
 pred abandonedAt[c: CardCycle, t: Tick] {
   some w: WithdrawOcc | committed[w] and w.subject = c and notAfter[w.tick, t]
@@ -254,6 +252,8 @@ sig KanbanCard extends Scoped {
                                                  //   (cards have no mint kind in the model)
   nominalQuantity: lone Quantity,                // durable target (overridable per cycle — CycleState.sQuantityOverride)
   loopRef:         lone EntityId,                // → Loop [KC-MH-5 / KD11]
+  notes:           set Note,                     // administrative notes (MPBOT-31, MP 2026-09-29: "part of the model, different than the
+                                                 //   occurrence notes"); the shared value `Note`, edited administratively, never by a cycle act
   // the physical/print artifact (durable; spans cycles)
   printStatus:     lone KanbanCardPrintStatus,
   lastPrintEvent:  lone KanbanCardPrintEvent,

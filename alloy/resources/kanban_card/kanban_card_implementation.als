@@ -8,7 +8,8 @@ module resources/kanban_card/kanban_card_implementation
  * ADMISSION GUARD: the canonical region order + the reified LifecycleConfig — a forward
  * operation may SKIP only INACTIVE statuses; TWO sanctioned backward operations: Shelve
  * (REQUESTED → REQUESTING) and ProductionFailure (IN_PROCESS → REQUESTING — DT-016 R8).
- * CLOSURE: withdraw (abandoned) or the successor's genesis (rollover — completed). Cycle
+ * CLOSURE: a RETIRE row — withdraw (abandoned) or the completion retire (completed); the rollover commits the
+ * completion retire and THEN the successor's genesis (Q25 resolved, COORDINATOR-Q199 M1, 2026-09-25). Cycle
  * occurrences share the ONE causal Tick order with IIOcc/PoolOcc — the composition seam the
  * demand module reads.
  */
@@ -25,17 +26,25 @@ fact CycleCommitAccepts { clog/commitAlwaysAccepts }
 
 /** liveAtOcc — the cycle is STARTED and OPEN when `o` executes (what its guards read). */
 pred liveAtOcc[o: CycleOcc] { some o.pre and not closedStrictlyBefore[o.subject, o.tick] }
+/** notLiveViol — the two faces of "not live", as two atoms (COORDINATOR-Q199 M3 / E3, MP 2026-09-25): never started →
+    `RNotStarted` (the cycle's `RPoolNotCreated`); started and closed → `RClosed`. Exactly one fires when `not liveAtOcc[o]`,
+    none when live — so every arm that read `(not liveAtOcc[o]) => RClosed` reads this instead. */
+fun notLiveViol[o: CycleOcc]: set Reason {
+  ((no o.pre) => RNotStarted else none)
+  + ((some o.pre and closedStrictlyBefore[o.subject, o.tick]) => RClosed else none)
+}
 
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ───────────────────
-/** requestViol — genesis: a fresh cycle, whose predecessor (if any) is rollover-eligible
-    (closed, or open at a COMPLETABLE status — the genesis then closes it as completed; MP
-    ruling 2026-07-08), into an active REQUESTING. Mid-trip (REQUESTING/REQUESTED/IN_PROCESS)
-    refuses: aborting there stays an explicit, auditable Withdraw. */
+/** requestViol — genesis: a fresh cycle, whose predecessor (if any) is already CLOSED — withdrawn, or retired by the
+    completion retire the rollover commits immediately before this genesis (Q25 resolved, COORDINATOR-Q199 M1; the
+    completability test is the retire's own, `retireCycleViol`) — into an active REQUESTING. A predecessor still open
+    refuses `RCardInCirculation`; aborting mid-trip stays an explicit, auditable Withdraw. */
 fun requestViol[o: RequestOcc]: set Reason {
   ((some b: CycleOcc | committed[b] and b.subject = o.subject and precedes[b.tick, o.tick])
      => RAlreadyStarted else none)
-  + ((some o.subject.precededBy and not rolloverEligible[o.subject.precededBy, o.tick])
-     => RCardInCirculation else none)
+  + ((some o.subject.precededBy and not closedStrictlyBefore[o.subject.precededBy, o.tick])
+     => RCardInCirculation else none)   // Q25 resolved: the predecessor must be CLOSED — the rollover's completion retire
+                                        //   commits first (`rolloverPair`); a genesis never closes a predecessor by itself
   + ((REQUESTING not in LifecycleConfig.active) => RInactiveTarget else none)
   // DT-023 D2/D3 (the kanban matrix row): cycle GENESIS is where the card starts a NEW
   // replenishment episode — scan-to-order of a retired item refuses; the live cycle,
@@ -45,7 +54,7 @@ fun requestViol[o: RequestOcc]: set Reason {
 /** forwardViol — the forward-skip discipline (KD9): strictly forward, into an active status,
     skipping only inactive ones. */
 fun forwardViol[o: CycleOcc]: set Reason {
-  ((not liveAtOcc[o]) => RClosed else none)
+  notLiveViol[o]
   + ((liveAtOcc[o] and not regionBefore[o.pre.sStatus, targetOf[o]]) => RBackward else none)
   + ((targetOf[o] not in LifecycleConfig.active) => RInactiveTarget else none)
   + ((liveAtOcc[o] and regionBefore[o.pre.sStatus, targetOf[o]]
@@ -78,29 +87,37 @@ fun startViol[o: StartProcessingOcc]: set Reason {
      => RPoolInUse else none)
   + ((some p: resolve[o.pool] & InventoryPool | p.itemPin.subject != (cycles.(o.subject)).itemPin.subject)
      => RPoolWrongItem else none)
-  + ((some p: resolve[o.pool] & InventoryPool, b: plc/MutateOcc | committed[b] and b.subject = p and precedes[b.tick, o.tick])
+  + (((some p: resolve[o.pool] & InventoryPool, b: plc/MutateOcc | committed[b] and b.subject = p and precedes[b.tick, o.tick])
+      or (some s: StartProcessingOcc - o | committed[s] and s.pool = o.pool and precedes[s.tick, o.tick]))
      => RPoolNotFresh else none)   // Q42 (cut 2): fresh = no committed MEMBERSHIP (Mutate) row before the attach — the pool's
-                                    //   genesis row (CreatePoolOcc) is its MINTING, not a use (M1's own words: "a USED pool is never re-attached")
+                                    //   genesis row (CreatePoolOcc) is its MINTING, not a use (M1's own words: "a USED pool is never re-attached");
+                                    //   ATTACHED-ONCE (2026-10-01, DT-020 §8.5.3 / the runtime's V019 index): a pool a committed StartProcessing
+                                    //   already named is USED even if never stocked — a closed or detached (ProductionFailure) holder does not
+                                    //   make it fresh again. A refused attach commits nothing, so a retry re-using its own orphan is admitted.
+                                    //   OVER THE ID (2026-10-02, R02-D12 — Copilot PR #2 #4158242505): the attached-once disjunct compares the
+                                    //   `pool` PAYLOAD (`s.pool = o.pool`) outside the resolution nesting, so a dangling id is USED too — as V019
+                                    //   is unique on the stored value; only the membership-row disjunct needs the resolved pool.
 }
 /** shelveViol — the sanctioned backward operation: exactly REQUESTED → REQUESTING. */
 fun shelveViol[o: ShelveOcc]: set Reason {
-  ((not liveAtOcc[o]) => RClosed else none)
+  notLiveViol[o]
   + ((liveAtOcc[o] and o.pre.sStatus != REQUESTED) => RNotRequested else none)
   + ((REQUESTING not in LifecycleConfig.active) => RInactiveTarget else none)
 }
 /** withdrawViol — closing an open cycle (the ABANDON retire). */
-fun withdrawViol[o: WithdrawOcc]: set Reason { (not liveAtOcc[o]) => RClosed else none }
-/** retireCycleViol — the COMPLETION retire (cut 2, Q24 (a)): closed → RClosed; live but mid-trip (not rolloverEligible: open at a
-    NON-completable status) → RCardInCirculation, the existing atom from the other side. */
+fun withdrawViol[o: WithdrawOcc]: set Reason { notLiveViol[o] }
+/** retireCycleViol — the COMPLETION retire (cut 2, Q24 (a)): never started → RNotStarted, closed → RClosed; live but mid-trip
+    (open at a NON-completable status) → RCardInCirculation, the existing atom from the other side. Since Q25 resolved this is
+    THE completability test of the rollover: the retire carries it; the successor's genesis only requires the predecessor closed. */
 fun retireCycleViol[o: RetireCycleOcc]: set Reason {
-  ((not liveAtOcc[o]) => RClosed else none)
-  + ((liveAtOcc[o] and not rolloverEligible[o.subject, o.tick]) => RCardInCirculation else none)
+  notLiveViol[o]
+  + ((liveAtOcc[o] and o.pre.sStatus not in completableStatuses) => RCardInCirculation else none)
 }
 /** productionFailureViol — the SECOND sanctioned backward operation (R8, amended 2026-07-06):
     exactly IN_PROCESS → REQUESTING (the completing production run allocated this cycle nothing;
     it re-enters the waiting queue, attachable by a new DemandItem). */
 fun productionFailureViol[o: ProductionFailureOcc]: set Reason {
-  ((not liveAtOcc[o]) => RClosed else none)
+  notLiveViol[o]
   + ((liveAtOcc[o] and o.pre.sStatus != IN_PROCESS) => RNotInProcess else none)
   + ((REQUESTING not in LifecycleConfig.active) => RInactiveTarget else none)
 }
