@@ -1,10 +1,11 @@
-# Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
-# Tier 3 — the FULL gate in CI, on demand (workflow_dispatch only, per MP 2026-08-14:
-# no schedule). Shards `make check-alloy` by top-level alloy family across matrix jobs
-# so each stays under the 6-hour job limit on 2-core hosted runners, plus the cookbook
-# (check-examples). Informational tier: not in the ruleset's required checks — the
-# local `make check-alloy` remains THE push gate.
-name: full-gate
+# Renamed from full-gate.yaml per MP's R02-D13 follow-up ruling (2026-10-02): "`full-gate` not a gate. Rename to `full-regression` manual trigger only."
+# Tier 3 — the FULL regression in CI, on demand (workflow_dispatch only, per MP 2026-08-14:
+# no schedule). NOT A GATE: shards `make check-alloy` by top-level alloy family across matrix
+# jobs so each stays under the 6-hour job limit on 2-core hosted runners, plus the cookbook
+# (check-examples). Informational — the local `make check-alloy` remains THE push gate and
+# affected-cones.yaml the PR check; the heaviest families exceed what a hosted runner carries
+# (SAT4J fallback, default heap — see the solver ticket).
+name: full-regression
 
 on:
   workflow_dispatch:
@@ -34,7 +35,7 @@ jobs:
           echo "families=$fams" >> "$GITHUB_OUTPUT"
           echo "shards: $fams"
 
-  gate:
+  regression: # the matrix job (was `gate`: renamed with the workflow — not a gate)
     needs: shard
     runs-on: ubuntu-latest
     timeout-minutes: 350
@@ -69,7 +70,7 @@ jobs:
                 echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"; echo "solver: SAT4J (glucose native failed to load)"
               fi;;
           esac
-      - name: full gate — ${{ matrix.family }} shard
+      - name: full regression — ${{ matrix.family }} shard
         run: make check-alloy CHECK_SCOPE="alloy/${{ matrix.family }}"
 
   examples:

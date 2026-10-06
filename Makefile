@@ -68,8 +68,8 @@ check-lifecycle:
 	python3 tools/lifecycle-gate.py --selftest > /dev/null && python3 tools/lifecycle-gate.py alloy
 
 ## check-alloy: run every command in every test root (any alloy/**/tests/*.als); fail on expect mismatch.
-## CHECK_SCOPE=alloy/<family> restricts the walk to one subtree — used by the full-gate CI workflow
-## to shard the gate across matrix jobs; the default (whole tree) is the push gate, unchanged.
+## CHECK_SCOPE=alloy/<family> restricts the walk to one subtree — used by the full-regression CI workflow (on demand, not a gate)
+## to shard the regression across matrix jobs; the default (whole tree) is the local push gate, unchanged.
 CHECK_SCOPE ?= alloy
 check-alloy: $(ALLOY) check-layering check-lifecycle
 	@mkdir -p $(OUT); fail=0; \
