@@ -14,8 +14,9 @@
 # TWO JOBS, by design (Copilot on PR #4): `check-affected` runs PR-controlled code (make tools,
 # the solver probe, make check-affected) with a READ-ONLY token and no persisted credentials,
 # and decides the verdict; `advisory` is the only job with `pull-requests: write` — a fresh
-# runner, no checkout, no PR code; only the outcome word crosses the job boundary, and it only
-# selects the comment's TEXT (the verdict is the first job's exit status). The advisory is ONE
+# runner, no checkout, no PR code; two values cross the job boundary — the outcome word and the
+# effective cone budget — and both only select the comment's TEXT (the verdict is the first job's
+# exit status). The nested-timeout rule and its margin: knowledge-base/nested-timeout-inside-a-job-deadline.md. The advisory is ONE
 # comment per PR, keyed by a hidden marker and authored by the Actions bot, updated in place on
 # every run (never a new comment per synchronize); a clean PR never gets one.
 name: affected-cones
@@ -44,7 +45,7 @@ jobs:
       contents: read
     outputs:
       outcome: ${{ steps.label.outputs.outcome || steps.cone.outputs.outcome }} # label | within-budget | exhausted | verdict-failed
-      budget: ${{ steps.cone.outputs.budget }} # the effective cone timeout actually applied, for the advisory text
+      budget: ${{ steps.cone.outputs.budget }} # the effective cone timeout actually applied — the second value crossing the job boundary, text only
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -112,17 +113,23 @@ jobs:
           echo "budget=${budget}s" >> "$GITHUB_OUTPUT"
           echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET nominal, ${budget}s effective (setup took ${elapsed}s; job budget remaining ${remaining}s of ${JOB_LIMIT_S}s; margin ${DEADLINE_MARGIN_S}s)"
           set +e
+          cone_t0=$(date +%s)
           timeout -k 20s "${budget}s" make check-affected FILES="$files"
           rc=$?
           set -e
-          # the outcome word only selects the advisory's text; the verdict is this step's exit status, which PR code cannot alter
-          if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+          cone_dt=$(( $(date +%s) - cone_t0 ))
+          # the outcome word only selects the advisory's text; the verdict is this step's exit status, which PR code cannot alter.
+          # Exhaustion is rc 124 (timeout's SIGTERM ended the cone) or rc 137 AFTER the budget elapsed (timeout's SIGKILL after the
+          # grace); a 137 BEFORE the budget is an outside kill (OOM, infrastructure), reported as a failed verdict, not as exhaustion.
+          reached=$(awk -v d="$cone_dt" -v b="$budget" 'BEGIN{ print (d >= b) ? "yes" : "no" }')
+          if [ "$rc" -eq 124 ] || { [ "$rc" -eq 137 ] && [ "$reached" = "yes" ]; }; then
             echo "outcome=exhausted" >> "$GITHUB_OUTPUT"
             echo "::error::affected-cones: the cone run exceeded its budget (${budget}s effective of $CONE_BUDGET nominal; setup took ${elapsed}s of the ${JOB_LIMIT_S}s job limit) on $HEAD_SHA — run make check-alloy locally on this head, cite the green run in the PR body, and apply the heavy-cone label"
             exit 1
           elif [ "$rc" -eq 0 ]; then
             echo "outcome=within-budget" >> "$GITHUB_OUTPUT"
           else
+            [ "$rc" -eq 137 ] && echo "::warning::affected-cones: the cone was killed (SIGKILL) after ${cone_dt}s, before its ${budget}s budget — an outside kill (memory, infrastructure), not an exhaustion; reported as a failed verdict"
             echo "outcome=verdict-failed" >> "$GITHUB_OUTPUT"
           fi
           exit "$rc"
