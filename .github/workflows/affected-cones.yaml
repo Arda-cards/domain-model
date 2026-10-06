@@ -92,7 +92,8 @@ jobs:
         id: cone
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         run: |
-          files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- alloy | tr '\n' ' ')"
+          set -o pipefail # a failed `git diff` must fail the check, never read as "no changed files" (Copilot, PR #4)
+          files="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- alloy | tr '\n' ' ')" || { echo "::error::affected-cones: git diff against origin/${GITHUB_BASE_REF} failed — the cone cannot be computed; this is not a clean cone"; echo "outcome=setup-failed" >> "$GITHUB_OUTPUT"; exit 1; }
           # the effective timeout = min(CONE_BUDGET, job budget remaining at cone start − DEADLINE_MARGIN_S), so the explicit
           # exhaustion error and the 'exhausted' outcome always fire before the job deadline (Copilot, PR #4; MP Q284)
           declared=$(awk '/^  check-affected:/{f=1} f && /timeout-minutes:/{print $2; exit}' .github/workflows/affected-cones.yaml)
@@ -101,7 +102,12 @@ jobs:
           nominal=$(to_s "$CONE_BUDGET")
           elapsed=$(( $(date +%s) - JOB_START ))
           remaining=$(( JOB_LIMIT_S - elapsed ))
-          avail=$(( remaining - DEADLINE_MARGIN_S )); [ "$avail" -lt 1 ] && avail=1
+          avail=$(( remaining - DEADLINE_MARGIN_S ))
+          if [ "$avail" -lt 1 ]; then # less than the margin remains: a timeout would not fit before the job deadline — fail now, explicitly
+            echo "outcome=setup-failed" >> "$GITHUB_OUTPUT"
+            echo "::error::affected-cones: no cone budget left — setup took ${elapsed}s of the ${JOB_LIMIT_S}s job limit (margin ${DEADLINE_MARGIN_S}s); the cone did not run. Re-run the job, or run make check-alloy locally and apply the heavy-cone label"
+            exit 1
+          fi
           budget=$(awk -v n="$nominal" -v a="$avail" 'BEGIN{ print (n < a) ? n : a }')
           echo "budget=${budget}s" >> "$GITHUB_OUTPUT"
           echo "changed alloy files: ${files:-none}; cone budget: $CONE_BUDGET nominal, ${budget}s effective (setup took ${elapsed}s; job budget remaining ${remaining}s of ${JOB_LIMIT_S}s; margin ${DEADLINE_MARGIN_S}s)"
@@ -123,7 +129,7 @@ jobs:
 
   advisory: # the ONLY job with a write token — a fresh runner, no checkout, no PR code; advisory only, never the verdict
     needs: check-affected
-    if: ${{ always() && needs.check-affected.result != 'cancelled' }} # every completed run, including a pre-cone setup failure (empty outcome)
+    if: ${{ always() }} # every outcome, including a job-limit kill (which GitHub reports as `cancelled`); a superseded run is excluded by the head guard below
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -139,10 +145,14 @@ jobs:
     steps:
       - name: create or update the one marker-keyed advisory comment, by outcome
         run: |
+          set -o pipefail
           marker='<!-- affected-cones-advisory -->'
           footer='*Posted by the affected-cones workflow; updated in place on every run.*'
           mode=create # create-or-update; "update" = only an existing comment is refreshed (a clean PR never gets one)
           warn() { echo "::warning::affected-cones: could not $1 the advisory comment (see this step's log); the verdict is check-affected's"; exit 0; }
+          # head guard: a run superseded by a newer push (concurrency cancellation) must not write stale state for an old head
+          current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha) || warn "read the PR head for"
+          [ "$current" = "$HEAD_SHA" ] || { echo "PR head is now $current, not $HEAD_SHA — this run is superseded; nothing posted"; exit 0; }
           case "$OUTCOME" in
             label)
               body="> [!note]
@@ -160,8 +170,8 @@ jobs:
               mode=update
               body="> [!warning]
           > **affected-cones: the cone run FAILED on a verdict** (not the budget) on head \`$HEAD_SHA\` ([run]($RUN_URL)). See the run's Alloy output; local evidence or the \`heavy-cone\` label does not answer a verdict failure." ;;
-            "")
-              mode=update # check-affected ended before the cone ran (a setup step failed or the job hit its limit): refresh a stale advisory, never create one
+            ""|setup-failed)
+              mode=update # check-affected ended before the cone ran (a setup step failed, the diff failed, no budget was left, or the job hit its limit): refresh a stale advisory, never create one
               body="> [!warning]
           > **affected-cones: the check ended before the cone ran** on head \`$HEAD_SHA\` ([run]($RUN_URL)) — a setup step failed or the job hit its limit; no verdict on the cone. See the run; earlier advisories on this PR are superseded." ;;
             *)
@@ -169,8 +179,9 @@ jobs:
           esac
           printf '%s\n%s\n>\n> %s\n' "$marker" "$body" "$footer" > advisory.md
           # only a comment AUTHORED BY THE ACTIONS BOT counts: the marker alone is user-controlled text
-          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
-                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1) || warn "look up"
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id") || warn "look up"
+          id=$(printf '%s\n' "$ids" | head -n 1)
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@advisory.md > /dev/null || warn "update"
             echo "advisory comment updated: #$id (${OUTCOME:-setup-failed})"
