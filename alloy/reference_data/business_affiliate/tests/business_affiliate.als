@@ -85,3 +85,41 @@ assert unit_ba_nothingAfterRetire {
 check unit_ba_nothingAfterRetire for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
 assert unit_ba_retireIsTombstone { all r: RetireBaOcc | committed[r] implies (r.post = r.pre and not baLiveAt[r.subject, r.tick]) }
 check unit_ba_retireIsTombstone for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
+
+// ── R02-D24.1 (model): a business role's kind is fixed at birth (MP, COORDINATOR-Q357, Option C) ──
+// The role IDENTITY (`BusinessRole`) carries the kind it was born with; each role VERSION
+// (`BusinessRoleVersion`) states the kind of its write (`vKind`) next to its payload (`detail`).
+// An Update that states a version whose `vKind` differs from its identity's kind is refused
+// with exactly `RRoleKindFixed`; every committed version agrees with its identity.
+
+// RED-first: an Update stating another kind for an existing role identity refuses with exactly RRoleKindFixed.
+run unit_ba_roleKindChangeRefused {
+  some c: CreateBaOcc, u: UpdateBaOcc, v: u.roleVersions {
+    committed[c] and c.subject = u.subject and precedes[c.tick, u.tick]
+    v.vKind != v.of.role
+    u.admission in Rejected and u.admission.because = RRoleKindFixed
+  }
+} for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+
+// RED-first: the law is a THEOREM of the guard + the Create fact — UNSAT = holds.
+check unit_ba_roleKindFixedAtBirth { roleKindFixedAtBirth } for 6 but 6 Tick, 5 Snapshot, 5 Occurrence expect 0
+
+// Control: an Update that changes only the payload of an existing role (same identity, same kind) is admitted.
+run unit_ba_roleVersionDetailChangeAdmitted {
+  some c: CreateBaOcc, u: UpdateBaOcc, r: BusinessRole, v1, v2: BusinessRoleVersion {
+    committed[c] and committed[u] and c.subject = u.subject and precedes[c.tick, u.tick]
+    v1 in c.roleVersions and v2 in u.roleVersions
+    v1.of = r and v2.of = r and v1.vKind = r.role and v2.vKind = r.role
+    v1.detail != v2.detail
+  }
+} for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+
+// Control: replacing a role by a NEW identity of another kind (a removal plus an addition) is admitted.
+run unit_ba_replaceByNewIdAdmitted {
+  some c: CreateBaOcc, u: UpdateBaOcc, disj r1, r2: BusinessRole {
+    committed[c] and committed[u] and c.subject = u.subject and precedes[c.tick, u.tick]
+    r1 in c.roles and r1.role = VENDOR
+    u.roles = r2 and r2.role = CARRIER
+    r1 not in u.post.sRoles
+  }
+} for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
