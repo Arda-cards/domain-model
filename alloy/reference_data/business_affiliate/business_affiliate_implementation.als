@@ -29,9 +29,15 @@ fun baMutateViol[o: BaOcc]: set Reason {
   + (lc/retiredBefore[o] => RBaRetired else none)
 }
 
+/** baKindViol — a write that states a role version whose kind differs from its identity's refuses with
+    `RRoleKindFixed` (R02-D24.1: a role's kind is fixed at birth). */
+fun baKindViol[o: BaWriteOcc]: set Reason { (some v: o.roleVersions | v.vKind != v.of.role) => RRoleKindFixed else none }
+/** baUpdateViol — Update refuses what the lifecycle refuses, and a change of a role's kind. */
+fun baUpdateViol[o: UpdateBaOcc]: set Reason { baMutateViol[o] + baKindViol[o] }
+
 fact BaAdmissionWitnessed {
   all o: CreateBaOcc | (o.admission = Accepted iff no createBaViol[o]) and (o.admission in Rejected implies o.admission.because = createBaViol[o])
-  all o: UpdateBaOcc | (o.admission = Accepted iff no baMutateViol[o]) and (o.admission in Rejected implies o.admission.because = baMutateViol[o])
+  all o: UpdateBaOcc | (o.admission = Accepted iff no baUpdateViol[o]) and (o.admission in Rejected implies o.admission.because = baUpdateViol[o])
   all o: RetireBaOcc | (o.admission = Accepted iff no baMutateViol[o]) and (o.admission in Rejected implies o.admission.because = baMutateViol[o])
 }
 
@@ -39,6 +45,11 @@ fact BaAdmissionWitnessed {
 fact BaEffects {
   all o: BaWriteOcc | committed[o] implies o.post.sRoles = o.roles
 }
+
+// ── a Create states each role at its birth kind (R02-D24.1) ────────────────────────────────────
+// The identity is born with the kind the Create states; the runtime cannot produce a Create whose kind
+// differs from the role it creates, so this is a well-formedness fact, not a refusal.
+fact BaBirthStatesKind { all o: CreateBaOcc, v: o.roleVersions | v.vKind = v.of.role }
 
 // ── the content axiom (C1 — see the contracts header for why this is a fact) ───────────────────
 fact BaContentLaws { roleOwnership }
