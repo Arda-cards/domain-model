@@ -96,12 +96,13 @@ check unit_ba_retireIsTombstone for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expec
 run unit_ba_roleKindChangeRefused {
   some c: CreateBaOcc, u: UpdateBaOcc, v: u.roleVersions {
     committed[c] and c.subject = u.subject and precedes[c.tick, u.tick]
+    v.of in u.pre.sRoles                // the version is of a role the affiliate already holds: a change of kind, not a malformed new role
     v.vKind != v.of.role
     u.admission in Rejected and u.admission.because = RRoleKindFixed
   }
 } for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
 
-// RED-first: the law is a THEOREM of the guard + the Create fact — UNSAT = holds.
+// RED-first: the law is a THEOREM — over write payloads of the Update guard and the Create fact; over committed post states also of the write effect, the retire's carry-forward and the chaining of the log (UNSAT = holds).
 check unit_ba_roleKindFixedAtBirth { roleKindFixedAtBirth } for 6 but 6 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Control: an Update that changes only the payload of an existing role (same identity, same kind) is admitted.
@@ -142,10 +143,11 @@ check unit_ba_oneVersionPerRole {
   all o: BaOcc | committed[o] implies (no disj v1, v2: o.post.sRoleVersions | v1.of = v2.of)
 } for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
 
-// RED-first: two writes of one affiliate that differ only in a version's detail have different bindings.
+// Guard (the weaker form of this command was RED at 13c2022, UNSAT with the identity-only bindings; this form implies it): two writes of one affiliate that differ only in a version's detail have different bindings.
 run unit_ba_bindingsDistinguishVersions {
-  some disj o1, o2: UpdateBaOcc {
-    o1.subject = o2.subject and o1.roles = o2.roles and o1.roleVersions != o2.roleVersions
+  some disj o1, o2: UpdateBaOcc, v1: o1.roleVersions, v2: o2.roleVersions {
+    o1.subject = o2.subject and o1.roles = o2.roles
+    v1.of = v2.of and v1.vKind = v2.vKind and v1.detail != v2.detail     // the same role, the same kind: only the payload differs
     o1.bindings != o2.bindings
   }
 } for 6 but 4 Tick, 4 Snapshot, 3 Occurrence expect 1
