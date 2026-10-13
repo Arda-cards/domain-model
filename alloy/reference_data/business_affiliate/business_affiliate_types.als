@@ -88,7 +88,7 @@ fact BaOccIsTheLog { BaOcc = balog/SubjectOcc }
 sig BaWriteOcc in balog/SubjectOcc { roleVersions: set BusinessRoleVersion }
 /** roles — the role identities a write's versions belong to. */
 fun roles: BaWriteOcc -> BusinessRole { roleVersions.of }
-fact BaWriteOccExtent { BaWriteOcc = CreateBaOcc + UpdateBaOcc and (all o: BaWriteOcc | o.bindings = o.subject + o.roles) }
+fact BaWriteOccExtent { BaWriteOcc = CreateBaOcc + UpdateBaOcc and (all o: BaWriteOcc | o.bindings = o.subject + o.roleVersions) }   // typed binding fields: the version atoms themselves (R02-D24.1 review)
 
 /** Create — births the BusinessAffiliate with its initial roles (live: the head is not a retire). */
 sig CreateBaOcc extends lc/CreateOcc {}

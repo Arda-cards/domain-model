@@ -45,12 +45,17 @@ pred baLifecycleShape {
 pred baLogChained { balog/chained }
 
 // ── C4: a role's kind is fixed at birth (R02-D24.1 — theorem of the Update guard + the Create fact) ─
-/** committedRoleVersion — `v` is stated by a committed write. */
-pred committedRoleVersion[v: BusinessRoleVersion] { some o: BaWriteOcc | committed[o] and v in o.roleVersions }
+/** committedRoleVersion — `v` is stated by a committed write or held by a committed post state. */
+pred committedRoleVersion[v: BusinessRoleVersion] { (some o: BaWriteOcc | committed[o] and v in o.roleVersions) or (some o: BaOcc | committed[o] and v in o.post.sRoleVersions) }
 /** Every committed role version states the kind its identity was born with: a role's kind never
     changes (replacing a role by a new identity of another kind is not a change of kind). */
 pred roleKindFixedAtBirth { all v: BusinessRoleVersion | committedRoleVersion[v] implies v.vKind = v.of.role }
+/** A committed write and a committed post state hold at most one version per role identity. */
+pred oneVersionPerRole {
+  all o: BaWriteOcc | committed[o] implies (no disj v1, v2: o.roleVersions | v1.of = v2.of)
+  all o: BaOcc | committed[o] implies (no disj v1, v2: o.post.sRoleVersions | v1.of = v2.of)
+}
 
 // ── the promise ──────────────────────────────────────────────────────────────────────────────────
 /** guarantees — the module's full promise: the conjunction of the published laws. */
-pred guarantees { roleOwnership and baLifecycleShape and baLogChained and roleKindFixedAtBirth }
+pred guarantees { roleOwnership and baLifecycleShape and baLogChained and roleKindFixedAtBirth and oneVersionPerRole }

@@ -43,12 +43,14 @@ fact BaAdmissionWitnessed {
 
 // ── effects (SET semantics on the write kinds; the retire's tombstone is the lifecycle module's `RetireEffect`) ──
 fact BaEffects {
-  all o: BaWriteOcc | committed[o] implies o.post.sRoles = o.roles
+  all o: BaWriteOcc | committed[o] implies o.post.sRoleVersions = o.roleVersions   // the state holds exactly the versions written (R02-D24.1 review)
 }
 
 // ── a Create states each role at its birth kind (R02-D24.1) ────────────────────────────────────
 // The identity is born with the kind the Create states; the runtime cannot produce a Create whose kind
 // differs from the role it creates, so this is a well-formedness fact, not a refusal.
+// A write states at most one version per role identity (R02-D24.1 review): a role appears once in the membership it sets.
+fact BaWriteOneVersionPerRole { all o: BaWriteOcc | no disj v1, v2: o.roleVersions | v1.of = v2.of }
 fact BaBirthStatesKind { all o: CreateBaOcc, v: o.roleVersions | v.vKind = v.of.role }
 
 // ── the content axiom (C1 — see the contracts header for why this is a fact) ───────────────────
