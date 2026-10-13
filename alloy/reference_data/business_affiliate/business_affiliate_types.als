@@ -49,6 +49,11 @@ sig RoleDetail {}
     states (`vKind`) and the payload. A committed version's `vKind` is its identity's kind
     (`roleKindFixedAtBirth`); a write stating another kind is refused with `RRoleKindFixed`. */
 sig BusinessRoleVersion { of: one BusinessRole, vKind: one BusinessRoleType, detail: one RoleDetail }
+// Value semantics: a version IS its fields — two versions with the same role, kind and detail are one atom (R02-D24.1 review),
+// so a state's version set cannot change by swapping equal atoms (BusinessAffiliateStateExtensional compares those sets).
+fact BusinessRoleVersionExtensional {
+  all disj a, b: BusinessRoleVersion | a.of != b.of or a.vKind != b.vKind or a.detail != b.detail
+}
 
 // No outgoing soft references (must be pinned, or `refs` is under-constrained).
 fact BusinessRoleRefs { all r: BusinessRole | no r.dataRefs }
