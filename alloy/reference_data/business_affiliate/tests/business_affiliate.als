@@ -111,6 +111,7 @@ run unit_ba_roleVersionDetailChangeAdmitted {
     v1 in c.roleVersions and v2 in u.roleVersions
     v1.of = r and v2.of = r and v1.vKind = r.role and v2.vKind = r.role
     v1.detail != v2.detail
+    v1 not in u.post.sRoleVersions and v2 in u.post.sRoleVersions   // the transition: the new version replaces the old one in the state
   }
 } for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
 
@@ -123,3 +124,28 @@ run unit_ba_replaceByNewIdAdmitted {
     r1 not in u.post.sRoles
   }
 } for 6 but 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+
+// ── R02-D24.1 review fixes (Copilot's review of domain-model#5): the state holds exactly the versions written ──
+// RED-first: a committed write's post state holds exactly the versions the write states (not only their identities).
+check unit_ba_postHoldsExactlyTheWrittenVersions {
+  all o: BaWriteOcc | committed[o] implies o.post.sRoleVersions = o.roleVersions
+} for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
+
+// RED-first: every version in a committed post state states its identity's kind (the law, read over states).
+check unit_ba_committedStatesAgreeOnKind {
+  all o: BaOcc | committed[o] implies (all v: o.post.sRoleVersions | v.vKind = v.of.role)
+} for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
+
+// RED-first: at most one version per role identity in a committed write and in a committed post state.
+check unit_ba_oneVersionPerRole {
+  all o: BaWriteOcc | committed[o] implies (no disj v1, v2: o.roleVersions | v1.of = v2.of)
+  all o: BaOcc | committed[o] implies (no disj v1, v2: o.post.sRoleVersions | v1.of = v2.of)
+} for 6 but 4 Tick, 3 Snapshot, 3 Occurrence expect 0
+
+// RED-first: two writes of one affiliate that differ only in a version's detail have different bindings.
+run unit_ba_bindingsDistinguishVersions {
+  some disj o1, o2: UpdateBaOcc {
+    o1.subject = o2.subject and o1.roles = o2.roles and o1.roleVersions != o2.roleVersions
+    o1.bindings != o2.bindings
+  }
+} for 6 but 4 Tick, 4 Snapshot, 3 Occurrence expect 1
