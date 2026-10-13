@@ -152,3 +152,13 @@ run unit_ba_bindingsDistinguishVersions {
     o1.bindings != o2.bindings
   }
 } for 6 but 4 Tick, 4 Snapshot, 3 Occurrence expect 1
+
+// ── R02-D24.1 third review (finding a): a role version is a VALUE ──
+// RED-first: no two distinct states hold the same set of (role, kind, detail) payloads — states with equal payloads are equal.
+// (A check of the extensionality FACT itself would be vacuous; this reads the consequence the fact exists for.)
+check unit_ba_statesWithEqualPayloadsAreEqual {
+  no disj s1, s2: BusinessAffiliateState |
+    all r: BusinessRole, k: BusinessRoleType, d: RoleDetail |
+      (some v: s1.sRoleVersions | v.of = r and v.vKind = k and v.detail = d)
+      iff (some v: s2.sRoleVersions | v.of = r and v.vKind = k and v.detail = d)
+} for 6 but 4 Tick, 4 Snapshot, 3 Occurrence expect 0
