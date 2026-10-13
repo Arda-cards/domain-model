@@ -24,7 +24,7 @@ run unit_invmet_countLoads {
     m1 + m2 in membersOf[c]
     not isZero[cellTotal[c]]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 3 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 3 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // An EMPTY (consumed-to-zero) member still counts — as a ZERO triple (a line is reported, not dropped).
@@ -36,7 +36,7 @@ run unit_invmet_emptyMemberZero {
     stateAsOf[m, c.cAsOf].sFill = EMPTY
     isZero[cellTotal[c]] and isZero[cellDegraded[c]] and isZero[cellUsable[c]]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 1 TLine, 1 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 1 TLine, 1 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // A retired (deleted) item is EXCLUDED from later counts, even though it matches tenant + Item.
@@ -47,7 +47,7 @@ run unit_invmet_retiredExcluded {
     no c.cLevel and m.tenantId = c.cTenant and m.itemPin.subject = c.cItem
     m not in membersOf[c]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // A2 locator classification: a facility-level cell admits the in-prefix member and excludes a
@@ -60,7 +60,7 @@ run unit_invmet_locatorCellLoads {
     liveAsOf[m2, c.cAsOf] and m2.tenantId = c.cTenant and m2.itemPin.subject = c.cItem
     m2 not in membersOf[c]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // The level JUMPS at a committed write: two same-query cells straddling a Replenish differ.
@@ -72,7 +72,7 @@ run unit_invmet_levelJumps {
     earlierThan[c1.cAsOf, r.at] and atOrBefore[r.at, c2.cAsOf]
     cellTotal[c1] != cellTotal[c2]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // ── family A: theorems (check; UNSAT = holds) ───────────────────────────────────────────────────
@@ -87,7 +87,7 @@ assert unit_invmet_partitionAdditivity {
 }
 // NB the antecedent is stated over the LINES (CellLinesExact pins them 1:1 to members), not by
 // recomputing membersOf four times — the recomputation made this check pathologically slow.
-check unit_invmet_partitionAdditivity for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 3 CountCell, 4 TLine, 4 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+check unit_invmet_partitionAdditivity for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 3 CountCell, 4 TLine, 4 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 0
 
 // BOUNDARY WITNESS (a deliberate NON-theorem): per-member cone-safety (degraded ≤ actual — a
@@ -100,7 +100,7 @@ check unit_invmet_partitionAdditivity for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 U
 // assert a theorem the algebra cannot support.
 run unit_invmet_usableConeNotLiftable {
   some c: CountCell | classify[cellUsable[c]] = NEGATIVE
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // A QUIET window repeats the level (LOCF): no committed occurrence in (τ₁, τ₂] ⟹ same members,
@@ -113,7 +113,7 @@ assert unit_invmet_quietPeriodRepeats {
      and (no o: IIOcc | committed[o] and earlierThan[c1.cAsOf, o.at] and atOrBefore[o.at, c2.cAsOf]))
     implies (membersOf[c1] = membersOf[c2] and cellTotal[c1] = cellTotal[c2])
 }
-check unit_invmet_quietPeriodRepeats for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+check unit_invmet_quietPeriodRepeats for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 0
 
 // ── family B: the calendar sampling ─────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ run unit_invmet_periodSeriesLoads {
     c.cAsOf = endOfPeriod[cal, o.at]
     o.target in membersOf[c]
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 1 TLine, 1 DLine, 1 PeriodSpec, 1 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 1 TLine, 1 DLine, 1 PeriodSpec, 1 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // ── the DT-008 bridge ───────────────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ run unit_invmet_bridgeLoads {
   some s: IILevelSignal, disj m1, m2: Measurement | {
     m1.of = s and m2.of = s and m1.at != m2.at
   }
-} for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 2 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 2 Measurement
       expect 1
 
 // THE RE-POINT THEOREM (DT-007 ↔ DT-008): the measurement framework's LOCF read equals the log's
@@ -147,5 +147,5 @@ assert unit_invmet_frameworkMatchesLog {
   (clocksAligned and strictChronology) implies
     all s: IILevelSignal, t: Instant | valueAt[s, t] = stateAsOf[s.watches, t].sActual
 }
-check unit_invmet_frameworkMatchesLog for 4 but 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 4 Measurement
+check unit_invmet_frameworkMatchesLog for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 4 Measurement
       expect 0

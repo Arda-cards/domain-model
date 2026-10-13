@@ -14,7 +14,7 @@ open procurement/order/order_received
 assert unit_ordr_receivedIsAccumulated {
   all l: OrderLine, t: Tick | receivedIsAccumulatedAt[l, t]
 }
-check unit_ordr_receivedIsAccumulated for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ordr_receivedIsAccumulated for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       2 RecordReceiptOcc, 1 ReverseReceiptOcc, 8 Quantity, 2 Note expect 0
 
@@ -25,7 +25,7 @@ run unit_ordr_zeroBeforeAnyPosting {
     no r: RecordReceiptOcc | committed[r]
     no qtyMap[lineStateAt[a.subject, t].sReceived]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       8 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -37,7 +37,7 @@ run unit_ordr_twoPostingsAccumulate {
     precedes[r1.tick, r2.tick] and notAfter[r2.tick, t]
     qtyMap[lineStateAt[r1.subject, t].sReceived] = add[qtyMap[r1.qty], qtyMap[r2.qty]]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note expect 1
 
@@ -52,6 +52,6 @@ run unit_ordr_reversalNetsToZero {
     some qtyMap[rr.qty]
     no qtyMap[lineStateAt[rr.subject, t].sReceived]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note expect 1

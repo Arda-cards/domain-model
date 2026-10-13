@@ -20,13 +20,13 @@ open meta/subject_log/lifecycle[dt/ProductionDelivery, dt/PDState] as pdlc   // 
 // ── the act commits on a REVOKED delivery (terminal) and tombstones it ─────────────────────────
 run unit_pdr_retireAfterRevoke {
   some o: RetireDeliveryOcc | committed[o] and pdPre[o].sStatus = PD_REVOKED and o.post = o.pre
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
 
 // complement: a committed retire never writes a new record (RetireEffect)
 assert unit_pdr_retireIsTombstone { all o: RetireDeliveryOcc | committed[o] implies o.post = o.pre }
-check unit_pdr_retireIsTombstone for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_pdr_retireIsTombstone for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 0
 
@@ -34,14 +34,14 @@ check unit_pdr_retireIsTombstone for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8
 run unit_pdr_retireNotTerminalRefused {
   some o: RetireDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
     and some o.pre and pdPre[o].sStatus = PD_CREATED
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
 
 // ── refused on a delivery that never started (no history) — the generic arm, the adopter's atom ─
 run unit_pdr_retireNeverCreatedRefused {
   some o: RetireDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RDeliveryClosed and no o.pre
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
 
@@ -49,7 +49,7 @@ run unit_pdr_retireNeverCreatedRefused {
 run unit_pdr_retireTwiceRefused {
   some disj r1, r2: RetireDeliveryOcc | committed[r1] and r2.subject = r1.subject and precedes[r1.tick, r2.tick]
     and refusedAtAdmission[r2] and RDeliveryClosed in r2.admission.because
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
 
@@ -57,18 +57,18 @@ run unit_pdr_retireTwiceRefused {
 run unit_pdr_revokeAfterRetireRefused {
   some r: RetireDeliveryOcc, v: RevokeDeliveryOcc | committed[r] and v.subject = r.subject and precedes[r.tick, v.tick]
     and refusedAtAdmission[v] and RDeliveryClosed in v.admission.because
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
 
 // ── the theorem: nothing commits on the delivery's log after a committed retire ────────────────
 assert unit_pdr_nothingAfterRetire { pdlc/nothingAfterRetire }
-check unit_pdr_nothingAfterRetire for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_pdr_nothingAfterRetire for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 0
 
 // ── MPBOT-11 M2 (2026-10-01) — the recording law on the delivery log: refused vs recorded ─────
-check unit_pdr_noRecordedRefusalWithoutGenesis { pdlc/noRecordedRefusalWithoutGenesis } for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_pdr_noRecordedRefusalWithoutGenesis { pdlc/noRecordedRefusalWithoutGenesis } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 0
 // witness: a refused delivery genesis is NOT recorded; a refused revoke on a CREATED delivery IS
@@ -76,6 +76,6 @@ run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
   some c: CreateDeliveryOcc, r: RevokeDeliveryOcc |
     refusedAtAdmission[c] and not pdlc/recorded[c]
     and refusedAtAdmission[r] and pdlc/liveAt[r] and pdlc/recorded[r]
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery,
       11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1

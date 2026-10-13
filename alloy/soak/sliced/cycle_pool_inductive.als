@@ -92,7 +92,7 @@ assert e7_law { all t: Tick | e7Inv[t] implies lawSliceAt[t] }
 run e7_seeded_start {
   some h: HavocCycleOcc | committed[h] and some (h.post & CycleState).sPool
   some o: StartProcessingOcc | committed[o] and some o.pool
-} for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
 
@@ -100,27 +100,27 @@ run e7_seeded_start {
     is realizable (the check is not vacuously UNSAT-by-starvation). */
 run e7_two_live {
   some t: Tick, disj c1, c2: CardCycle | liveCycleAt[c1, t] and liveCycleAt[c2, t]
-} for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
 
-check e7_slice_faithful for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_slice_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
-check e7_prov_faithful for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_prov_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
-check e7_base for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
-check e7_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
-check e7_law for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
@@ -158,11 +158,11 @@ assert e7_prov_step {
     (poolProvenanceAt[t] and (no h: HavocCycleOcc | h.tick = t2)) implies poolProvenanceAt[t2]
 }
 
-check e7_prov_base for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_prov_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 
-check e7_prov_step for 5 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
       5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
 

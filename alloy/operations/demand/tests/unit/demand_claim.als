@@ -29,7 +29,7 @@ run dem_claimArc {
     f.peerView = sem/PV_MOVED_BY_THIS
     c in attachedLiveAt[d, a.tick] and claimHolderOf[c, a.tick] = d.eId and membershipMirrorsHeadAt[a.tick]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 Tick, 8 Occurrence, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
 // The race (FM-DEM-11): two demands RESERVE one cycle — the loser is refused RKeyTaken on the chain BEFORE kanban is
@@ -40,7 +40,7 @@ run dem_raceLoserRefused {
     a.subject = c and b.subject = c and a.holder != b.holder and precedes[a.tick, b.tick]
     lone k: AcceptOcc | committed[k] and k.subject = c
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 8 Snapshot, 2 Note expect 1
 
 // The lost ack (FM-DEM-24): the accept landed and cites the RESERVE, the CONFIRM is lost — the re-drive reads
@@ -52,7 +52,7 @@ run dem_lostAckRedrive {
     notAfter[k.tick, t] and claim/phaseAt[c, t] = sem/I_RESERVED and cycleViewAt[c, t] = sem/PV_MOVED_BY_THIS
     claim/redrive[claim/phaseAt[c, t], cycleViewAt[c, t]] = sem/RD_CONFIRM
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // The uncited UI accept (DT-027 §7's cell): the cycle is REQUESTED but nobody's — moved-otherwise → RELEASE, no attach.
@@ -67,7 +67,7 @@ run dem_uncitedAcceptReleases {
     x.peerView = sem/PV_MOVED_OTHERWISE and claim/phaseAt[c, x.tick] = sem/I_FREE
     no a: AddCycleOcc + CreateWithCycleOcc | committed[a]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // ── moved-otherwise UNDER THE HOLD (A-4), as COMMITTED RELEASEs — what E2b made representable (DT-029 Q9) ──────
@@ -82,7 +82,7 @@ run dem_withdrawnUnderHoldReleases {
     claim/redrive[sem/I_HELD, cycleViewAt[c, w.tick]] = sem/RD_RELEASE_DETACH
     c not in attachedAt[d, dt.tick] and no claimHolderOf[c, dt.tick]
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 11 Tick, 10 Occurrence, 10 EntityId, 12 Snapshot, 2 Note expect 1
 
 // (ii) shelved by a THIRD PARTY (SPEARHEAD-D7 Option A): the head is a stranger's shelve → REQUESTING under the hold reads
@@ -98,7 +98,7 @@ run dem_thirdPartyShelveUnderHoldReleases {
     claim/redrive[sem/I_HELD, cycleViewAt[c, s.tick]] = sem/RD_RELEASE_DETACH
     c not in attachedAt[d, rm.tick] and no claimHolderOf[c, rm.tick]
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 11 Tick, 10 Occurrence, 10 EntityId, 12 Snapshot, 2 Note expect 1
 // (iii) card deleted (FM-DEM-16) has no kind in the model: (i)'s shape.
 
@@ -114,7 +114,7 @@ run dem_startKeepRoundTrip {
     claim/phaseAt[c, sp.tick] = sem/I_ACTING
     claim/phaseAt[c, ac.tick] = sem/I_HELD and claim/holderAt[c, ac.tick] = d.eId and statusAt[c, ac.tick] = IN_PROCESS
   }
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 11 Snapshot, 2 Note expect 1
 
 // CLOSE: ACT_RESERVE(A_SHELVE) → the shelve cites it → ONE ACT_CONFIRM ends the hold (key FREE, no holder; FM-DEM-20).
@@ -127,7 +127,7 @@ run dem_shelveClosesHoldInOneRow {
     precedes[f.tick, ar.tick] and precedes[ar.tick, s.tick] and precedes[s.tick, ac.tick]
     claim/phaseAt[c, ac.tick] = sem/I_FREE and no claimHolderOf[c, ac.tick] and statusAt[c, ac.tick] = REQUESTING
   }
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 11 Snapshot, 2 Note expect 1
 
 // ── the detector, the retry, the guard that still bites ───────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ run dem_lateAcceptDetected {
     precedes[r.tick, x.tick] and precedes[x.tick, k.tick]
     lateAccept[k]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // A-7: the same owner re-sending its RESERVE while the first is live is refused RKeyTaken — no idempotent-reserve clause.
@@ -148,7 +148,7 @@ run dem_sameOwnerRetryRefused {
     committed[a] and refusedAtAdmission[b] and b.admission.because = sem/RKeyTaken
     a.subject = c and b.subject = c and a.holder = b.holder and precedes[a.tick, b.tick]
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 7 Tick, 8 EntityId, 7 Snapshot, 2 Note expect 1
 
 // The guard still bites at HELD: while OUR accept is the head, a RELEASE is refused RLanded (the HELD rule's other way).
@@ -163,7 +163,7 @@ run dem_releaseAtHeldWhileOursRefused {
     claim/prePhase[x] = sem/I_HELD and x.admission in Rejected and sem/RLanded in x.admission.because
     some q: RequestOcc | committed[q] and q.subject = c and precedes[q.tick, k.tick]   // the cycle's genesis, STATED for legibility (not needed by the witness)
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // ── the laws ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -172,26 +172,26 @@ assert dem_heldViewHeadBased {
   all o: claim/ConfirmOcc + claim/ReleaseOcc | claim/prePhase[o] = sem/I_HELD implies
     ((o.peerView = sem/PV_MOVED_BY_THIS) iff cycleHeadCitesAt[o.subject, o.tick])
 }
-check dem_heldViewHeadBased for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_heldViewHeadBased for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 assert dem_confirmedAcceptCited { confirmedAcceptCited }
-check dem_confirmedAcceptCited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_confirmedAcceptCited for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 // R-a (MINESWEEPER's chain A review): the residual's MOVED_OTHERWISE arm under the hold cannot be reading our own accept in
 // flight — at every held tick a committed accept citing the opener strictly precedes it. Negative control: drop `confirmViol`'s
 // RNotLanded arm and this check finds the counterexample (an uncited CONFIRM enters HELD with no accept) — run as a probe.
 assert dem_heldImpliesAcceptLanded { heldImpliesAcceptLanded }
-check dem_heldImpliesAcceptLanded for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_heldImpliesAcceptLanded for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 assert dem_releasedClaimUncited { releasedClaimUncited }
-check dem_releasedClaimUncited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_releasedClaimUncited for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 assert dem_attachRequiresHeld { attachRequiresHeld }
-check dem_attachRequiresHeld for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_attachRequiresHeld for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 assert dem_detachRequiresReleased { detachRequiresReleased }
-check dem_detachRequiresReleased for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_detachRequiresReleased for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0
 assert dem_cycleIndivisibleFromChain { cycleIndivisibleFromChain }
-check dem_cycleIndivisibleFromChain for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check dem_cycleIndivisibleFromChain for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 1 InventoryPool, 8 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 0

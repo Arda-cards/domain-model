@@ -29,7 +29,7 @@ run mov_mergeArc {
     f.peerView = sem/PV_MOVED_BY_THIS
     some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
 
 // R-02 — the idempotent callee: a re-sent merge citing the SAME leg on the SAME pool is refused RDuplicateOrigin.
@@ -40,7 +40,7 @@ run mov_holdingMergeIdempotent {
     precedes[r.tick, a.tick] and precedes[a.tick, b.tick]
     b.admission in Rejected and RDuplicateOrigin in b.admission.because
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // R-03 (FM-DEM-02, PDEV-1772) — two extract legs on ONE holding pool (two revokes): the second RESERVE is refused
@@ -52,7 +52,7 @@ run mov_revokeRaceSerializes {
     precedes[r1.tick, r2.tick] and movement/phaseAt[p, r2.tick] = sem/I_RESERVED
     r2.admission in Rejected and sem/RKeyTaken in r2.admission.because
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 2 ProductionDelivery,
       15 Tick, 14 Occurrence, 14 EntityId, 16 Snapshot, 2 Note expect 1   // scope derived (first execution UNSAT at 11 Tick / for 9): two extracts need
       // two revokes (revokeExtractsAtomically, one extract per revoke), two deliveries (a revoked PD refuses a second revoke), two record +
@@ -73,7 +73,7 @@ run mov_interruptedDistributeRedrives {
     no y: PoolRemoveOcc - x | committed[y] and y.arche = r
     some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
 
 // Q7 = A — the transfer composite: ONE leg keyed on the source, its two pool rows on two pools carry ONE arche; the
@@ -85,7 +85,7 @@ run mov_transferBothHalvesOneArche {
     o.arche = l and a.arche = l and adjacentCommit[o, a] and f.peerRid = o
     precedes[l.tick, o.tick] and precedes[a.tick, f.tick]
   }
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot, 2 Note expect 1
       // scope derived (first execution UNSAT at for 6): the transfer needs the item HELD at the source (poolTransferViol RNotMember) — a
       // prior committed add on p — so 7 occurrences (add, leg, transfer, paired add, confirm, the item pin, a demand row for ownerVersion)
@@ -100,7 +100,7 @@ run mov_pairedAddNotLate {
     no movement/IntentOcc & subject.q                         // the destination has NO chain: phaseAt reads I_FREE there
     not lateMovement[a]
   }
-} for 8 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 10 Tick, 9 Occurrence, 10 EntityId, 10 Snapshot, 2 Note expect 1
 // … and never late while its leg is live: a committed paired add under a RESERVED/HELD source leg is not a late movement (at de9b305,
 // which read the destination's empty chain, this check was SAT — the held failure this check guards against).
@@ -109,7 +109,7 @@ assert mov_pairedAddNeverLateWhileLegLive {
       and tr.arche in movement/IntentOcc and movement/phaseAt[(tr.arche & movement/IntentOcc).subject, a.tick] in sem/livePhases)
     implies not lateMovement[a]
 }
-check mov_pairedAddNeverLateWhileLegLive for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check mov_pairedAddNeverLateWhileLegLive for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 0
 
 // An UNCITED committed add is never late (MINESWEEPER's MG-12 review): the guard `o.arche in movement/IntentOcc` is what excludes it, and
@@ -126,7 +126,7 @@ run mov_uncitedAddNotLate {
                                                                  // key as I_FREE and the add as late: `not lateMovement[a]` goes UNSAT.
     not lateMovement[a]
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 6 Tick, 6 EntityId, 6 Snapshot, 2 Note expect 1
 
 // The late-act detector: the leg was RELEASEd (uncited, UNMOVED) and the add landed AFTER — a late movement.
@@ -137,7 +137,7 @@ run mov_lateMovementDetected {
     precedes[r.tick, rel.tick] and precedes[rel.tick, a.tick]
     lateMovement[a]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
 
 // The reversal exclusion: a committed remove naming the late add takes it out of the detector.
@@ -152,17 +152,17 @@ run mov_reversalExcluded {
     not lateMovement[a]
     some c0: ip/CreatePoolOcc | committed[c0] and c0.subject = p and precedes[c0.tick, r.tick]   // the pool's genesis, STATED for legibility (not needed by the witness)
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 1
       // ORIGINAL scope restored: the six-occurrence count was right; the first-execution UNSAT was the LAW TEXT (lateMovement's split
       // nested its quantifiers by precedence and never saw the remove) — found by the bisection probe, fixed in the module
 
 // ── the additive-arm laws (theorems of citationView + the guards) ───────────────────────────────────────────────
 assert mov_confirmedMovementCited { confirmedMovementCited }
-check mov_confirmedMovementCited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check mov_confirmedMovementCited for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 0
 assert mov_releasedReserveUncited { releasedReserveUncited }
-check mov_releasedReserveUncited for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check mov_releasedReserveUncited for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 8 Tick, 8 EntityId, 8 Snapshot, 2 Note expect 0
 // One leg per pool per originator (DT-029 Q8): two committed legs on ONE pool citing ONE originator is unrepresentable
 // (the module fact `ArcheUnique`); the second is refused RDuplicateArche by `reserveViol` (MG-10).
@@ -173,5 +173,5 @@ run mov_secondLegSameOriginRefused {
     precedes[r1.tick, f.tick] and precedes[f.tick, r2.tick]
     r2.admission in Rejected and sem/RDuplicateArche in r2.admission.because
   }
-} for 9 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1

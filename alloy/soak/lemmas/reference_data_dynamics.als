@@ -17,13 +17,13 @@ open reference_data/staff/staff_implementation
 
 // The item lifecycle shape at MULTI-SUBJECT, MULTI-VERSION scopes.
 assert soak_rd_itemLifecycleShape { itemLifecycleShape }
-check soak_rd_itemLifecycleShape for 6 but 5 Int, 3 Scalar,
+check soak_rd_itemLifecycleShape for 6 but 2 RoleDetail, 5 Int, 3 Scalar,
       3 Item, 4 ItemSupply, 3 BusinessAffiliate, 4 BusinessRole, 2 StaffMember,
       12 Occurrence, 14 EntityId, 10 Tick, 12 Snapshot expect 0
 
 // The affiliate lifecycle shape, same widths.
 assert soak_rd_baLifecycleShape { baLifecycleShape }
-check soak_rd_baLifecycleShape for 6 but 5 Int, 3 Scalar,
+check soak_rd_baLifecycleShape for 6 but 2 RoleDetail, 5 Int, 3 Scalar,
       3 Item, 4 ItemSupply, 3 BusinessAffiliate, 4 BusinessRole, 2 StaffMember,
       12 Occurrence, 14 EntityId, 10 Tick, 12 Snapshot expect 0
 
@@ -36,7 +36,7 @@ run soak_rd_pinnedFloatingDiverge {
     precedes[t1, t2]
     some itemVersionAt[p.subject, t2] and itemVersionAt[p.subject, t2] != p
   }
-} for 6 but 5 Int, 3 Scalar,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar,
       3 Item, 4 ItemSupply, 2 BusinessAffiliate, 3 BusinessRole, 2 StaffMember,
       12 Occurrence, 14 EntityId, 10 Tick, 12 Snapshot expect 1
 
@@ -46,7 +46,7 @@ assert soak_rd_currentUnique {
   all i: Item, t: Tick | lone itemVersionAt[i, t]
   all b: BusinessAffiliate, t: Tick | lone baVersionAt[b, t]
 }
-check soak_rd_currentUnique for 6 but 5 Int, 3 Scalar,
+check soak_rd_currentUnique for 6 but 2 RoleDetail, 5 Int, 3 Scalar,
       3 Item, 4 ItemSupply, 3 BusinessAffiliate, 4 BusinessRole, 2 StaffMember,
       12 Occurrence, 14 EntityId, 10 Tick, 12 Snapshot expect 0
 
@@ -60,6 +60,6 @@ run soak_rd_dynamicsCompanion {
     c2.subject = b and u2.subject = b and d2.subject = b
     and committed[c2] and committed[u2] and committed[d2]
   some s: ItemSupply | some s.supplierPin
-} for 6 but 5 Int, 3 Scalar,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar,
       2 Item, 3 ItemSupply, 2 BusinessAffiliate, 3 BusinessRole, 1 StaffMember,
       12 Occurrence, 14 EntityId, 10 Tick, 12 Snapshot expect 1

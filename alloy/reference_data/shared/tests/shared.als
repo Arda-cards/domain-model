@@ -19,14 +19,14 @@ pred coherent {
     and s.supplierRole = r and r.role = VENDOR
     and i.tenantId = s.supplierPin.subject.tenantId
 }
-run unit_shared_coherent { coherent } for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 1
+run unit_shared_coherent { coherent } for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 1
 
 // A present role selector is always a VENDOR role OF THE PINNED VERSION — UNSAT = holds
 // (supplierPinsSound regression, the dissolved form of supplierIsVendor).
 check unit_shared_supplierIsVendor {
   all s: ItemSupply | some s.supplierRole implies
     (s.supplierRole in s.supplierPin.post.sRoles and s.supplierRole.role = VENDOR)
-} for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 0
+} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Cross-tenant isolation over every resolved reference (kernel CrossTenantIsolation regression) — UNSAT.
 // `some b` guard: an EMPTY resolve satisfies `b in Scoped` (subset), so the unguarded form is
@@ -34,14 +34,14 @@ check unit_shared_supplierIsVendor {
 check unit_shared_tenantIsolation {
   all a: Scoped, id: a.refs | let b = resolve[id] |
     (some b and b in Scoped) implies a.tenantId = b.tenantId
-} for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 0
+} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Negative: no ItemSupply's vendor pin reaches an affiliate in a different tenant — UNSAT
 // (the pin-tenancy clause of supplierPinsSound).
 run unit_shared_noCrossTenantSupplier {
   some s: ItemSupply |
     some s.supplierPin and s.supplierPin.subject.tenantId != s.tenantId
-} for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 0
+} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // ── the named happy-path witnesses (unwitnessed-scenarios follow-up, 2026-07-08) ────────────────
 // Previously covered only implicitly by the joint-SAT load; named so the shapes cannot silently
@@ -57,7 +57,7 @@ run unit_shared_cleanResolution {
     s.tenantId = s.supplierPin.subject.tenantId
   }
   all s: ItemSupply | some s.supplierPin implies some s.supplierRole
-} for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 1
+} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 1
 
 // The linked-VENDOR selection is PRECISE, not incidental: the pinned VERSION bears MORE THAN
 // ONE role, and the selector picks exactly its VENDOR one.
@@ -67,4 +67,4 @@ run unit_shared_linkedVendorPrecise {
     r1.role = VENDOR and r2.role != VENDOR
     s.supplierRole = r1
   }
-} for 6 but 5 Tick, 5 Snapshot, 5 Occurrence expect 1
+} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 1
