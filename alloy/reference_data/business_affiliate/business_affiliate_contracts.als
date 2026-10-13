@@ -9,8 +9,13 @@ module reference_data/business_affiliate/business_affiliate_contracts
  *    implementation asserts them as facts (the degenerate-form heritage, now content-only).
  *  - LIFECYCLE laws (Create-first, retirement-terminal) are THEOREMS of the guards + effects,
  *    proven in the suite (check, UNSAT = holds) and assumable by consumers via the mock.
- *  - The ROLE-KIND law (C4, R02-D24.1: a role's kind is fixed at birth) is a THEOREM of the
- *    Update guard (`RRoleKindFixed`) and the Create fact, proven in the suite.
+ *  - The ROLE-KIND laws (C4, R02-D24.1: a role's kind is fixed at birth, and a write or committed
+ *    state holds at most one version per role identity) are THEOREMS, proven in the suite (check,
+ *    UNSAT = holds). Over write payloads they follow from the Update guard (`RRoleKindFixed`), the
+ *    Create fact (`BaBirthStatesKind`) and the write fact (`BaWriteOneVersionPerRole`). Over committed
+ *    post states they ALSO depend on the write effect (`post.sRoleVersions = roleVersions`), on the
+ *    retire's carry-forward of the prior state and on the chaining of the log (a state is the post of
+ *    its committed occurrence, so it holds only validated versions). Mock consumers assume them.
  *  - The CHAINING law is the spine's, adopted as fact and re-published here so consumer unit
  *    roots get the log shape from the mock.
  */
@@ -44,7 +49,7 @@ pred baLifecycleShape {
 /** Every affiliate occurrence — refusals included — reads the real current record. */
 pred baLogChained { balog/chained }
 
-// ── C4: a role's kind is fixed at birth (R02-D24.1 — theorem of the Update guard + the Create fact) ─
+// ── C4: a role's kind is fixed at birth; one version per role (R02-D24.1 — theorems; see the header for what each rests on) ─
 /** committedRoleVersion — `v` is stated by a committed write or held by a committed post state. */
 pred committedRoleVersion[v: BusinessRoleVersion] { (some o: BaWriteOcc | committed[o] and v in o.roleVersions) or (some o: BaOcc | committed[o] and v in o.post.sRoleVersions) }
 /** Every committed role version states the kind its identity was born with: a role's kind never
