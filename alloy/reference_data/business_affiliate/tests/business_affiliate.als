@@ -109,7 +109,7 @@ check unit_ba_roleKindFixedAtBirth { roleKindFixedAtBirth } for 6 but 6 Tick, 5 
 run unit_ba_roleVersionDetailChangeAdmitted {
   some c: CreateBaOcc, u: UpdateBaOcc, r: BusinessRole, v1, v2: BusinessRoleVersion {
     committed[c] and committed[u] and c.subject = u.subject and precedes[c.tick, u.tick]
-    v1 in c.roleVersions and v2 in u.roleVersions
+    c.roleVersions = v1 and u.roleVersions = v2          // each write is exactly the selected version: nothing else changes with the detail
     v1.of = r and v2.of = r and v1.vKind = r.role and v2.vKind = r.role
     v1.detail != v2.detail
     v1 not in u.post.sRoleVersions and v2 in u.post.sRoleVersions   // the transition: the new version replaces the old one in the state
@@ -145,8 +145,9 @@ check unit_ba_oneVersionPerRole {
 
 // Guard (the weaker form of this command was RED at 13c2022, UNSAT with the identity-only bindings; this form implies it): two writes of one affiliate that differ only in a version's detail have different bindings.
 run unit_ba_bindingsDistinguishVersions {
-  some disj o1, o2: UpdateBaOcc, v1: o1.roleVersions, v2: o2.roleVersions {
-    o1.subject = o2.subject and o1.roles = o2.roles
+  some disj o1, o2: UpdateBaOcc, v1, v2: BusinessRoleVersion {
+    o1.subject = o2.subject
+    o1.roleVersions = v1 and o2.roleVersions = v2          // each payload is exactly the selected version: the binding difference can only come from the detail
     v1.of = v2.of and v1.vKind = v2.vKind and v1.detail != v2.detail     // the same role, the same kind: only the payload differs
     o1.bindings != o2.bindings
   }
