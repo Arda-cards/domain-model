@@ -110,6 +110,7 @@ run unit_ba_roleVersionDetailChangeAdmitted {
   some c: CreateBaOcc, u: UpdateBaOcc, r: BusinessRole, v1, v2: BusinessRoleVersion {
     committed[c] and committed[u] and c.subject = u.subject and precedes[c.tick, u.tick]
     c.roleVersions = v1 and u.roleVersions = v2          // each write is exactly the selected version: nothing else changes with the detail
+    u.pre = c.post and u.pre.sRoleVersions = v1          // the update's actual pre-state is the Create's post state holding v1: no write intervenes
     v1.of = r and v2.of = r and v1.vKind = r.role and v2.vKind = r.role
     v1.detail != v2.detail
     v1 not in u.post.sRoleVersions and v2 in u.post.sRoleVersions   // the transition: the new version replaces the old one in the state
@@ -120,7 +121,8 @@ run unit_ba_roleVersionDetailChangeAdmitted {
 run unit_ba_replaceByNewIdAdmitted {
   some c: CreateBaOcc, u: UpdateBaOcc, disj r1, r2: BusinessRole {
     committed[c] and committed[u] and c.subject = u.subject and precedes[c.tick, u.tick]
-    r1 in c.roles and r1.role = VENDOR
+    c.roles = r1 and r1.role = VENDOR                  // the Create's membership is exactly r1
+    u.pre = c.post                                    // the update's actual pre-state is the Create's post state: no write intervenes
     u.roles = r2 and r2.role = CARRIER
     r1 not in u.post.sRoles
   }
