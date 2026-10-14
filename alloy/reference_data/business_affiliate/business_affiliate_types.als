@@ -19,8 +19,9 @@ module reference_data/business_affiliate/business_affiliate_types
  *
  * IDENTITY vs STATE (DT-011): the affiliate's identity is bare (tenant-scoped legal entity);
  * the ROLE MEMBERSHIP is versioned state (`BusinessAffiliateState.sRoles`), folded per
- * DT-023 Q-C — a role grant/revoke IS an affiliate version. `BusinessRole` rows are
- * IMMUTABLE child entities (changing one is replacing it in the next state).
+ * DT-023 Q-C — a role grant/revoke IS an affiliate version. A role has an IDENTITY
+ * (`BusinessRole`, born with its kind, which never changes — R02-D24.1) and VERSIONS
+ * (`BusinessRoleVersion`: the kind a write states plus the payload); the state holds versions.
  */
 
 open meta/profiles/domain_log        // PROFILE (DT-012): log anatomy + group/order premises
@@ -33,11 +34,26 @@ open reference_data/shared/lifecycle // RRetiredRef (DT-023)
 /** BusinessRoleType — the kind of role a business affiliate plays. */
 enum BusinessRoleType { VENDOR, CUSTOMER, CARRIER, OPERATOR, OTHER }
 
-/** BusinessRole — a role a BusinessAffiliate plays (e.g. VENDOR); an IMMUTABLE child entity
-    FOLDED into the affiliate's versioned state (DT-023 Q-C) — membership is version-carried
-    (`BusinessAffiliateState.sRoles`). First-class as the ROLE-SELECTOR half of a consumer's
-    pin + selector pair (the dissolved-handle form). */
+/** BusinessRole — the IDENTITY of a role a BusinessAffiliate plays (e.g. VENDOR): its entity id and
+    the kind it was BORN with, which is fixed (R02-D24.1, MP 2026-10-12 Option C). FOLDED into the
+    affiliate's versioned state (DT-023 Q-C) through its versions — membership is version-carried
+    (`BusinessAffiliateState.sRoleVersions`; `sRoles` is the identities they belong to). First-class as
+    the ROLE-SELECTOR half of a consumer's pin + selector pair (the dissolved-handle form). */
 sig BusinessRole extends Scoped { role: one BusinessRoleType }
+
+/** RoleDetail — the payload a role version carries besides its kind (the runtime's name and notes;
+    opaque here: the model needs only that two versions can differ in it). */
+sig RoleDetail {}
+
+/** BusinessRoleVersion — one write's statement of a role (a value): which identity, the kind the write
+    states (`vKind`) and the payload. A committed version's `vKind` is its identity's kind
+    (`roleKindFixedAtBirth`); a write stating another kind is refused with `RRoleKindFixed`. */
+sig BusinessRoleVersion { of: one BusinessRole, vKind: one BusinessRoleType, detail: one RoleDetail }
+// Value semantics: a version IS its fields — two versions with the same role, kind and detail are one atom (R02-D24.1 review),
+// so a state's version set cannot change by swapping equal atoms (BusinessAffiliateStateExtensional compares those sets).
+fact BusinessRoleVersionExtensional {
+  all disj a, b: BusinessRoleVersion | a.of != b.of or a.vKind != b.vKind or a.detail != b.detail
+}
 
 // No outgoing soft references (must be pinned, or `refs` is under-constrained).
 fact BusinessRoleRefs { all r: BusinessRole | no r.dataRefs }
@@ -52,15 +68,17 @@ fact BusinessAffiliateRefs { all b: BusinessAffiliate | no b.dataRefs }
 
 // ── the state record ────────────────────────────────────────────────────────────────────────────
 /** BusinessAffiliateState — one moment's versioned payload of an affiliate (a value;
-    extensional): the folded role membership. The lifecycle (Live / Retired) is the LOG's shape
-    since 2026-09-09 — live while the head is not a Retire — not a field. */
+    extensional): the folded role membership, as role versions. The lifecycle (Live / Retired) is the
+    LOG's shape since 2026-09-09 — live while the head is not a Retire — not a field. */
 sig BusinessAffiliateState extends Snapshot {
-  sRoles:  set BusinessRole     // the folded children (Q-C)
+  sRoleVersions:  set BusinessRoleVersion     // the folded children (Q-C), as versions (R02-D24.1)
 }
 // Value semantics: a state IS its fields.
 fact BusinessAffiliateStateExtensional {
-  all disj a, b: BusinessAffiliateState | a.sRoles != b.sRoles
+  all disj a, b: BusinessAffiliateState | a.sRoleVersions != b.sRoleVersions
 }
+/** sRoles — the role IDENTITIES a state's versions belong to (the membership the consumers read). */
+fun sRoles: BusinessAffiliateState -> BusinessRole { sRoleVersions.of }
 
 // ── the kinds — the reference-data lifecycle (DT-023 R1) ────────────────────────────────────────
 /** BaOcc — the affiliate log's occurrence family; the PIN TYPE (DT-023 R3): a version pin is
@@ -70,10 +88,12 @@ sig BaOcc in balog/SubjectOcc {}
 fact BaOccIsTheLog { BaOcc = balog/SubjectOcc }
 
 /** BaWriteOcc — the content-carrying kinds' shared payload (SET semantics): the full role
-    membership each write states. A SUBSET sig carrying the field (Create is a Create shape,
-    Update a Mutate shape — one field, no overload; the throwaway of 2026-09-09). */
-sig BaWriteOcc in balog/SubjectOcc { roles: set BusinessRole }
-fact BaWriteOccExtent { BaWriteOcc = CreateBaOcc + UpdateBaOcc and (all o: BaWriteOcc | o.bindings = o.subject + o.roles) }
+    membership each write states, as role versions. A SUBSET sig carrying the field (Create is a
+    Create shape, Update a Mutate shape — one field, no overload; the throwaway of 2026-09-09). */
+sig BaWriteOcc in balog/SubjectOcc { roleVersions: set BusinessRoleVersion }
+/** roles — the role identities a write's versions belong to. */
+fun roles: BaWriteOcc -> BusinessRole { roleVersions.of }
+fact BaWriteOccExtent { BaWriteOcc = CreateBaOcc + UpdateBaOcc and (all o: BaWriteOcc | o.bindings = o.subject + o.roleVersions) }   // typed binding fields: the version atoms themselves (R02-D24.1 review)
 
 /** Create — births the BusinessAffiliate with its initial roles (live: the head is not a retire). */
 sig CreateBaOcc extends lc/CreateOcc {}
@@ -84,7 +104,7 @@ sig UpdateBaOcc extends lc/MutateOcc {}
 sig RetireBaOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign atoms; RRetiredRef is shared via lifecycle) ───────────
-one sig RBaExists, RBaNotCreated, RBaRetired extends Reason {}
+one sig RBaExists, RBaNotCreated, RBaRetired, RRoleKindFixed extends Reason {}
 
 // ── the read API ────────────────────────────────────────────────────────────────────────────────
 /** baStateAt — the affiliate's versioned content as of `t` (LOCF; none before Create). */

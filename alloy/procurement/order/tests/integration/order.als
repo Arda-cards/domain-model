@@ -28,7 +28,7 @@ run int_ord_loads {
     some resolve[a.subject.orderRef] & Order
     demandStatusAt[d, a.tick] = DS_RELEASED
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
@@ -49,7 +49,7 @@ run int_ord_submitArc {
     demandStatusAt[d, s.tick] = DS_IN_PROCESS
     d in servicedOf[ord, s.tick]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       12 Tick, 14 EntityId, 14 Snapshot, 9 Occurrence, 2 Note expect 1
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8 (mirrors unit_ord_buildAndSubmit):
@@ -65,15 +65,15 @@ run int_ord_cancelReturnsToQueue {
     no holdingLineOf[d, c.tick]
     demandStatusAt[d, c.tick] = DS_RELEASED       // demand knew nothing of the order (O3)
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 11 EntityId, 11 Snapshot, 2 Note expect 1
 
 // ── law re-discharge on the composed stack ──────────────────────────────────────────────────────
 assert int_ord_contract_demandIndivisible { demandIndivisible }
-check int_ord_contract_demandIndivisible for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check int_ord_contract_demandIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert int_ord_contract_frozenOutsideDraft { frozenOutsideDraft }
-check int_ord_contract_frozenOutsideDraft for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check int_ord_contract_frozenOutsideDraft for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0

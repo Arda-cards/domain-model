@@ -40,7 +40,7 @@ run int_rcv_deliveryArc {
     precedes[rc.tick, pc.tick] and precedes[pc.tick, rd.tick] and precedes[rd.tick, rl.tick]
     rlStatusAt[rl.subject, rl.tick] = RL_DISTRIBUTED
   }
-} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem,
       1 ProductionDelivery, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,

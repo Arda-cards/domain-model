@@ -25,7 +25,7 @@ run int_dem_loads {
     some resolve[o.subject.stationRef] & Station
     some resolve[o.member] & CardCycle
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 12 EntityId, 10 Snapshot, 2 Note expect 1
 
 // ── the R8 production arc (call-first): Accept → CreateWithCycle → Release → StartProcessing →
@@ -39,7 +39,7 @@ run int_dem_productionToReady {
     statusAt[c, o.tick] = READY
     some heldAt[resolve[stateOfCycleAt[c, o.tick].sPool] & InventoryPool, o.tick]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool,
       12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 2 Note expect 1
 
@@ -53,15 +53,15 @@ run int_dem_recollationAfterFailure {
     demandStatusAt[d1, a2.tick] = DS_COMPLETE and c in attachedAt[d1, a2.tick]
     c in attachedAt[d2, a2.tick]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
       14 Tick, 14 EntityId, 14 Snapshot, 12 Occurrence, 2 Note expect 1
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layers) ──────
 assert int_dem_contract_cycleIndivisible { cycleIndivisible }
-check int_dem_contract_cycleIndivisible for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check int_dem_contract_cycleIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 assert int_dem_contract_frozenOutsideOpen { frozenOutsideOpen }
-check int_dem_contract_frozenOutsideOpen for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check int_dem_contract_frozenOutsideOpen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0

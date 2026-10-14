@@ -31,7 +31,7 @@ run int_rcv_loads {
     some resolve[o.pool] & InventoryPool
     some rlPre[o].sExpectedItem
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
@@ -48,7 +48,7 @@ run int_rcv_latticeCompanion {
     liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p2
     liveDemandAt[d, t] and resolve[demandStateAt[d, t].sHolding] = p3
   }
-} for 10 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 3 InventoryPool, 1 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,

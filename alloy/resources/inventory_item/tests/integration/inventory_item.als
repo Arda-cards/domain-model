@@ -21,7 +21,7 @@ run int_ii_loads {
   some o: inventory_item_types/CreateOcc | committed[o]
     and some o.target.itemPin.subject.uom
     and liveAt[o.target, o.tick]
-} for 5 but 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 
 // ── cross-layer composition: the deep supplier chain resolves in one universe with a live log ───
 run int_ii_supplyChainLoads {
@@ -32,11 +32,11 @@ run int_ii_supplyChainLoads {
     some s.supplierPin   // the vendor VERSION pin (DT-023 cut 7b — was resolve[s.supplier.vendorRef])
     some o: inventory_item_types/CreateOcc | committed[o] and o.target = ii
   }
-} for 6 but 3 Scalar, 5 Int, 11 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence expect 1
+} for 6 but 2 RoleDetail, 3 Scalar, 5 Int, 11 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence expect 1
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layer) ───────
 assert int_ii_contract_stateFunction { stateIsFunctionOnceStarted }
-check int_ii_contract_stateFunction for 5 but 3 Scalar, 5 Int expect 0
+check int_ii_contract_stateFunction for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
 
 assert int_ii_contract_closureIsTerminal { closureIsTerminal }
-check int_ii_contract_closureIsTerminal for 5 but 3 Scalar, 5 Int expect 0
+check int_ii_contract_closureIsTerminal for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0

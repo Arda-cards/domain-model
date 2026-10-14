@@ -12,7 +12,7 @@ open resources/kanban_card/kanban_card_implementation
 open resources/kanban_card/kanban_card_contracts
 
 assert soak_cyc_poolProvenance { poolProvenance }
-check soak_cyc_poolProvenance for 6 but 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check soak_cyc_poolProvenance for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
       11 Occurrence, 14 EntityId, 9 Tick, 11 Snapshot, 2 Note expect 0
 

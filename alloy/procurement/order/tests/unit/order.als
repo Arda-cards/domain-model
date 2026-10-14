@@ -25,47 +25,47 @@ open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl   // the
 
 // ── CONTRACT DISCHARGE (check; UNSAT = the law holds of the implementation) ─────────────────────
 assert unit_ord_contract_frozenOutsideDraft { frozenOutsideDraft }
-check unit_ord_contract_frozenOutsideDraft for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_frozenOutsideDraft for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_demandIndivisible { demandIndivisible }
-check unit_ord_contract_demandIndivisible for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_demandIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_attachRequiresReleased { attachRequiresReleased }
-check unit_ord_contract_attachRequiresReleased for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_attachRequiresReleased for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_attachItemAgrees { attachItemAgrees }
-check unit_ord_contract_attachItemAgrees for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_attachItemAgrees for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_submitRequiresStarted { submitRequiresStarted }
-check unit_ord_contract_submitRequiresStarted for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_submitRequiresStarted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_receiptAccrues { receiptAccrues }
-check unit_ord_contract_receiptAccrues for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_receiptAccrues for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 8 Quantity, 2 Note expect 0
 
 assert unit_ord_contract_receiptReverses { receiptReverses }
-check unit_ord_contract_receiptReverses for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_receiptReverses for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 8 Quantity, 2 Note expect 0
 
 assert unit_ord_contract_lineClosureByAct { lineClosureByAct }
-check unit_ord_contract_lineClosureByAct for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_lineClosureByAct for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_closeRequiresSettled { closeRequiresSettled }
-check unit_ord_contract_closeRequiresSettled for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_closeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_supplierBindingFrozen { supplierBindingFrozen }
-check unit_ord_contract_supplierBindingFrozen for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_supplierBindingFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 assert unit_ord_contract_orderTerminalClosure { orderTerminalClosure }
-check unit_ord_contract_orderTerminalClosure for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_orderTerminalClosure for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note expect 0
 
 // (unit_ord_contract_lineDescriptorFrozen RETIRED at DT-023 cut 7a: the law dissolved — the
@@ -77,7 +77,7 @@ check unit_ord_contract_orderTerminalClosure for 5 but 5 Int, 3 Scalar, 5 State,
 // Smoke/genesis: Create births DRAFT.
 run unit_ord_createDraft {
   some o: CreateOrderOcc | committed[o] and orderStatusAt[o.subject, o.tick] = OS_DRAFT
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
@@ -95,7 +95,7 @@ run unit_ord_buildAndSubmit {
     orderStatusAt[ord, s.tick] = OS_SUBMITTED
     d in servicedOf[ord, s.tick]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 12 EntityId, 10 Snapshot, 8 Occurrence, 2 Note expect 1
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8: Submit now requires a LINKED
@@ -110,7 +110,7 @@ run unit_ord_waivedConfirm {
     k.confirmation.disposition = DISP_WAIVED
     confirmedReadingAt[ord, k.tick]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
 
@@ -124,7 +124,7 @@ run unit_ord_receiptSettles {
     receiptsSettledAt[t]
     receivingReadingAt[parentOf[rr.subject], t]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 11 EntityId, 11 Snapshot, 4 Quantity, 2 Note, 8 Occurrence expect 1
       // census +1 at DT-023 cut 7a: the item-log fixture behind the attach agreement pushed
@@ -142,7 +142,7 @@ run unit_ord_reverseCompensatesReceipt {
     some qtyMap[rr.qty]
     no qtyMap[lineStateAt[rr.subject, t].sReceived]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note expect 1
 
@@ -155,7 +155,7 @@ run unit_ord_reverseOnClosedLineRefused {
     o.admission.because = RLineClosed
     lPre[o].sLineStatus = L_CLOSED
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
@@ -168,7 +168,7 @@ run unit_ord_missedNotificationLegal {
     no rr: RecordReceiptOcc | committed[rr]
     not receiptsSettledAt[t]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
@@ -183,7 +183,7 @@ run unit_ord_selfHealRestores {
     not receiptsSettledAt[t1]
     receiptsSettledAt[t2]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 10 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
@@ -197,14 +197,14 @@ run unit_ord_closeShort {
     some openOf[cl.subject, cl.tick]              // short: the open reading is non-zero at the close tick
     orderStatusAt[ord, c.tick] = OS_CLOSED
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
 // Scenario 6 (cancel, DRAFT only): plain abandonment while composing.
 run unit_ord_cancelDraft {
   some c: CancelOrderOcc | committed[c] and orderStatusAt[c.subject, c.tick] = OS_CANCELED
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
@@ -218,7 +218,7 @@ run unit_ord_cancelReturnsToQueue {
     d in servicedAt[l, c.tick]                       // the line still RECORDS the servicing…
     no holdingLineOf[d, c.tick]                      // …but the HOLD is gone with the order
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
@@ -233,7 +233,7 @@ run unit_ord_effectiveItemFloatsWhileDraft {
     effectiveItemAt[a.subject, t] = itemVersionAt[u.subject, t]
     effectiveItemAt[a.subject, t] != itemVersionAt[u.subject, a.tick]   // it MOVED off the genesis version
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 9 Snapshot, 3 Quantity, 2 Note, 7 Occurrence expect 1
 
@@ -249,7 +249,7 @@ run unit_ord_effectiveItemFreezesAtSubmit {
     effectiveItemAt[l, t] = itemVersionAt[u.subject, s.tick]
     effectiveItemAt[l, t] != itemVersionAt[u.subject, t]   // the current version moved on; the line did not
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       11 Tick, 12 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 10 Occurrence expect 1
 
@@ -263,56 +263,56 @@ run unit_ord_resetToSupplier {
     oPost[r].sSupplier.vendorRole = oPre[r].sSupplier.vendorRole
     oPost[r].sSupplier.name = oPre[r].sSupplier.name
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       8 EntityId, 8 Snapshot, 3 SupplierBinding, 2 Note expect 1
 
 // ── refusal witnesses — one per Reason, reason-PRECISE (because = exactly the set) ──────────────
 run unit_ord_orderStartedRefused {
   some o: CreateOrderOcc | refusedAtAdmission[o] and o.admission.because = ROrderStarted
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
 run unit_ord_orderClosedRefused {
   some o: UpdateSupplierOcc | refusedAtAdmission[o] and o.admission.because = ROrderClosed
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
 run unit_ord_lineStartedRefused {
   some o: AddLineOcc | refusedAtAdmission[o] and o.admission.because = RLineStarted
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       8 EntityId, 2 Note expect 1
 
 run unit_ord_lineClosedRefused {
   some o: UpdateLineOcc | refusedAtAdmission[o] and o.admission.because = RLineClosed
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       8 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_frozenRefused {
   some o: AddLineOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_badStateRefused {
   some o: CancelOrderOcc | refusedAtAdmission[o] and o.admission.because = RBadState
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_noLinesRefused {
   some o: SubmitOcc | refusedAtAdmission[o] and o.admission.because = RNoLines
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
 run unit_ord_noSupplierRefused {
   some o: SubmitOcc | refusedAtAdmission[o] and o.admission.because = RNoSupplier
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierName, 9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -324,13 +324,13 @@ run unit_ord_foreignRefRefused {
     refusedAtAdmission[o] and o.admission.because = RForeignRef
     some o.supplier.vendorPin and o.supplier.vendorPin.subject.tenantId != o.subject.tenantId
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 1
 
 run unit_ord_demandHeldRefused {
   some o: AttachDemandOcc | refusedAtAdmission[o] and o.admission.because = RDemandHeld
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 9 Snapshot, 2 Note expect 1
 
@@ -339,7 +339,7 @@ run unit_ord_demandIneligibleRefused {
     refusedAtAdmission[o] and o.admission.because = RDemandIneligible
     demandStatusAt[resolve[o.demand] & DemandItem, o.tick] = DS_OPEN   // the item is not yet in the queue
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -354,7 +354,7 @@ run unit_ord_wrongItemRefused {
     some o.subject.itemRef
     d.itemPin.subject != resolve[o.subject.itemRef] & Item
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       12 EntityId, 10 Snapshot, 10 Tick, 9 Occurrence, 2 Note expect 1
       // census +: two item logs (the line's and the demand's) ride the trace since cut 7a
@@ -369,19 +369,19 @@ run unit_ord_freeFormAttachRefused {
     demandStatusAt[d, o.tick] = DS_RELEASED
     freeForm[o.subject]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_notAttachedRefused {
   some o: DetachDemandOcc | refusedAtAdmission[o] and o.admission.because = RNotAttached
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_linesOpenRefused {
   some o: CloseOrderOcc | refusedAtAdmission[o] and o.admission.because = RLinesOpen
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -390,13 +390,13 @@ run unit_ord_noDemandRefused {
     refusedAtAdmission[o] and o.admission.because = RNoDemand
     freeForm[o.subject]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 3 Quantity, 2 Note expect 1
 
 run unit_ord_notTerminalRefused {
   some o: DeleteOrderOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       7 EntityId, 2 Note expect 1
 
@@ -409,7 +409,7 @@ run unit_ord_lineRetiredItemRefused {
     refusedAtAdmission[o] and o.admission.because = RRetiredRef
     some o.subject.itemRef
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 8 Tick, 6 Occurrence, 2 Note expect 1
 
@@ -424,7 +424,7 @@ run unit_ord_attachRetiredDemandAllowed {
     x.subject = resolve[o.subject.itemRef] and precedes[x.tick, o.tick]
     not itemLiveAt[resolve[o.subject.itemRef] & Item, o.tick]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       11 EntityId, 9 Snapshot, 9 Tick, 8 Occurrence, 2 Note expect 1
 
@@ -436,7 +436,7 @@ run unit_ord_submitUnlinkedSupplierRefused {
     no oPre[sub].sSupplier.vendorPin
     refusedAtAdmission[sub] and sub.admission.because = RNoSupplier
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 SupplierName, 10 EntityId, 8 Snapshot, 8 Tick, 6 Occurrence, 2 Note expect 1
 
@@ -449,7 +449,7 @@ run unit_ord_freeFormLineLegal {
     no lineStateAt[a.subject, a.tick].sDemand
     no qtyMap[lineStateAt[a.subject, a.tick].sReceived]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       8 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -461,7 +461,7 @@ run unit_ord_nameOnlySupplierLegal {
     some o.supplier.name
     no o.supplier.vendorPin and no o.supplier.vendorRole
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 BusinessRole, 0 BusinessAffiliate, 7 EntityId, 2 Note expect 1
 
@@ -476,7 +476,7 @@ run unit_ord_submitRetiredVendorRefused {
     oPre[sub].sSupplier.vendorPin.subject = d.subject
     refusedAtAdmission[sub] and sub.admission.because = RRetiredRef
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 BusinessAffiliate, 1 BusinessRole, 13 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 1
 
@@ -491,7 +491,7 @@ run unit_ord_submittedSurvivesVendorRetirement {
     orderStatusAt[sub.subject, t] = OS_SUBMITTED
     not baLiveAt[oPost[sub].sSupplier.vendorPin.subject, t]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 BusinessAffiliate, 1 BusinessRole, 13 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 1
 
@@ -502,7 +502,7 @@ run unit_ord_overReceiptLegal {
     r1.subject = r2.subject
     lineStatusAt[r1.subject, r2.tick] = L_OPEN
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note expect 1
 
@@ -514,7 +514,7 @@ run unit_ord_samePairDifferentItemsLegal {
     liveLineAt[l1, t] and liveLineAt[l2, t]
     d1 in servicedAt[l1, t] and d2 in servicedAt[l2, t]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 2 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 14 EntityId, 12 Snapshot, 2 Note expect 1
 
@@ -527,7 +527,7 @@ run unit_ord_inFlightSubmitLegal {
     demandStatusAt[d, t] = DS_IN_PROCESS
     no s: SubmitOcc | committed[s]
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
@@ -540,14 +540,14 @@ run unit_ord_deleteRetiresTerminal {
     orderStatusAt[x.subject, x.tick] = OS_CLOSED
     orderDeletedAt[x.subject, x.tick]
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
 
 // ── CUT 6 (DT-022 TQ-7): header details + internal notes ────────────────────────────────────────
 // The C11 law: priority / assignee / vendor notes unchanged by every post-DRAFT reader.
 assert unit_ord_contract_headerDetailFrozen { headerDetailFrozen }
-check unit_ord_contract_headerDetailFrozen for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_headerDetailFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       2 StaffMember, 8 EntityId, 7 Tick, 8 Snapshot, 2 Note expect 0
 
@@ -555,7 +555,7 @@ check unit_ord_contract_headerDetailFrozen for 5 but 5 Int, 3 Scalar, 5 State, 8
 assert unit_ord_contract_priorityDefault {
   all o: CreateOrderOcc | committed[o] implies oPost[o].sPriority = OP_UNDEFINED
 }
-check unit_ord_contract_priorityDefault for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_contract_priorityDefault for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       6 EntityId, 6 Tick, 6 Snapshot, 2 Note expect 0
 
@@ -571,7 +571,7 @@ run unit_ord_detailsSetWhileDraft {
     oPost[o].sAssignee = o.assignee
     oPost[o].sNotes = o.notes
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 StaffMember, 8 EntityId, 6 Tick, 6 Snapshot, 5 Occurrence, 2 Note expect 1
 
@@ -582,7 +582,7 @@ run unit_ord_detailsFrozenRefused {
     o.admission.because = RFrozen
     oPre[o].sStatus = OS_SUBMITTED
   }
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
 
@@ -594,7 +594,7 @@ run unit_ord_assigneeForeignRefused {
     o.admission.because = RForeignRef
     some o.assignee and o.assignee.subject.tenantId != o.subject.tenantId
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       2 StaffMember, 9 EntityId, 6 Tick, 6 Snapshot, 5 Occurrence, 2 Note expect 1
 
@@ -607,7 +607,7 @@ run unit_ord_assigneeRetiredRefused {
     o.admission in Rejected
     o.admission.because = RRetiredRef
   }
-} for 5 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 StaffMember, 9 EntityId, 7 Tick, 6 Snapshot, 6 Occurrence, 2 Note expect 1
 
@@ -619,7 +619,7 @@ run unit_ord_internalNotesAnyTime {
     oPre[o].sStatus = OS_CLOSED
     oPost[o].sInternalNotes != oPre[o].sInternalNotes
   }
-} for 7 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 Tick, 9 EntityId, 12 Snapshot, 2 Note expect 1
 
@@ -627,25 +627,25 @@ run unit_ord_internalNotesAnyTime {
 // RemoveLine on a line still servicing a demand is refused RDemandAttached (TWO ACTS: detach first — MP's word).
 run unit_ord_removeWithDemandRefused {
   some o: RemoveLineOcc | some lPre[o].sDemand and refusedAtAdmission[o] and RDemandAttached in o.admission.because
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note expect 1
 // A committed RemoveLine saw no demand attached (the law behind the two acts).
 assert unit_ord_removeRequiresDetached { all o: RemoveLineOcc | committed[o] implies no lPre[o].sDemand }
-check unit_ord_removeRequiresDetached for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_removeRequiresDetached for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note expect 0
 // Internal notes on a CLOSED line: Annotate commits and CHANGES the line's note set (TQ-7(c) one rung down; the point-defect fix).
 run unit_ord_lineNotesOnClosedLine {
   some o: AnnotateLineOcc | committed[o] and lPre[o].sLineStatus = L_CLOSED and lPost[o].sInternalNotes != lPre[o].sInternalNotes
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 // Annotate AFTER the line's retire is refused RLineClosed: terminality covers the line's notes (MP 2026-09-09).
 run unit_ord_annotateAfterRemoveRefused {
   some r: RemoveLineOcc, o: AnnotateLineOcc | committed[r] and o.subject = r.subject and precedes[r.tick, o.tick]
     and refusedAtAdmission[o] and o.admission.because = RLineClosed
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 // Terminality, both logs: nothing commits on an order after its committed delete, nor on a line after its committed remove.
@@ -653,12 +653,12 @@ assert unit_ord_nothingAfterRetire {
   all r: DeleteOrderOcc, o: CreateOrderOcc + UpdateSupplierOcc + ResetToSupplierOcc + SubmitOcc + CloseOrderOcc + CancelOrderOcc + UpdateOrderDetailsOcc + AnnotateOrderOcc + DeleteOrderOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
   all r: RemoveLineOcc, o: AddLineOcc + UpdateLineOcc + AttachDemandOcc + DetachDemandOcc + RemoveLineOcc + RecordAcknowledgmentOcc + RecordReceiptOcc + ReverseReceiptOcc + CloseLineOcc + AnnotateLineOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
 }
-check unit_ord_nothingAfterRetire for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 0
 
 // ── MPBOT-11 M2 (2026-10-01) — the recording law on both order logs: refused vs recorded ──────
-check unit_ord_noRecordedRefusalWithoutGenesis { lco/noRecordedRefusalWithoutGenesis and lcl/noRecordedRefusalWithoutGenesis } for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+check unit_ord_noRecordedRefusalWithoutGenesis { lco/noRecordedRefusalWithoutGenesis and lcl/noRecordedRefusalWithoutGenesis } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 0
 // witness: a refused order genesis is NOT recorded; a refused line act on a LIVE line IS
@@ -666,6 +666,6 @@ run unit_ord_refusedGenesisNotRecordedLineRefusalRecorded {
   some c: CreateOrderOcc, u: UpdateLineOcc |
     refusedAtAdmission[c] and not lco/recorded[c]
     and refusedAtAdmission[u] and lcl/liveAt[u] and lcl/recorded[u]
-} for 6 but 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
