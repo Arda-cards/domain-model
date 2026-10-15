@@ -30,13 +30,14 @@ module resources/inventory_item/inventory_pool
  * lock/unlock the set as a unit; reservations against the set.
  */
 
-open meta/profiles/domain_log                    // PROFILE (DT-012): the log anatomy (StatefulAction, Tick, verdicts)
+open meta/profiles/timed_log                     // PROFILE (DT-012): P2 — the log anatomy (StatefulAction, Tick, verdicts) + the domain-time stamp (Timed, Instant): the COORDINATOR-Q527 opt-in
 open meta/kernel                                 // Scoped, Entity, EntityId, resolve
 open reference_data/item/item_types            // Item — the membership classifier (TYPES; laws via root mock/impl)
 open resources/inventory_item/inventory_item_types     // InventoryItem (+ transitively keyed algebra, values)
 open meta/subject_log/subject_log[InventoryPool, PoolState] as plog
 open meta/subject_log/lifecycle[InventoryPool, PoolState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030 M2; cut 2, 2026-09-10)
 open meta/subject_log/affirm[InventoryPool, PoolState] as aff     // the AFFIRM act (Q43, 2026-09-10: the module's promised first adopter)
+open shared/backdating                           // RBackdated — the back-dating refusal family (COORDINATOR-Q527); this module's member is RBackdatedPoolWrite
 
 /** InventoryPool — the IDENTITY of a tenant-scoped set of InventoryItems under one Item; its
     membership lives on PoolState records in the occurrence log. */
@@ -103,6 +104,11 @@ sig PoolRemoveOcc extends lc/MutateOcc { item: one InventoryItem, reverses: lone
     "take inventory from Inventory-at-Rest into a new DemandItem without receiving". */
 sig PoolTransferOcc extends lc/MutateOcc { item: one InventoryItem, to: one InventoryPool, reverses: lone PoolOcc }
   { bindings = subject + item + to + arche + reverses }
+/** poolWriteKinds — the kinds that WRITE a version of the pool (the lifecycle shapes: genesis, the three movements, the retire);
+    Affirm commits inert and stays unstamped. COORDINATOR-Q527 (MP, 2026-10-15): these opt in to the domain-time stamp, so the
+    log can state in CAUSAL terms that no accepted step back-dates the history it reads (`poolStampsMonotone`). */
+fun poolWriteKinds: set PoolOcc { CreatePoolOcc + PoolAddOcc + PoolRemoveOcc + PoolTransferOcc + RetirePoolOcc }
+fact PoolWritesTimed { poolWriteKinds in Timed }
 /** ReversalDiscipline — B-mov: `reverses` names a COMMITTED row on the SAME pool, EARLIER, of the INVERSE kind and the same
     item — an add reversing a remove, a remove reversing an add, a transfer reversing a transfer whose `to` is this one's
     source and whose source is this one's `to`. The late-movement detector (the owner's module) excludes rows named by a
@@ -133,6 +139,10 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
                          //   typed duplicate refusal. LOCAL atom: this module opens no pattern layer, and the pattern's
                          //   `RDuplicateArche` would clash in the flat namespace with a root that opens both.
         extends Reason {}
+/** RBackdatedPoolWrite — the RBackdated family's pool member (COORDINATOR-Q527): a write dated BEFORE the pool's newest
+    committed write — accepting it would put the pool's stamps out of causal order (`poolStampsMonotone`). The runtime's
+    counterpart today is the pool's untyped fork conflict; its typed code is MPBOT-77's survey. */
+one sig RBackdatedPoolWrite extends RBackdated {}
 
 // ── the spine adoption: chaining (unconditional — a refused occurrence still read the real
 // membership) + v1 result policy ────────────────────────────────────────────────────────────────
@@ -239,6 +249,20 @@ pred splitInPool[s: SplitOcc, a: PoolAddOcc] {
 fun lastPoolTouch[p: InventoryPool, t: Tick]: lone PoolOcc { plog/lastTouch[p, t] }
 /** heldAt — the pool's membership as of `t` (empty before any committed history). */
 fun heldAt[p: InventoryPool, t: Tick]: set InventoryItem { plog/recordAt[p, t].holds }
+/** lastPoolWrite — the latest committed WRITE (a stamped kind) on `p` at-or-before `t`: the version a stamp comparison reads. */
+fun lastPoolWrite[p: InventoryPool, t: Tick]: lone PoolOcc {
+  { o: poolWriteKinds | committed[o] and o.subject = p and notAfter[o.tick, t]
+      and (no b: poolWriteKinds | committed[b] and b.subject = p and notAfter[b.tick, t] and precedes[o.tick, b.tick]) }
+}
+/** poolRetiredAt — the pool has a committed retire at-or-before `t` (the end of its history; a consumer's gate reads this —
+    COORDINATOR-Q527 B: demand's COMPLETE). */
+pred poolRetiredAt[p: InventoryPool, t: Tick] { some r: RetirePoolOcc | committed[r] and r.subject = p and notAfter[r.tick, t] }
+/** poolStampsMonotone — the per-log TRACE LAW (COORDINATOR-Q527, MP's causal rule): along one pool's committed causal order
+    the domain stamps never go back. A THEOREM of the `RBackdatedPoolWrite` arm in every write guard (checked, never a fact). */
+pred poolStampsMonotone {
+  all disj a, b: poolWriteKinds | (committed[a] and committed[b] and a.subject = b.subject and precedes[a.tick, b.tick])
+    implies atOrBefore[a.at, b.at]
+}
 
 // M2c (DT-020 §8.5.3/§8.2.1, SPEARHEAD-D1 A′-2): "AT REST" IS THE POOL'S CUSTODY READING —
 // a pool CANNOT know who holds it (the DAG requirement: this module sees no ReceivingLine /

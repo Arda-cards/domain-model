@@ -26,7 +26,7 @@ module operations/demand/demand_types
  * inventory_pool rides that cone.
  */
 
-open meta/profiles/domain_log                        // PROFILE (DT-012): log anatomy + group/order premises
+open meta/profiles/timed_log                         // PROFILE (DT-012): P2 — log anatomy + group/order premises + the domain-time stamp (COORDINATOR-Q527: CompleteOcc is stamped)
 open meta/kernel                                     // Scoped, EntityId, resolve
 open meta/subject_log/subject_log[DemandItem, DemandState] as dlog   // the log SPINE (DT-015 Q5)
 open meta/subject_log/lifecycle[DemandItem, DemandState] as lc     // the SHAPES: Create / Mutate / Retire (DT-030, 2026-09-09)
@@ -36,6 +36,7 @@ open shared/values                                   // Quantity
 open reference_data/item/item_types                  // Item (collation-key target; TYPES only)
 open resources/processing_network/processing_network_types   // Station (collation-key target; TYPES only)
 open resources/kanban_card/kanban_card_types          // CardCycle + the cycle log surface + KanbanCard (TYPES — DT-017; the kanban four-file cut retired the INTERIM direct open, 2026-07-08)
+open shared/backdating                               // RBackdated — the back-dating refusal family (COORDINATOR-Q527); this module's member is RBackdatedHolding
 
 // ── the status vocabulary ───────────────────────────────────────────────────────────────────────
 /** DemandStatus — the DemandItem lifecycle states (R5: MVP2 five states, plain enum; DS_ prefix
@@ -176,12 +177,16 @@ sig ExtractProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bind
     fill → READY (cycle CompleteProcessing) first; this commit gates on fills being READY. */
 sig DistributeOcc extends lc/MutateOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
   { bindings = subject + allocation.Quantity + EntityId.allocation + fills }
-/** Complete — declare the production run done (R8): requires the holding pool EMPTY and every
-    live member SETTLED. C/OP call-first: the caller settles each still-IN_PROCESS member first —
-    inventory → CompleteProcessing (READY), none → ProductionFailure (REQUESTING, back in the
-    queue); this commit gates on no member left IN_PROCESS. The resulting quantity MAY differ
-    from the intent (R3b advisory). */
+/** Complete — declare the production run done (R8): requires the holding pool RETIRED (COORDINATOR-Q527
+    Option B, MP 2026-10-15: the caller's retire leg, which the pool admits only EMPTY, precedes this commit)
+    with its newest write dated at or before this commit's own stamp (A5), and every live member SETTLED.
+    C/OP call-first: the caller settles each still-IN_PROCESS member first — inventory →
+    CompleteProcessing (READY), none → ProductionFailure (REQUESTING, back in the queue) — and retires
+    the holding; this commit gates on no member left IN_PROCESS and the holding retired. The resulting
+    quantity MAY differ from the intent (R3b advisory). STAMPED (`CompleteTimed`): the one demand kind
+    carrying the domain-time stamp, read against the holding pool's writes. */
 sig CompleteOcc extends lc/MutateOcc {} { bindings = subject }
+fact CompleteTimed { CompleteOcc in Timed }   // COORDINATOR-Q527: the stamp the A5 condition compares
 /** Cancel — abandon an OPEN task (R5: guard requires NO attached cycles — RHasCards). */
 sig CancelOcc extends lc/MutateOcc {} { bindings = subject }
 /** Delete — delete/retire the closed task (R7: terminal Delete/Retire; tombstoned, II precedent). */
@@ -238,7 +243,8 @@ one sig RDemandStarted,     // create: this subject already has committed histor
         RNotAttached,       // remove/detach: the cycle is not a member
         RHasCards,          // cancel with attached cycles (R5)
         RBadAllocation,     // distribute: allocation keys / fills outside the live membership (R8)
-        RUndistributed,     // complete: the holding pool still has content (R8)
+        RUndistributed,     // complete: the holding pool is not yet RETIRED at the commit — content may remain or arrive
+                            //   (R8; COORDINATOR-Q527 B: the retire leg, admitted only EMPTY, precedes the commit)
         RNotTerminal        // delete: the subject is not COMPLETE/CANCELED
         extends Reason {}
 // The PD subject's reasons (§8.1.2/§8.1.4; cut 3). RWrongItem is REUSED from the pool module
@@ -251,6 +257,10 @@ one sig RDeliveryStarted,      // create-delivery: this PD already has committed
                                //   OPEN→IN_PROCESS StartProduction choreography belongs to a service
                                //   composite OUTSIDE the model (A4 caller-responsibility)
         extends Reason {}
+/** RBackdatedHolding — the RBackdated family's demand member (COORDINATOR-Q527 A5, MP 2026-10-15): COMPLETE refused
+    because the holding pool's newest committed write is dated AFTER the COMPLETE's own stamp — accepting it would record
+    a completion earlier in domain time than the content history it closes. Runtime: `DemandReason`, the same name (#327). */
+one sig RBackdatedHolding extends RBackdated {}
 
 // ── the read API (per-role; L9) ─────────────────────────────────────────────────────────────────
 /** dPre / dPost — an occurrence's records, TYPED (the DT-017 Snapshot field-name collision fix:
