@@ -150,11 +150,25 @@ fact PoolChaining      { plog/chained }
 // (no o.pre = the pool has no committed history: membership reads empty — `none.holds = none`.)
 
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ────────────────────
+/** prevPoolWrite — the newest committed write on `p` STRICTLY before `o` (the pool's OWN guard reads its own log, so the
+    at-or-before read `lastPoolWrite[p, o.tick]` would name a committed `o` itself — found by `unit_pool_stampsMonotone`'s
+    first counterexample, 2026-10-15; a consumer reading the pool at ITS tick has no such self, OneOccurrencePerTick). */
+fun prevPoolWrite[o: PoolOcc, p: InventoryPool]: lone PoolOcc {
+  { w: poolWriteKinds | committed[w] and w.subject = p and precedes[w.tick, o.tick]
+      and (no b: poolWriteKinds | committed[b] and b.subject = p and precedes[b.tick, o.tick] and precedes[w.tick, b.tick]) }
+}
+/** poolBackdatedViol — COORDINATOR-Q527 (MP's causal rule): a write on `p` dated BEFORE `p`'s newest committed write is
+    refused `RBackdatedPoolWrite` — the step that would put the trace out of order is never accepted; `poolStampsMonotone`
+    is its theorem. Genesis has no earlier write (a second genesis is `RPoolStarted`), so Create carries no arm. */
+fun poolBackdatedViol[o: PoolOcc, p: InventoryPool]: set Reason {
+  (some w: prevPoolWrite[o, p] | not atOrBefore[w.at, o.at]) => RBackdatedPoolWrite else none
+}
 /** createPoolViol / retirePoolViol — cut 2: the family's arms + the domain's emptiness rule (Q17). */
 fun createPoolViol[o: CreatePoolOcc]: set Reason { lc/createViol[o, RPoolStarted] }
 fun retirePoolViol[o: RetirePoolOcc]: set Reason {
   lc/retireViol[o, RPoolClosed]
   + ((lc/liveAt[o] and some o.pre.holds) => RPoolNotEmpty else none)
+  + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527: a retire dated before the newest write
 }
 fun poolAddViol[o: PoolAddOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2: never created / retired — the family's arm
@@ -166,11 +180,13 @@ fun poolAddViol[o: PoolAddOcc]: set Reason {
   // tick (RAlreadyMember above only catches the SAME pool).
   + ((some q: InventoryPool - o.pool | o.item in heldAt[q, o.tick]) => RHeldElsewhere else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov: a re-sent origin on this pool is refused, typed (the module FACT `ArcheUnique` needs the refusal — Q8)
+  + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527
 }
 fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
+  + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527
 }
 /** poolTransferViol — M2b: RSameTarget (a no-op move), RNotMember (the item isn't at the
     SOURCE — `subject`/`from`), RWrongItem/RWrongTenant judged at the DESTINATION (`to`) — the
@@ -184,6 +200,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item.itemPin.subject != o.to.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
+  + poolBackdatedViol[o, o.subject] + poolBackdatedViol[o, o.to]   // COORDINATOR-Q527: judged at the SOURCE and the DESTINATION (its paired add carries this stamp — TransferPairing)
 }
 fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // Q43 + Q45: never-created and retired are DISTINCT atoms; stale is the pattern's
 fact PoolAdmissionWitness {
@@ -228,9 +245,10 @@ pred adjacentCommit[a, b: Occurrence] {
 fact TransferPairing {
   all o: PoolTransferOcc | committed[o] implies
     (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
-       and a.arche = o.arche)   // Q7 = A (MP, 2026-09-03): the paired half carries the transfer's causal signature — one act, one
+       and a.arche = o.arche   // Q7 = A (MP, 2026-09-03): the paired half carries the transfer's causal signature — one act, one
                                 //   `arche` on both rows; adjacency stays as the model's "same transaction"; when the transfer is
                                 //   self-minted the pair cites the transfer row itself (it IS the add's immediate cause)
+       and a.at = o.at)        // COORDINATOR-Q527: one act, one STAMP — the transfer's guard judged the destination's newest write, so the paired add's own arm cannot fire
 }
 
 /** splitInPool — M2b composite (a DERIVED predicate, not a kind): a committed SplitOcc whose

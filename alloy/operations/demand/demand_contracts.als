@@ -251,6 +251,8 @@ pred guarantees {
   and distributeRequiresReady
   and completeRequiresSettled
   and completeRequiresDistributed
+  and completeRequiresRetiredHolding   // COORDINATOR-Q527 B (2026-10-15): the retired gate; C5 above is now its theorem
+  and completeStampedAfterHolding      // COORDINATOR-Q527 A5: the stamp condition in causal terms
   and withdrawnDetachReconciles
   and terminalClosure
   and createDeliveryGated       // §8.1.4 (vacuous in PD-free consumer universes)

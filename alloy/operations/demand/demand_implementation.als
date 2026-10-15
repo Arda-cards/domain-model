@@ -199,8 +199,10 @@ fun distributeViol[o: DistributeOcc]: set Reason {
 fun completeViol[o: CompleteOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_IN_PROCESS) => RBadState else none)
-  + ((liveAtOccD[o] and some heldAt[resolve[dPre[o].sHolding] & InventoryPool, o.tick])
-     => RUndistributed else none)
+  + ((liveAtOccD[o] and some p: resolve[dPre[o].sHolding] & InventoryPool | not poolRetiredAt[p, o.tick])
+     => RUndistributed else none)   // COORDINATOR-Q527 B: the holding RETIRED first (the caller's leg, admitted only EMPTY) — C5 follows
+  + ((liveAtOccD[o] and some p: resolve[dPre[o].sHolding] & InventoryPool, w: lastPoolWrite[p, o.tick] | not atOrBefore[w.at, o.at])
+     => RBackdatedHolding else none)   // COORDINATOR-Q527 A5: the holding's newest write dated after this commit's own stamp
   + ((liveAtOccD[o] and some c: preMemberCycles[o] | statusAt[c, o.tick] = IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every member SETTLED first (READY or back to REQUESTING)
 }
