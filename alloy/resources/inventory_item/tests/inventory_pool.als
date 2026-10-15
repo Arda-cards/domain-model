@@ -124,3 +124,31 @@ run unit_pool_reversalNamesInverse {
 run unit_pool_reversalWrongKindImpossible {
   some disj a, b: PoolAddOcc | b.reverses = a
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 0
+
+// ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — the pool's member and the per-log trace law:
+// stamps are monotone along each pool's committed causal order, a THEOREM of the guards (MP's causal rule: no
+// step is accepted that would break the conditions on the log's trace). Registered in the workbook plan note
+// (streams/samwise/q527-model-change-plan.md) before any run; RED before the arm — see the commit bodies.
+
+// P1: a write dated BEFORE the pool's newest committed write is refused with exactly RBackdatedPoolWrite.
+run unit_pool_backdatedWriteRefused {
+  some o: PoolAddOcc | refusedAtAdmission[o] and o.admission.because = RBackdatedPoolWrite
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
+
+// P2: the per-log trace law.
+assert unit_pool_stampsMonotone { poolStampsMonotone }
+check unit_pool_stampsMonotone for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 0
+
+// P3 (control): a write dated EQUAL to the newest write commits — at-or-before, never strictly after.
+run unit_pool_sameStampWriteCommits {
+  some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.subject = a.subject
+    and r.item = a.item and precedes[a.tick, r.tick] and r.at = a.at
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
+
+// P4: a transfer's paired destination add carries the transfer's stamp (one act, one stamp — the pairing's rule).
+assert unit_pool_transferPairOneStamp {
+  all o: PoolTransferOcc, a: PoolAddOcc |
+    (committed[o] and committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a] and a.arche = o.arche)
+      implies a.at = o.at
+}
+check unit_pool_transferPairOneStamp for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 0
