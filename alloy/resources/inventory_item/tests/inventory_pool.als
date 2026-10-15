@@ -152,3 +152,17 @@ assert unit_pool_transferPairOneStamp {
       implies a.at = o.at
 }
 check unit_pool_transferPairOneStamp for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 0
+
+// P5 — Copilot's review of domain-model#6 (thread r4289194035): the transfer guard's DESTINATION arm witnessed on its own.
+// Two live pools; the SOURCE's newest write dated at or before the transfer's stamp (its arm silent); the DESTINATION's
+// newest write dated AFTER it: the transfer is refused with exactly RBackdatedPoolWrite — a typed refusal at the transfer,
+// not a trace excluded by TransferPairing and the paired add's guard (which is why P2 and P4 stay green without the arm).
+// A guard of behaviour that already exists at 01deb9f (SAT from the start, declared); UNSAT with the destination arm
+// removed — the throwaway control in the commit body.
+run unit_pool_transferBackdatedDestinationRefused {
+  some o: PoolTransferOcc | {
+    refusedAtAdmission[o] and o.admission.because = RBackdatedPoolWrite
+    all w: prevPoolWrite[o, o.subject] | atOrBefore[w.at, o.at]
+    some w: prevPoolWrite[o, o.to] | earlierThan[o.at, w.at]
+  }
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
