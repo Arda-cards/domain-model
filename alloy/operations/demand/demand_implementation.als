@@ -141,12 +141,16 @@ fun recordProductionViol[o: RecordProductionOcc]: set Reason {
   // carries no pool field of its own (compose-don't-subsume: the paired CreateDeliveryOcc
   // asserts it — the same asymmetric shape the Revoke/Extract pair already uses, neither side
   // duplicating the other's fields); this reads the pool through the §8.1.2 ATOMIC pairing
-  // (`createRecordsAtomically`) — the CreateDeliveryOcc naming the SAME ProductionDelivery for
-  // the SAME demand. Independent of that CreateDeliveryOcc's OWN admission (a candidate `c`
-  // need not itself be committed): each half of the composite stays reason-precise on its own
-  // terms, not merely inheriting the sibling's guard evaluation order.
+  // (`createRecordsAtomically`) — the COMMITTED CreateDeliveryOcc naming the SAME
+  // ProductionDelivery for the SAME demand. MF-003 (MP, 2026-10-16) REVERSES the earlier clause
+  // "independent of that CreateDeliveryOcc's OWN admission (a candidate `c` need not itself be
+  // committed)": read over every create, a REFUSED wrong-pool create stayed in the arm's range,
+  // so the honest retry's record (same delivery id, a pool that agrees) was refused RWrongItem,
+  // and `createRecordsAtomically` then excluded the retry instead of letting it commit. Over
+  // committed creates the arm is subsumed in this universe by the create-side arm (ids are keys,
+  // pins static); it stays for the runtime, where the pools can change between the two halves.
   + ((some c: CreateDeliveryOcc, p: resolve[c.pool] & InventoryPool |
-        c.subject.eId = o.delivery and c.subject.demandRef = o.subject.eId
+        committed[c] and c.subject.eId = o.delivery and c.subject.demandRef = o.subject.eId
         and p.itemPin.subject != o.subject.itemPin.subject)
      => RWrongItem else none)
 }

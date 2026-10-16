@@ -191,7 +191,9 @@ fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
 /** poolTransferViol — M2b: RSameTarget (a no-op move), RNotMember (the item isn't at the
     SOURCE — `subject`/`from`), RWrongItem/RWrongTenant judged at the DESTINATION (`to`) — the
     same item-agreement shape `poolAddViol` uses, since the destination gain IS an ordinary
-    add (`transferPairing`). */
+    add (`transferPairing`). RDuplicateOrigin on BOTH pools: the source's is the row's own
+    `archeDuplicate`; the destination's (MF-002, MP 2026-10-16) refuses a transfer whose origin
+    a committed row on `to` already carries, because its paired add would be that duplicate. */
 fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2: the SOURCE must be live …
   + ((not lc/liveSubjectAt[o.to, o.tick]) => RPoolClosed else none)   // … and so must the DESTINATION (its paired add is a Mutate on `to`)
@@ -201,6 +203,14 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
   + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
   + poolBackdatedViol[o, o.subject] + poolBackdatedViol[o, o.to]   // COORDINATOR-Q527: judged at the SOURCE and the DESTINATION (its paired add carries this stamp — TransferPairing)
+  // MF-002 (MP, 2026-10-16): the DESTINATION side of the same slot. The paired add on `to` carries `o.arche`
+  // (`TransferPairing`), so its own `archeDuplicate` fires exactly when an earlier committed row on `to` carries
+  // that origin; this arm tests the same condition on the transfer, so the attempt is REFUSED with a reason
+  // instead of having no admissible pair (and being silently excluded). It mirrors `archeDuplicate`'s slot test
+  // with the subject set to `to` (a self-minted transfer never trips it: nothing before it can cite it), so a
+  // ruling on MF-001 (whether a self-initiated row takes a slot) changes this arm together with that predicate.
+  + ((some b: PoolOcc | committed[b] and b.subject = o.to and precedes[b.tick, o.tick] and b.arche = o.arche)
+     => RDuplicateOrigin else none)
 }
 fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // Q43 + Q45: never-created and retired are DISTINCT atoms; stale is the pattern's
 fact PoolAdmissionWitness {
@@ -240,8 +250,11 @@ pred adjacentCommit[a, b: Occurrence] {
     OWN guard (`poolTransferViol`) already judges `RWrongItem`/`RWrongTenant` at the
     DESTINATION — the same clauses the paired add's guard evaluates — and the item was JUST
     removed from every other pool (this transfer's own source effect), so the paired add's
-    `RAlreadyMember`/`RHeldElsewhere` cannot fire: the pairing is always admissible once the
-    transfer itself is. */
+    `RAlreadyMember`/`RHeldElsewhere` cannot fire. Nor can its `RDuplicateOrigin` (the
+    transfer's destination-side origin arm judges the same slot — MF-002, MP 2026-10-16) or its
+    `RBackdatedPoolWrite` (one stamp on both rows, judged at the destination — COORDINATOR-Q527).
+    Before each of those arms, the offending transfer had no admissible pair and was EXCLUDED
+    rather than refused: the pairing is always admissible once the transfer itself is. */
 fact TransferPairing {
   all o: PoolTransferOcc | committed[o] implies
     (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
