@@ -397,13 +397,15 @@ check unit_dem_recordProductionItemArmSubsumed for 7 but 2 RoleDetail, 5 Int, 3 
       10 EntityId, 9 Snapshot, 2 Note expect 0
 
 // MF-003 (MP, 2026-10-16): the honest RETRY. A create naming a pool of another item is refused with
-// RWrongItem; the retry (same delivery, a pool that agrees) commits, and so does its RecordProduction.
+// RWrongItem; the retry (same delivery, naming a pool — which its committed create guard makes one that
+// agrees; Copilot on PR #7) commits, and so does its RecordProduction.
 // RED before the change: the record read the refused create's pool and was refused RWrongItem, and
 // `createRecordsAtomically` then excluded the retry altogether (UNSAT).
 run unit_dem_deliveryRetryAfterWrongPoolRecorded {
   some disj c1, c2: CreateDeliveryOcc, r: RecordProductionOcc | {
     refusedAtAdmission[c1] and c1.admission.because = RWrongItem
     committed[c2] and c2.subject = c1.subject and precedes[c1.tick, c2.tick]
+    some resolve[c2.pool] & InventoryPool   // the retry NAMES a pool, so its committed guard proved the item agreement
     committed[r] and r.delivery = c2.subject.eId
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
