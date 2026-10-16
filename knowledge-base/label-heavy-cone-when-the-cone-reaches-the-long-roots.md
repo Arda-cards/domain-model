@@ -22,10 +22,17 @@ with `heavy-cone` to avoid the timeouts"):**
 - **The PR body cites the run:** each root's verdict counts and time, the end line, and the head SHA.
   While the run is still going, the body says so and what remains. If a root misses its `expect`,
   remove the label and fix the cause on the PR.
-- **Running the set here:** one JVM per root, glucose, each root resumable through its own result file.
-  The receiver unit root needs more than the default heap: give it its own lane with `-Xmx7g`. The
-  other roots run in a second lane with `-Xmx6g`. A 4-core, 15 GB machine holds both lanes plus the rung
-  base commands at `-Xmx2g`.
+- **Running the set in a cloud session** (measured on #7's head, 2026-10-16, on a 4-core machine with a 16 GB
+  memory cgroup): one JVM per root, glucose, each root resumable through its own result file.
+  - **The rung base commands need `-Xmx5g`.** At `-Xmx2g` the order and receiver rungs died of `OutOfMemoryError`
+    while parsing, with no verdict. At `-Xmx5g` all 8 rungs (10 commands) are UNSAT as expected: about a minute each
+    for the order rungs, 5 to 7 minutes for the receiver ones.
+  - **Run nothing else heavy beside the long lanes.** Two lanes (`-Xmx7g` for the receiver unit root, `-Xmx6g` for
+    the rest) fill the cgroup. A Dafny gate started beside them got `tests/pool_lattice.als` killed by the cgroup's
+    OOM killer after 3.4 hours, still on its first command (`sys_poolLatticeGlobal`: 896k variables, 2.3M clauses).
+  - **A session container is not a night window.** A restart killed the remaining lanes, the receiver unit root at
+    10 of 35 commands after 4.9 hours. Roots that run for hours belong in the night window's slots; the cloud
+    session can carry the rung base commands and the roots that finish in minutes.
 
 **Why not let CI decide:** the check's budget (`knowledge-base/nested-timeout-inside-a-job-deadline.md`)
 guarantees the explicit failure, never a verdict. An unlabeled heavy PR spends 15 minutes of runner
