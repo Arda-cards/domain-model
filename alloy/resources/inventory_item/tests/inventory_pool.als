@@ -116,6 +116,18 @@ run unit_pool_selfMintedTransferPairCitesTransfer {
   some o: PoolTransferOcc, a: PoolAddOcc | committed[o] and committed[a] and o.arche = o
     and a.pool = o.to and a.item = o.item and adjacentCommit[o, a] and a.arche = o
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+/** MF-002 (MP, 2026-10-16): a transfer whose origin a CITING row on the DESTINATION already carries is refused with exactly
+    RDuplicateOrigin, judged at the destination, because the transfer's paired add would be that duplicate. RED before the
+    destination arm: the attempt had no admissible paired add, so `TransferPairing` excluded it instead of refusing it (UNSAT).
+    The source is kept clear of the origin, so the refusal is the destination arm's alone; the citing row `b` keeps the
+    witness independent of MF-001 (whether a self-initiated row takes a slot). */
+run unit_pool_transferOriginLandedOnDestinationRefused {
+  some g: Occurrence, b: PoolOcc, o: PoolTransferOcc |
+    committed[b] and b.pool = o.to and b.arche = g and b.arche != b and precedes[b.tick, o.tick]
+    and o.arche = g
+    and (no c: PoolOcc | committed[c] and c.pool = o.pool and precedes[c.tick, o.tick] and c.arche = g)
+    and refusedAtAdmission[o] and o.admission.because = RDuplicateOrigin
+} for 7 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 9 Tick expect 1
 /** A reversal names the inverse row on the same pool, same item, earlier — and carries its OWN arche (a new context). */
 run unit_pool_reversalNamesInverse {
   some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.reverses = a and r.arche != a.arche

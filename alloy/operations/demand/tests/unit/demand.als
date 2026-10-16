@@ -382,15 +382,33 @@ run unit_dem_deliveryWrongItemRefused {
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
 // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2, MINESWEEPER model-deltas M3.1): pool-vs-demand item
-// agreement on the RECORD side too — a RecordProduction correlated (by the §8.1.2 ATOMIC
-// pairing) with a CreateDelivery whose pool disagrees with the demand's item is refused with
-// exactly RWrongItem. RED before the arm: recordProductionViol had no item-agreement clause at
-// all (see the commit body for the RED evidence).
-run unit_dem_recordProductionWrongPoolItemRefused {
-  some r: RecordProductionOcc | refusedAtAdmission[r] and r.admission.because = RWrongItem
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+// agreement on the RECORD side too. MF-003 (MP, 2026-10-16) narrows the arm to COMMITTED creates. A
+// committed create has already passed the create-side arm (its pool agrees with the demand's item),
+// and in this universe ids are keys and pins are static, so the record-side arm cannot fire here:
+// the create-side arm SUBSUMES it. It stays for the runtime, where the pools can change between the
+// two halves (the Dafny follower's witness `RecordWrongItem` exhibits that case). Was
+// `run unit_dem_recordProductionWrongPoolItemRefused … expect 1`, satisfiable only because the arm
+// read REFUSED creates, which is what made the honest retry below unrecordable.
+assert unit_dem_recordProductionItemArmSubsumed {
+  no r: RecordProductionOcc | RWrongItem in r.admission.because
+}
+check unit_dem_recordProductionItemArmSubsumed for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool,
-      10 EntityId, 9 Snapshot, 2 Note expect 1
+      10 EntityId, 9 Snapshot, 2 Note expect 0
+
+// MF-003 (MP, 2026-10-16): the honest RETRY. A create naming a pool of another item is refused with
+// RWrongItem; the retry (same delivery, a pool that agrees) commits, and so does its RecordProduction.
+// RED before the change: the record read the refused create's pool and was refused RWrongItem, and
+// `createRecordsAtomically` then excluded the retry altogether (UNSAT).
+run unit_dem_deliveryRetryAfterWrongPoolRecorded {
+  some disj c1, c2: CreateDeliveryOcc, r: RecordProductionOcc | {
+    refusedAtAdmission[c1] and c1.admission.because = RWrongItem
+    committed[c2] and c2.subject = c1.subject and precedes[c1.tick, c2.tick]
+    committed[r] and r.delivery = c2.subject.eId
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 InventoryPool,
+      10 Tick, 11 EntityId, 10 Snapshot, 2 Note expect 1
 
 // M3.2: the minted holding pool's itemPin always agrees with the demand's item — a THEOREM of
 // the StartProduction effect (`StartProductionHoldingPoolPin`). RED before the fact: nothing
