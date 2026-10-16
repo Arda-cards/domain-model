@@ -103,10 +103,25 @@ pred demandCyclesAlignedAt[t: Tick] {
 
 // ── C5 · closure guards (R8) — single-log law ───────────────────────────────────────────────────
 /** Complete requires everything produced to be gone from the holding pool — distributed to
-    members or placed at a locator ("never had any" satisfies vacuously). */
+    members or placed at a locator ("never had any" satisfies vacuously). Since COORDINATOR-Q527 B
+    (2026-10-15) a THEOREM of `completeRequiresRetiredHolding` and the pool's retire-EMPTY rule. */
 pred completeRequiresDistributed {
   all o: CompleteOcc | committed[o] implies
     no heldAt[resolve[dPre[o].sHolding] & InventoryPool, o.tick]
+}
+/** completeRequiresRetiredHolding — COORDINATOR-Q527 Option B (MP, 2026-10-15), C5's sibling: a committed Complete saw
+    its holding pool RETIRED (the caller's retire leg, admitted only EMPTY, preceded the commit — call-first). A theorem
+    of the `RUndistributed` arm. */
+pred completeRequiresRetiredHolding {
+  all o: CompleteOcc | committed[o] implies
+    (all p: resolve[dPre[o].sHolding] & InventoryPool | poolRetiredAt[p, o.tick])
+}
+/** completeStampedAfterHolding — COORDINATOR-Q527 A5 in causal terms: every committed write of the holding pool causally
+    before a committed Complete is dated at or before the Complete's own stamp. A theorem of the `RBackdatedHolding` arm
+    (which reads the NEWEST write) and the pool's trace law `poolStampsMonotone`. */
+pred completeStampedAfterHolding {
+  all o: CompleteOcc, p: resolve[dPre[o].sHolding] & InventoryPool, w: poolWriteKinds |
+    (committed[o] and committed[w] and w.subject = p and precedes[w.tick, o.tick]) implies atOrBefore[w.at, o.at]
 }
 
 // ── C6 · the withdrawal reaction (R7) — CONVERGENT/NOTIFICATION ─────────────────────────────────
@@ -236,6 +251,8 @@ pred guarantees {
   and distributeRequiresReady
   and completeRequiresSettled
   and completeRequiresDistributed
+  and completeRequiresRetiredHolding   // COORDINATOR-Q527 B (2026-10-15): the retired gate; C5 above is now its theorem
+  and completeStampedAfterHolding      // COORDINATOR-Q527 A5: the stamp condition in causal terms
   and withdrawnDetachReconciles
   and terminalClosure
   and createDeliveryGated       // §8.1.4 (vacuous in PD-free consumer universes)

@@ -450,3 +450,66 @@ assert unit_dem_nothingAfterRetire {
 }
 check unit_dem_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note expect 0
+
+// ── COORDINATOR-Q527 (MP, 2026-10-15: Option B, the RBackdated family) — COMPLETE gates on a RETIRED holding
+// pool whose newest write is dated at or before the COMPLETE's own stamp. The witnesses below were registered
+// with their expected verdicts in the workbook plan note (streams/samwise/q527-model-change-plan.md) BEFORE any
+// run; RED before the arms — see the commit bodies. New commands pin `3 Instant` (before / equal / after).
+
+// W1: the family's demand member — exactly RBackdatedHolding when the holding pool, already RETIRED at the
+// commit (so the retired gate is silent), has its newest write dated AFTER the COMPLETE's own stamp.
+run unit_dem_completeBackdatedHoldingRefused {
+  some o: CompleteOcc, p: InventoryPool | {
+    refusedAtAdmission[o] and o.admission.because = RBackdatedHolding
+    resolve[dPre[o].sHolding] = p and poolRetiredAt[p, o.tick]
+    some w: lastPoolWrite[p, o.tick] | earlierThan[o.at, w.at]
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+
+// W2: every committed pool write causally before a committed COMPLETE is dated at or before it (the A5
+// condition as a published law — a theorem of the RBackdatedHolding arm and the pool's own trace law).
+assert unit_dem_contract_completeStampedAfterHolding { completeStampedAfterHolding }
+check unit_dem_contract_completeStampedAfterHolding for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note expect 0
+
+// W3: a committed COMPLETE's holding pool is RETIRED at its tick (B's gate as a published law; C5's sibling).
+assert unit_dem_contract_completeRequiresRetiredHolding { completeRequiresRetiredHolding }
+check unit_dem_contract_completeRequiresRetiredHolding for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note expect 0
+
+// W4: B's own witness — an EMPTY but UNRETIRED holding pool refuses COMPLETE with exactly RUndistributed
+// (before B an empty pool admitted it: the gate read emptiness, not retirement).
+run unit_dem_completeUnretiredEmptyHoldingRefused {
+  some o: CompleteOcc, p: InventoryPool | {
+    refusedAtAdmission[o] and o.admission.because = RUndistributed
+    resolve[dPre[o].sHolding] = p and no heldAt[p, o.tick] and not poolRetiredAt[p, o.tick]
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+
+// W5 (control): the ruled path commits — the holding pool retired EMPTY, dated before the COMPLETE, then COMPLETE.
+run unit_dem_completeRetiredHoldingCommits {
+  some o: CompleteOcc, p: InventoryPool, r: RetirePoolOcc | {
+    committed[o] and committed[r]
+    resolve[dPre[o].sHolding] = p and r.subject = p and precedes[r.tick, o.tick]
+    earlierThan[r.at, o.at]
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+
+// W6 (control, the record's E7): the retire dated EXACTLY at the COMPLETE's stamp lets it commit (at-or-before).
+run unit_dem_completeHoldingDatedAtCommits {
+  some o: CompleteOcc, p: InventoryPool, r: RetirePoolOcc | {
+    committed[o] and committed[r]
+    resolve[dPre[o].sHolding] = p and r.subject = p and precedes[r.tick, o.tick]
+    r.at = o.at
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
