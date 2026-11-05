@@ -79,4 +79,4 @@ run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
     and refusedAtAdmission[r] and pdlc/liveAt[r] and pdlc/recorded[r]
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note expect 1
