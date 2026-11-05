@@ -355,9 +355,9 @@ run unit_dem_deliveryRevokedArc {
     deliveryStatusAt[v.subject, v.tick] = PD_REVOKED
     v.subject not in contributionsFor[resolve[v.subject.demandRef] & DemandItem, v.tick]
   }
-} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      10 Tick, 10 EntityId, 9 Snapshot, 2 Note expect 1
+      12 Tick, 10 EntityId, 9 Snapshot, 2 Note expect 1
 
 // §8.1.4 refusal: a CreateDelivery whose target is not IN_PROCESS (here: still OPEN) —
 // exactly RTargetNotInProcess. The OPEN→IN_PROCESS choreography is a composite's, not ours.
@@ -378,7 +378,7 @@ run unit_dem_deliveryWrongItemRefused {
     refusedAtAdmission[o] and o.admission.because = RWrongItem
     demandStatusAt[resolve[o.subject.demandRef] & DemandItem, o.tick] = DS_IN_PROCESS
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -409,9 +409,9 @@ run unit_dem_deliveryRetryAfterWrongPoolRecorded {
     some resolve[c2.pool] & InventoryPool   // the retry NAMES a pool, so its committed guard proved the item agreement
     committed[r] and r.delivery = c2.subject.eId
   }
-} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 InventoryPool,
-      10 Tick, 11 EntityId, 10 Snapshot, 2 Note expect 1
+      12 Tick, 11 EntityId, 10 Snapshot, 2 Note expect 1
 
 // M3.2: the minted holding pool's itemPin always agrees with the demand's item — a THEOREM of
 // the StartProduction effect (`StartProductionHoldingPoolPin`). RED before the fact: nothing
