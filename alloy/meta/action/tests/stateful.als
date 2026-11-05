@@ -11,7 +11,7 @@ open meta/action/stateful
 /** SOp — a concrete stateful kind with free outcome, to exercise the anatomy. */
 sig SOp extends StatefulAction {} { no bindings }
 
-// A committed stateful action carries its result snapshot (read by the commit guard).
+// A committed stateful action carries its result snapshot (what its Effect produced).
 run unit_stateful_committedCarriesAfter {
   some a: SOp | committed[a] and some a.pre and some a.post
 } for 4 expect 1
