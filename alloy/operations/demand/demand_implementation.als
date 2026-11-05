@@ -131,6 +131,7 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
      => RForeignRef else none)
   + ((some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject)
      => RWrongItem else none)   // QA704 Q4 (a), DT-009 Q27: M3.2 as the arm it is in dafny-domain StartProductionViol (was the fact StartProductionHoldingPoolPin)
+  + ((some o.holding and not namedPoolLive[o.holding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b), MD-074: the holding must exist and be live
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_RELEASED
       and some c: preMemberCycles[o] | statusAt[c, o.tick] != IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every live member's StartProcessing (saga's first legs) already committed
@@ -138,6 +139,7 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
 fun recordProductionViol[o: RecordProductionOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_IN_PROCESS) => RBadState else none)
+  + ((liveAtOccD[o] and some dPre[o].sHolding and not namedPoolLive[dPre[o].sHolding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b): the holding may retire between two deliveries; the genesis refuses the same (one verdict)
   + ((some pd: resolve[o.delivery] & ProductionDelivery | pd.tenantId != o.subject.tenantId)
      => RForeignRef else none)   // §8.1.2: delivery now = the PD entity, not the transient pool
   // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): pool-vs-demand item agreement — the act binds the
@@ -172,6 +174,8 @@ fun extractProductionViol[o: ExtractProductionOcc]: set Reason {
     the status read. Both clauses may fire together (reason-precise = the SET). */
 fun createDeliveryViol[o: CreateDeliveryOcc]: set Reason {
   pdlc/createViol[o, RDeliveryStarted]                       // genesis-once — the family's arm (cut 2)
+  + ((some d: resolve[o.subject.demandRef] & DemandItem | some demandStateAt[d, o.tick].sHolding
+        and not namedPoolLive[demandStateAt[d, o.tick].sHolding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b), reading A: the pair keeps one verdict
   + ((demandStatusAt[resolve[o.subject.demandRef] & DemandItem, o.tick] != DS_IN_PROCESS)
      => RTargetNotInProcess else none)
   // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): re-based from a caller-asserted item to the

@@ -152,7 +152,8 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
         RPoolNotCreated, // Q45 (MP, 2026-09-10: "Yes — distinguish them"): an AFFIRM of a pool that never existed — distinct from RPoolClosed (retired)
         RPoolClosed,     // cut 2: the pool is not live — never created, or already retired (the family's arm; also a transfer's DESTINATION)
         RPoolNotEmpty,   // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
-        RReversalUnlawful // QA704 Q4 (a), DT-009 Q27: a movement naming a reversed row that is not the committed inverse row on this pool (was the fact ReversalDiscipline)
+        RReversalUnlawful, // QA704 Q4 (a), DT-009 Q27: a movement naming a reversed row that is not the committed inverse row on this pool (was the fact ReversalDiscipline)
+        RNoSuchPool      // QA704 Q2 (b), MP 2026-11-05 (dafny-domain#33, MD-074): a consumer's act names a pool that does not exist or is not live at the act — DECLARED here, read by demand (StartProduction, the delivery's genesis, RecordProduction) and kanban (StartProcessing)
         extends Reason {}
 /** RBackdatedPoolWrite — the RBackdated family's pool member (COORDINATOR-Q527): a write dated BEFORE the pool's newest
     committed write — accepting it would put the pool's stamps out of causal order (`poolStampsMonotone`). The runtime's
@@ -294,6 +295,11 @@ fun lastPoolWrite[p: InventoryPool, t: Tick]: lone PoolOcc {
 /** poolRetiredAt — the pool has a committed retire at-or-before `t` (the end of its history; a consumer's gate reads this —
     COORDINATOR-Q527 B: demand's COMPLETE). */
 pred poolRetiredAt[p: InventoryPool, t: Tick] { some r: RetirePoolOcc | committed[r] and r.subject = p and notAfter[r.tick, t] }
+/** poolLiveAt — the pool EXISTS (committed history at-or-before `t`) and is not retired: what a consumer's attach or holding
+    arm reads (QA704 Q2 (b); dafny-domain `PoolLiveAt`). */
+pred poolLiveAt[p: InventoryPool, t: Tick] { some lastPoolTouch[p, t] and not poolRetiredAt[p, t] }
+/** namedPoolLive — the id resolves to a pool live at `t` (dafny-domain `NamedPoolLive`, kanban-card-contract). */
+pred namedPoolLive[id: EntityId, t: Tick] { some p: resolve[id] & InventoryPool | poolLiveAt[p, t] }
 /** poolStampsMonotone — the per-log TRACE LAW (COORDINATOR-Q527, MP's causal rule): along one pool's committed causal order
     the domain stamps never go back. A THEOREM of the `RBackdatedPoolWrite` arm in every write guard (checked, never a fact). */
 pred poolStampsMonotone {

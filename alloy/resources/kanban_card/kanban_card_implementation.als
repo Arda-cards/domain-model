@@ -83,6 +83,7 @@ fun forwardViol[o: CycleOcc]: set Reason {
     used pool. */
 fun startViol[o: StartProcessingOcc]: set Reason {
   forwardViol[o]
+  + ((not namedPoolLive[o.pool, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b): the pool must exist and be live at the act (no dangling id attaches)
   + ((some p: resolve[o.pool] & InventoryPool | p.tenantId != o.subject.tenantId) => RForeignPool else none)
   + ((some p: resolve[o.pool] & InventoryPool | some c2: CardCycle - o.subject |
         liveCycleAt[c2, o.tick] and resolve[stateOfCycleAt[c2, o.tick].sPool] = p)
