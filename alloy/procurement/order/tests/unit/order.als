@@ -705,3 +705,8 @@ check unit_ord_assigneePinCurrencyHolds {
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 0
+// The definitional law is a THEOREM of the RVendorPinUnsound arm over committed binding writes.
+check unit_ord_supplierBindingPinAgreesHolds { supplierBindingPinAgrees }
+  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 0

@@ -486,3 +486,10 @@ check unit_rcv_lineItemPinCurrencyHolds {
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 0
+// The definitional law is a THEOREM of the RCarrierPinUnsound arm over committed header writes.
+check unit_rcv_receiverCarrierPinAgreesHolds { receiverCarrierPinAgrees }
+  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 0
