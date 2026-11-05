@@ -145,16 +145,12 @@ fact InventoryItemRefs { all ii: InventoryItem | no ii.dataRefs }
 // gave the old soft ref.
 fact ItemPinTenancy { all ii: InventoryItem | ii.itemPin.subject.tenantId = ii.tenantId }
 
-// D9 / G5 — license plates are unique (no two items EVER share one); non-reusability comes from the
-// log's no-resurrection guard (implementation) rather than a Retired axis.
-fact LicensePlateUnique { all disj a, b: InventoryItem | a.licensePlate != b.licensePlate }
-
-// D10 / G6 — a present serialNumber is unique within (tenant, Item).
-fact SerialNumberUniquePerItem {
-  all disj a, b: InventoryItem |
-    (a.tenantId = b.tenantId and a.itemPin.subject = b.itemPin.subject and some a.serialNumber)
-      implies a.serialNumber != b.serialNumber
-}
+// D9 / G5 — license plates are unique among items WITH COMMITTED HISTORY, and D10 / G6 — a present serialNumber is unique
+// within (tenant, Item) among them: since QA704 Q4 (a) (DT-009 Q27) both are ARMS of the births (`identityViol` in the
+// implementation: RLicensePlateTaken, RSerialTaken, on Create and on Split's new sibling) and THEOREMS over started items
+// (tests/unit/inventory_item.als unit_occ_lpnUniqueAmongStarted, unit_occ_serialUniqueAmongStarted), as in dafny-domain
+// src/resources/inventory-item/inventory-item.dfy. An item atom no birth committed is outside their reach. Non-reusability
+// of a plate comes from the log's no-resurrection guard rather than a Retired axis.
 
 // Tight by default — no orphan handle atoms tied to the IMMUTABLE identity. (LotNumber/Text are
 // carried by state records/occurrence params, so their no-orphan rules live at the DAG sink,
@@ -173,7 +169,11 @@ fact NoOrphanIndividualizer { all x: Individualizer | x in InventoryItem.individ
 
 // ── Reason taxonomy (the refusal vocabulary — part of the operations' error channel) ─────────────
 one sig RNotLive, RAlreadyExists, RLocked, RUnfit, REmpty, RNonPositive, ROverdraw,
-        RSerialized, RNotApplicable, RIncompatible, RIncomparable, RInvalidUnit extends Reason {}
+        RSerialized, RNotApplicable, RIncompatible, RIncomparable, RInvalidUnit,
+        RLicensePlateTaken,   // QA704 Q4 (a), DT-009 Q27: a birth whose plate an item with committed history bears (was the fact LicensePlateUnique)
+        RSerialTaken,         // QA704 Q4 (a): a birth whose serial an item of the same (tenant, Item) with history bears (was SerialNumberUniquePerItem)
+        RItemPinStale         // QA704 Q4 (a): a Create pinning an item version not current at its tick (was the fact ItemPinCurrency)
+        extends Reason {}
 // RIncomparable — the amounts are on incomparable unit bases (the partial order is silent): the
 //   conservative-refusal convention; distinct from ROverdraw ("provably more than available").
 // RInvalidUnit — a tracked Item's operation used a unit outside its UomScheme (DT-009).

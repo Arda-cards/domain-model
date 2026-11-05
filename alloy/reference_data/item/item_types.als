@@ -125,7 +125,11 @@ sig UpdateItemOcc extends lc/MutateOcc {}
 sig RetireItemOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign atoms; RRetiredRef is shared via lifecycle) ───────────
-one sig RItemExists, RItemNotCreated, RItemRetired extends Reason {}
+one sig RItemExists, RItemNotCreated, RItemRetired,
+        RSupplyNotOwned,      // QA704 Q4 (a), DT-009 Q27: a supply row another item's committed history holds, a foreign-tenant row, or a default outside the write's rows
+        RSupplierPinUnsound,  // QA704 Q4 (a): a supply row whose vendor pin and role selector do not come together, agree, or sit in the tenant
+        RSupplierPinStale     // QA704 Q4 (a): a supply row pinning a vendor version not current at the write
+        extends Reason {}
 
 // ── the read API ────────────────────────────────────────────────────────────────────────────────
 /** itemStateAt — the item's versioned content as of `t` (LOCF; none before Create). */

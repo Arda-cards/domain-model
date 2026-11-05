@@ -17,8 +17,14 @@ one sig StaffService extends Service {}   // DT-015 R2: the service's activation
 fact StaffActivated { activated[StaffService, stlog/SubjectOcc] }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────
-/** createStaffViol — Create refuses only an already-created subject (the generic create arm, the module's atom). */
-fun createStaffViol[o: CreateStaffOcc]: set Reason { lc/createViol[o, RStaffExists] }
+/** createStaffViol — Create refuses an already-created subject (the generic create arm, the module's atom) and a name a CREATED
+    member of the tenant already bears (RStaffNameTaken — QA704 Q4 (a): the content fact `staffNameUnique` as the arm it is in
+    dafny-domain src/reference-data/staff/staff.dfy `NameFreeInTenant`; the law is its theorem over created members). */
+fun createStaffViol[o: CreateStaffOcc]: set Reason {
+  lc/createViol[o, RStaffExists]
+  + ((some c: CreateStaffOcc | committed[c] and precedes[c.tick, o.tick] and c.subject != o.subject
+        and c.subject.tenantId = o.subject.tenantId and c.subject.name = o.subject.name) => RStaffNameTaken else none)
+}
 /** retireStaffViol — Retire refuses an uncreated or already-retired subject (the generic liveness conditions, the
     module's two atoms — the adopter may split the closed atom in two). */
 fun retireStaffViol[o: RetireStaffOcc]: set Reason {
@@ -33,5 +39,4 @@ fact StaffAdmissionWitnessed {
 
 // ── effects: none to state — the record is fieldless; the retire's tombstone is the lifecycle module's `RetireEffect` ──
 
-// ── the content axiom (C1 — nothing deeper derives it) ─────────────────────────────────────────
-fact StaffContentLaws { staffNameUnique }
+// (C1, name uniqueness, is a THEOREM of the RStaffNameTaken arm above since QA704 Q4 (a): tests/staff.als unit_stf_nameUniqueInTenant.)

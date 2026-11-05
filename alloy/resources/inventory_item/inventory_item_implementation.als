@@ -57,19 +57,30 @@ pred liveBefore[o: IIOcc, ii: InventoryItem] {
 }
 
 // ── reason-precise admission guards (violation sets; Accepted ⟺ ∅; because = EXACTLY the set) ────
+/** startedII — the item has committed history (a row that touched it committed). */
+pred startedII[ii: InventoryItem] { some o: IIOcc | committed[o] and ii in touches[o] }
+/** identityViol — QA704 Q4 (a), DT-009 Q27: the identity facts as the arms they are in dafny-domain
+    src/resources/inventory-item/inventory-item.dfy `IdentityViol`, on the item a birth brings in (`o.target` of a Create, `nu` of a
+    Split): its plate is borne by an item with committed history before `o` (RLicensePlateTaken); its serial, when present, by an
+    item of the same (tenant, Item) with history (RSerialTaken). The laws are theorems over started items. */
+fun identityViol[o: IIOcc, ii: InventoryItem]: set Reason {
+  ((some b: InventoryItem - ii | b.licensePlate = ii.licensePlate and some priorOn[o, b]) => RLicensePlateTaken else none)
+  + ((some ii.serialNumber and some b: InventoryItem - ii | b.tenantId = ii.tenantId and b.itemPin.subject = ii.itemPin.subject
+        and b.serialNumber = ii.serialNumber and some priorOn[o, b]) => RSerialTaken else none)
+}
 fun createViol[o: inventory_item_types/CreateOcc]: set Reason {
   ((some priorOn[o, o.target]) => RAlreadyExists else none)      // incl. tombstones: LPN never resurrects
   + ((not gPositive[o.qty.byUnit]) => RNonPositive else none)
   + ((not unitsOk[o.qty.byUnit, o.target]) => RInvalidUnit else none)
+  + identityViol[o, o.target]                                                   // QA704 Q4 (a): the plate and serial free among started items
+  + ((not pinsCurrentItem[o.target.itemPin, o.tick]) => RItemPinStale else none)   // QA704 Q4 (a): was the fact ItemPinCurrency (DT-023 cut 7a)
 }
 // DT-023 cut 7a: a committed birth pins the item's CURRENT version at its tick (Q-A currency).
 // Deliberately NO RRetiredRef guard here — inventory birth is CAPTURE riding upstream-guarded
 // commitments (the D3 grandfather principle: a receiving line added pre-retirement still
 // births; at-rest stock of a retired item is legal). The new-commitment gates live in
 // demand/order/receiving/kanban. A birth after retirement simply pins the retired version.
-fact ItemPinCurrency {
-  all o: inventory_item_types/CreateOcc | committed[o] implies pinsCurrentItem[o.target.itemPin, o.tick]
-}
+// (The currency law is the RItemPinStale arm of `createViol` since QA704 Q4 (a); its theorem: tests/unit/inventory_item.als unit_occ_itemPinCurrencyHolds.)
 fun deleteViol[o: DeleteOcc]: set Reason {
   ((not liveBefore[o, o.target]) => RNotLive else none)
   + ((liveBefore[o, o.target] and o.pre.sFill != EMPTY) => RNotApplicable else none)   // use WriteOff
@@ -154,6 +165,7 @@ fun splitViol[o: SplitOcc]: set Reason {
   + ((not (unitsOk[o.soGood.byUnit, o.target] and unitsOk[o.soDeg.byUnit, o.target]))
        => RInvalidUnit else none)
   + ((o.nu.itemPin.subject != o.target.itemPin.subject or o.nu.tenantId != o.target.tenantId) => RIncompatible else none)
+  + identityViol[o, o.nu]   // QA704 Q4 (a): the sibling's plate and serial must be free among started items
 }
 fun mergeViol[o: MergeOcc]: set Reason {
   ((not liveBefore[o, o.target] or not liveBefore[o, o.absorbed]) => RNotLive else none)

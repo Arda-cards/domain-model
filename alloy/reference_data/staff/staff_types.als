@@ -57,7 +57,9 @@ sig CreateStaffOcc extends lc/CreateOcc {} { bindings = subject }
 sig RetireStaffOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign; RRetiredRef is shared via lifecycle) ─────────────────
-one sig RStaffExists, RStaffNotCreated, RStaffRetired extends Reason {}
+one sig RStaffExists, RStaffNotCreated, RStaffRetired,
+        RStaffNameTaken   // QA704 Q4 (a), DT-009 Q27: a Create whose name a created member of the tenant already bears
+        extends Reason {}
 
 // ── the read API ────────────────────────────────────────────────────────────────────────────────
 /** staffStateAt — the member's versioned content as of `t` (LOCF; none before Create). */

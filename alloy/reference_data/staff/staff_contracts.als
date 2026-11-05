@@ -10,10 +10,13 @@ open reference_data/staff/staff_types as st
 open meta/subject_log/subject_log[st/StaffMember, st/StaffState] as stlog  // same params ⇒ the SAME spine instance
 
 // ── C1: name uniqueness (identity-carried — unchanged by the conversion) ────────────────────────
-/** staffNameUnique — a staff member's name is unique WITHIN its tenant (MP ruling,
-    DT-022 TQ-7(b) follow-up, 2026-08-08); the same name may recur across tenants. */
+/** staffNameUnique — a CREATED staff member's name is unique WITHIN its tenant among created members (MP ruling,
+    DT-022 TQ-7(b) follow-up, 2026-08-08); the same name may recur across tenants. Since QA704 Q4 (a) a THEOREM of the
+    implementation's RStaffNameTaken arm (dafny-domain `NamesDifferAt`), stated over members with a committed Create:
+    a member atom no Create committed is outside the arm's reach. */
+pred staffStarted[s: StaffMember] { some o: CreateStaffOcc | committed[o] and o.subject = s }
 pred staffNameUnique {
-  all disj a, b: StaffMember | a.tenantId = b.tenantId implies a.name != b.name
+  all disj a, b: StaffMember | (a.tenantId = b.tenantId and staffStarted[a] and staffStarted[b]) implies a.name != b.name
 }
 
 // ── C2: the lifecycle shape (DT-023 R1, Update omitted — theorem of guards + effects) ──────────
