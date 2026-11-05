@@ -178,7 +178,6 @@ run unit_cyr_startProcessingNoSuchPoolRefused {
 assert unit_cyr_startedPoolLive { all o: StartProcessingOcc | committed[o] implies namedPoolLive[o.pool, o.tick] }
 check unit_cyr_startedPoolLive for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 // ── the law over the PAYLOAD, stated inline so it does not depend on the model's own `poolAttachedOnce` text: at most one
 //    committed StartProcessing per pool id, resolved or not (RED at tests-4: a counterexample with a dangling id) ──
 assert unit_cyr_attachedOnceById { all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e } }
