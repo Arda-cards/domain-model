@@ -58,7 +58,6 @@ pred popT[sBefore, sAfter: seq Tray]           { some sBefore and sAfter = sBefo
 // ── WITNESSING: verdicts ⟺ evaluable guards; committed Effects ⟺ the cores ──────────────────────
 fact PushAdmission { all a: PushA | a.admission = Accepted }                       // always admissible
 fact PopAdmission  { all a: PopA  | a.admission = Accepted iff some traysBefore[a] }
-fact CommitAccepts { all a: StackAction | some a.commit implies a.commit = Accepted }
 fact PushEffect    { all a: PushA | committed[a] implies pushT[traysBefore[a], a.post.trays, a.tray] }
 fact PopEffect     { all a: PopA  | committed[a] implies popT[traysBefore[a], a.post.trays] }
 

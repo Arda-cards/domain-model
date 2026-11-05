@@ -142,7 +142,7 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
 one sig RBackdatedPoolWrite extends RBackdated {}
 
 // ── the spine adoption: chaining (unconditional — a refused occurrence still read the real
-// membership) + v1 result policy ────────────────────────────────────────────────────────────────
+// membership) + the activation every row cites ──────────────────────────────────────────────────────────────
 fact PoolChaining      { plog/chained }
 one sig PoolService extends Service {}
 fact PoolActivated     { activated[PoolService, plog/SubjectOcc] }   // DT-015 R2: every pool row cites the pool service.s act that wrote it
@@ -207,8 +207,6 @@ fact PoolAdmissionWitness {
   all o: PoolRemoveOcc   | (o.admission = Accepted iff no poolRemoveViol[o])   and (o.admission in Rejected implies o.admission.because = poolRemoveViol[o])
   all o: PoolTransferOcc | (o.admission = Accepted iff no poolTransferViol[o]) and (o.admission in Rejected implies o.admission.because = poolTransferViol[o])
 }
-// No result policy in v1 (mirrors the InventoryItem log).
-fact PoolCommitAccepts { plog/commitAlwaysAccepts }
 
 // ── effects ──────────────────────────────────────────────────────────────────────────────────────
 fact PoolEffectWitness {

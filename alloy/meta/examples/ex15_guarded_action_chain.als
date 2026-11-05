@@ -45,8 +45,6 @@ pred occupiedBefore[r: Room, t: Tick] {
 // (Alloy cannot store a predicate as data; the per-kind fact ties the Decision to the evaluable formula.)
 fact CheckInAdmission  { all a: CheckIn  | a.admission = Accepted iff not occupiedBefore[a.into, a.tick] }
 fact CheckOutAdmission { all a: CheckOut | a.admission = Accepted iff occupiedBefore[a.from, a.tick] }
-// No result policy in this example: the commit gate accepts whenever it is evaluated.
-fact CommitAlwaysAccepts { all a: CheckIn + CheckOut | some a.commit implies a.commit = Accepted }
 
 // ── the post-projection: occupancy AT a tick, folded from the committed prefix (committedUpTo) ──────
 /** occupiedAt — the state query after a chain: fold the committed log prefix at `t`. */

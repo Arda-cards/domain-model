@@ -20,7 +20,6 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 fact BaChain { balog/chained }
 one sig BusinessAffiliateService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact BaActivated { activated[BusinessAffiliateService, balog/SubjectOcc] }
-fact BaCommitPolicy { balog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────
 /** createBaViol — Create refuses only an already-created subject (the generic create arm, the module's atom). */

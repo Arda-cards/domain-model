@@ -21,7 +21,7 @@ fact WidgetStateExtensional { all disj a, b: WidgetState | a.level != b.level }
 one sig RNegative, RNotCreated, RWidgetClosed extends Reason {}
 
 sig SetLevelOcc extends lc/MutateOcc { to: one Int } { bindings = subject + to }   // a Mutate: carries the liveness arm (terminality needs every kind to)
-fact SpineAdopted { wl/chained and wl/commitAlwaysAccepts }
+fact SpineAdopted { wl/chained }
 fun setViol[o: SetLevelOcc]: set Reason { lc/liveViol[o, RWidgetClosed] + ((o.to < 0) => RNegative else none) }
 fact SetLevelWitness {
   all o: SetLevelOcc | (o.admission = Accepted iff no setViol[o])

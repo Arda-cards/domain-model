@@ -37,11 +37,6 @@ check unit_action_successNoReason for 5 expect 0
 assert unit_action_outcomesPartition {
   all a: Action | (committed[a] or refusedAtAdmission[a]) and not (committed[a] and refusedAtAdmission[a])
 }
-    (committed[a] or refusedAtAdmission[a] or refusedAtCommit[a])
-    and not (committed[a] and refusedAtAdmission[a])
-    and not (committed[a] and refusedAtCommit[a])
-    and not (refusedAtAdmission[a] and refusedAtCommit[a])
-}
 check unit_action_outcomesPartition for 5 expect 0
 
 // Pre vs post projection domain: the inclusive prefix exceeds the strict one by exactly the

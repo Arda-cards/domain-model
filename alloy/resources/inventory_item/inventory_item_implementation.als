@@ -204,9 +204,6 @@ fact IIAdmissionWitness {
 }
 one sig InventoryItemService extends Service {}   // DT-015 R2: the service's activation log
 fact IIActivated { activated[InventoryItemService, IIOcc] }   // every item row cites the act that wrote it
-// No result policy in v1; the ABAC/authorization commit guard is the deferred hook (DT-006 Layer 2).
-fact IICommitAccepts { all o: IIOcc | some o.commit implies o.commit = Accepted }
-| some o.commit implies o.commit = Accepted }
 
 // Record-frame helpers (the frame conjuncts relocate to records — they do not disappear).
 pred samePayloadQty[b, a: InventoryItemState] {

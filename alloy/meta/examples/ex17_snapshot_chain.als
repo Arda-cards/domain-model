@@ -66,7 +66,6 @@ pred payT[balBefore, balAfter, amt: Int]    { amt <= balBefore and balAfter = ba
 // ── WITNESSING: verdicts tied to evaluable guards; Effects tied to the cores ─────────────────────
 fact ChargeAdmission  { all a: Charge  | a.admission = Accepted }                          // always admissible
 fact PaymentAdmission { all a: Payment | a.admission = Accepted iff a.amount <= balBefore[a] }
-fact CommitAccepts    { all a: FolioAction | some a.commit implies a.commit = Accepted }   // no result policy here
 fact ChargeEffect     { all a: Charge  | committed[a] implies chargeT[balBefore[a], a.post.balance, a.amount] }
 fact PaymentEffect    { all a: Payment | committed[a] implies payT[balBefore[a], a.post.balance, a.amount] }
 

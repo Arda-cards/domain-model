@@ -117,8 +117,8 @@ fact AdmissionWitness {
 }
 
 // ── spine adoption + effects ────────────────────────────────────────────────────────────────────
-fact VendorChain { vlog/chained }      fact VendorCommits { vlog/commitAlwaysAccepts }
-fact DocChain    { dlog/chained }      fact DocCommits    { dlog/commitAlwaysAccepts }
+fact VendorChain { vlog/chained }
+fact DocChain    { dlog/chained }
 
 fun vPost[o: vlog/SubjectOcc]: lone VendorRec { o.post & VendorRec }
 fun dPre [o: dlog/SubjectOcc]: lone DocRec { o.pre  & DocRec }

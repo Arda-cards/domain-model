@@ -52,7 +52,7 @@ fact AdmissionWitness {
 }
 
 // ── spine adoption + effects ────────────────────────────────────────────────────────────────────
-fact TallyChain { tlog/chained }   fact TallyCommits { tlog/commitAlwaysAccepts }
+fact TallyChain { tlog/chained }
 
 fun tPre [o: tlog/SubjectOcc]: lone TallyRec { o.pre  & TallyRec }
 fun tPost[o: tlog/SubjectOcc]: lone TallyRec { o.post & TallyRec }

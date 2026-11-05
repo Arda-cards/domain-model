@@ -27,12 +27,10 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
 fact DemandChaining      { dlog/chained }
-fact DemandCommitAccepts { dlog/commitAlwaysAccepts }   // v1 result policy (no commit-gate refusals)
 fact PDChaining          { pdlog/chained }
 one sig DemandService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact DemandActivated      { activated[DemandService, dlog/SubjectOcc] }
 fact PDActivated          { activated[DemandService, pdlog/SubjectOcc] }
-fact PDCommitAccepts     { pdlog/commitAlwaysAccepts }
 
 // ── the §8.1.2 ATOMIC compositions (enforcement facts — the model's rendering of the ONE
 // demand tx; see the C8 contracts note for why these are facts here and not in `guarantees`) ──

@@ -21,7 +21,7 @@ one sig RNegative extends Reason {}
 sig SetLevelOcc extends wl/SubjectOcc { to: one Int } { bindings = subject + to }
 
 one sig WidgetService extends Service {}
-fact SpineAdopted { wl/chained and wl/commitAlwaysAccepts }
+fact SpineAdopted { wl/chained }
 fact WidgetActivated { activated[WidgetService, wl/SubjectOcc] }   // DT-015 R2: beside the spine adoption
 fun setViol[o: SetLevelOcc]: set Reason {
   ((o.to < 0) => RNegative else none)

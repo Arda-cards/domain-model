@@ -27,7 +27,6 @@ module meta/subject_log/subject_log[Subject, Rec]
  *   open meta/subject_log/subject_log[CardCycle, CycleState] as clog
  *   sig RequestOcc extends clog/SubjectOcc { ... } { bindings = subject + ... }
  *   fact MyChain { clog/chained }               // adopt the chaining law
- *   fact MyCommit { clog/commitAlwaysAccepts }  // v1 result policy, if wanted
  *   one sig MyService extends Service {}       // with `open meta/activation/activation` (DT-015 D1 to D3):
  *   fact MyActivated { activated[MyService, clog/SubjectOcc] }   // every row cites the activation that wrote it
  *   ... guards/effects; reads via clog/recordAt[s, t] ...
@@ -52,10 +51,6 @@ fun priorOn[o: SubjectOcc]: lone SubjectOcc {
 pred chained {
   all o: SubjectOcc | let pr = priorOn[o] | (some pr => o.pre = pr.post else no o.pre)
 }
-
-/** commitAlwaysAccepts — the v1 result policy (no commit-gate refusals yet); adopt as a fact
-    until a result policy exists (the deferred ABAC/commit-guard hook). */
-pred commitAlwaysAccepts { all o: SubjectOcc | some o.commit implies o.commit = Accepted }
 
 /** lastTouch — the latest committed occurrence on `s` at-or-before `t`. */
 fun lastTouch[s: Subject, t: Tick]: lone SubjectOcc {

@@ -15,7 +15,6 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 fact StaffChain { stlog/chained }
 one sig StaffService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact StaffActivated { activated[StaffService, stlog/SubjectOcc] }
-fact StaffCommitPolicy { stlog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────
 /** createStaffViol — Create refuses only an already-created subject (the generic create arm, the module's atom). */

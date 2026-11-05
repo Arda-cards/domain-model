@@ -7,7 +7,7 @@ module meta/action/stateful
  * state-agnostic; this module is to it what keyed_order is to keyed_monoid.
  *
  * This is where the EFFECT gets a visible seat in the anatomy: the pipeline is
- *     admission reads `pre`  →  the Effect constrains (pre, post)  →  commit reads `post`,
+ *     admission reads `pre`  →  the Effect constrains (pre, post),
  * and "the Effect of kind K" is precisely the constraint K's transition core places on the pair
  * (the witnessing fact: `all a: K | committed[a] implies kTransition[a.pre, a.post, …]`).
  * State reads collapse to field access — no folds over the prefix.
@@ -32,7 +32,7 @@ sig Snapshot {}
 /** StatefulAction — an action that carries the snapshots its guards read and its Effect produced. */
 abstract sig StatefulAction extends Action {
   pre:  lone Snapshot,   // what the admission guard read (the subject's state just before this tick)
-  post: lone Snapshot    // what the Effect produced (what the commit guard read) — iff committed
+  post: lone Snapshot    // what the Effect produced — iff committed
 }
 
 /** A result snapshot exists exactly when the action committed — a refused action produced nothing.

@@ -27,8 +27,8 @@ module soak/sliced/order_supplier_binding_inductive
  * its post is an arbitrary well-formed OrderState. Seeds are forced committed and strictly
  * BEFORE every real order occurrence; e7_step excludes steps INTO a seed tick. The order
  * module's admission/effect witnessing and its pin-currency facts (BindingPinCurrency,
- * AssigneePinCurrency) all name their kinds, so seeds are swept only by olog/chained +
- * commitAlwaysAccepts — benign (the receiving precedent). The law is UNCONDITIONAL in the
+ * AssigneePinCurrency) all name their kinds, so seeds are swept only by olog/chained —
+ * benign (the receiving precedent; `commitAlwaysAccepts` left with the second gate, TN-003 row 9). The law is UNCONDITIONAL in the
  * contracts (guard/frame-derived, no genesis premise) — nothing to thread.
  *
  * NIGHTWATCH 2026-08-27: base-scope shake-out by day; _w then _s gates in the night window.

@@ -25,7 +25,6 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 fact CycleChain         { clog/chained }
 one sig KanbanService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact CycleActivated        { activated[KanbanService, clog/SubjectOcc] }
-fact CycleCommitAccepts { clog/commitAlwaysAccepts }
 
 /** liveAtOcc — the cycle is STARTED and OPEN when `o` executes (what its guards read). */
 pred liveAtOcc[o: CycleOcc] { some o.pre and not closedStrictlyBefore[o.subject, o.tick] }

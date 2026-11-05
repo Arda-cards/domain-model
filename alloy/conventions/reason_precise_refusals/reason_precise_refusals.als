@@ -83,7 +83,7 @@ fact AdmissionWitness {
 }
 
 // ── spine adoption + effects ────────────────────────────────────────────────────────────────────
-fact LatchChain { llog2/chained }   fact LatchCommits { llog2/commitAlwaysAccepts }
+fact LatchChain { llog2/chained }
 fun lPost2[o: llog2/SubjectOcc]: lone LatchRec { o.post & LatchRec }
 
 fact EffectWitness {

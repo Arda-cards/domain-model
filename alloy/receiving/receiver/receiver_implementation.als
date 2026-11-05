@@ -37,15 +37,12 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 
 // ── spine adoption (DT-015 Q5; three subjects) ─────────────────────────────────────────────────
 fact ReceiverChaining       { rvlog/chained }
-fact ReceiverCommitAccepts  { rvlog/commitAlwaysAccepts }   // v1 result policy (no commit-gate refusals)
 fact RcvLineChaining        { rllog/chained }
-fact RcvLineCommitAccepts   { rllog/commitAlwaysAccepts }
 fact AttributionChaining    { oalog/chained }
 one sig ReceiverService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact ReceiverActivated    { activated[ReceiverService, rvlog/SubjectOcc] }
 fact RcvLineActivated     { activated[ReceiverService, rllog/SubjectOcc] }
 fact AttributionActivated { activated[ReceiverService, oalog/SubjectOcc] }
-fact AttributionCommitAccepts { oalog/commitAlwaysAccepts }
 
 // ── the same-module ATOMIC compositions (enforcement facts — NOT in `guarantees`; see the
 // contracts header for why) ─────────────────────────────────────────────────────────────────────

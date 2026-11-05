@@ -28,12 +28,10 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 
 // ── spine adoption ×2 (DT-015 Q5) ───────────────────────────────────────────────────────────────
 fact OrderChaining       { olog/chained }
-fact OrderCommitAccepts  { olog/commitAlwaysAccepts }   // v1 result policy
 fact LineChaining        { llog/chained }
 one sig OrderService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact OrderActivated       { activated[OrderService, olog/SubjectOcc] }
 fact LineActivated        { activated[OrderService, llog/SubjectOcc] }
-fact LineCommitAccepts   { llog/commitAlwaysAccepts }
 
 // ── guard-side reads ────────────────────────────────────────────────────────────────────────────
 /** liveAtOccO — the order is STARTED and LIVE as the operation reads it (pre-record). */

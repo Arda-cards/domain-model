@@ -19,7 +19,6 @@ open meta/activation/activation   // the activation every row cites (DT-015 D1 t
 fact ItemChain { ilog/chained }
 one sig ItemService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact ItemActivated { activated[ItemService, ilog/SubjectOcc] }
-fact ItemCommitPolicy { ilog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────
 /** supplyRetiredViol — DT-023 cut 7b: a write INTRODUCING a supply row whose vendor pin's

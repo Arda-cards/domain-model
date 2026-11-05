@@ -19,7 +19,7 @@ module conventions/inductive_invariant/inductive_invariant
  * Arbitrary pre-states come from a HAVOC SEED KIND declared in the ROOT (frame-free,
  * always committed, strictly before every real occurrence) — sound exactly because the
  * module's admission/effect witnessing is PER-KIND, so seeds are swept only by `chained`
- * and `commitAlwaysAccepts`. Faithfulness asserts tie the root's per-tick slices to the
+ * (`commitAlwaysAccepts` left with the second gate, TN-003 row 9). Faithfulness asserts tie the root's per-tick slices to the
  * PUBLISHED laws, and vacuity runs prove the obligations range over non-empty
  * configurations. The full apparatus, obligations, and scope-perimeter semantics are in
  * the root: tests/inductive_invariant.als.
@@ -70,9 +70,7 @@ sig HangOcc       extends hglog/SubjectOcc { peg: lone EntityId }    { bindings 
 sig UnhangOcc     extends hglog/SubjectOcc {}                        { bindings = subject }
 
 fact CubbyChaining  { cblog/chained }
-fact CubbyCommits   { cblog/commitAlwaysAccepts }
 fact HangerChaining { hglog/chained }
-fact HangerCommits  { hglog/commitAlwaysAccepts }
 
 // ── the reasons ─────────────────────────────────────────────────────────────────────────────────
 one sig RUnborn,     // any mutator before genesis
