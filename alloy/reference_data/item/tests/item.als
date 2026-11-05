@@ -32,7 +32,7 @@ run unit_item_supplyNotOwnedRefused {
     c2.subject = i2 and precedes[c1.tick, c2.tick] and s in c2.supplies
     c2.admission in Rejected and c2.admission.because = RSupplyNotOwned
   }
-} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 6 Tick, 3 Snapshot, 5 Occurrence expect 1
 // A write whose supply row names a role selector without its pin is refused with exactly RSupplierPinUnsound.
 run unit_item_supplierPinUnsoundRefused {
   some c: CreateItemOcc, s: c.supplies | no s.supplierPin and some s.supplierRole
@@ -88,7 +88,7 @@ run unit_item_lifecycleArc {
     itemLiveAt[i, u.tick] and not itemLiveAt[i, d.tick]
     u.post.sSupplies != c.post.sSupplies
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
 check unit_item_lifecycleShape { itemLifecycleShape } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
@@ -99,7 +99,7 @@ run unit_item_retiredMutateRefused {
     committed[d] and u.subject = d.subject and precedes[d.tick, u.tick]
     u.admission in Rejected and u.admission.because = RItemRetired
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // ── DT-023 cut 7a: version pins (R3) ───────────────────────────────────────────────────────────
 

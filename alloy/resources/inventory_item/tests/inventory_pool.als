@@ -72,13 +72,13 @@ run unit_pool_transfer {
     and o.item not in heldAt[o.pool, o.tick]
     and (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and precedes[o.tick, a.tick]
            and o.item in heldAt[o.to, a.tick])
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 8 Tick expect 1
 
 // A transfer into a pool of a DIFFERENT Item is refused with exactly RWrongItem (judged at the
 // DESTINATION — the pool-vs-pool item agreement, DT-020 §8.5.3).
 run unit_pool_transferWrongItemRefused {
   some o: PoolTransferOcc | refusedAtAdmission[o] and o.admission.because = RWrongItem
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 8 Tick expect 1
 
 // A transfer of an item the SOURCE pool does not currently hold is refused with exactly
 // RNotMember.
@@ -118,7 +118,7 @@ run unit_pool_transferBothHalvesOneArche {
   some g: Call, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
     and o.arche = g and precedes[g.tick, o.tick] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
     and a.arche = o.arche and a.pool != o.pool
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 9 Tick expect 1
 /** A refused pool write cites a refused activation: the act is atomic (`effectsAgree`), and the refusal is still a row. */
 run unit_pool_refusedAddCitesRefusedActivation {
   some g: Call, a: PoolAddOcc | refusedAtAdmission[g] and a.arche = g and refusedAtAdmission[a]
@@ -172,7 +172,7 @@ run unit_pool_transferBackdatedDestinationRefused {
     all w: prevPoolWrite[o, o.subject] | atOrBefore[w.at, o.at]
     some w: prevPoolWrite[o, o.to] | earlierThan[o.at, w.at]
   }
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant, 8 Occurrence, 8 Tick expect 1
 
 // ── QA704 Q4 (a), DT-009 Q27: the reversal discipline is a guard arm (reflects dafny-domain src/resources/inventory-item/inventory-pool.dfy, RReversalUnlawful) ──
 /** A remove naming a REFUSED add as the row it reverses is refused with RReversalUnlawful: the reversed row must be a COMMITTED
