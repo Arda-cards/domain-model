@@ -50,7 +50,7 @@ run unit_invmet_retiredExcluded {
     no c.cLevel and m.tenantId = c.cTenant and m.itemPin.subject = c.cItem
     m not in membersOf[c]
   }
-} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 7 Tick, 5 Instant, 7 Occurrence, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // A2 locator classification: a facility-level cell admits the in-prefix member and excludes a
@@ -63,7 +63,7 @@ run unit_invmet_locatorCellLoads {
     liveAsOf[m2, c.cAsOf] and m2.tenantId = c.cTenant and m2.itemPin.subject = c.cItem
     m2 not in membersOf[c]
   }
-} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 7 Tick, 5 Instant, 7 Occurrence, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // The level JUMPS at a committed write: two same-query cells straddling a Replenish differ.
