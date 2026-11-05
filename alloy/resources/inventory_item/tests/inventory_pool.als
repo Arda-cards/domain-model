@@ -96,38 +96,24 @@ run unit_pool_splitInPool {
   some s: SplitOcc, a: PoolAddOcc | splitInPool[s, a]
 } for 7 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
 
-// ── B-mov (DT-029 E6 / SAMWISE-S1 / MINESWEEPER-Q7 = A): the causal signature on movement rows ──────────────────
-/** A re-sent movement — a second add on ONE pool citing the SAME origin a committed add already carries — is refused
-    with exactly RDuplicateOrigin (the idempotent callee; the module fact `ArcheUnique` needs this typed refusal — Q8). */
-run unit_pool_duplicateOriginRefused {
-  some g: PoolOcc, disj a, b: PoolAddOcc | committed[g] and committed[a]
-    and a.arche = g and b.arche = g and a.pool = b.pool and precedes[g.tick, a.tick] and precedes[a.tick, b.tick]
-    and b.admission in Rejected and b.admission.because = RDuplicateOrigin
+// ── the activation (DT-015 D1 to D3): every pool row cites the pool service's act that wrote it ─────────────────────
+/** THE SIBLING WITNESS (MP, Journal 192741): one activation writes TWO committed adds on ONE pool. RED on the tree before
+    DT-015: the second add was refused `RDuplicateOrigin` (B-mov, the per-row origin law `ArcheUnique`), so UNSAT. */
+run unit_pool_siblingAddsOneActivation {
+  some g: Call, disj a, b: PoolAddOcc | committed[g] and committed[a] and committed[b]
+    and a.arche = g and b.arche = g and a.pool = b.pool and precedes[a.tick, b.tick]
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
-/** Q7 = A: a CITING transfer's paired destination add carries the SAME arche — one act, one causal signature, two rows on
-    two pools (no duplicate: uniqueness is per (arche, pool)). */
+/** Q7 = A: a transfer's paired destination add carries the SAME activation — one act, one causal signature, two rows on
+    two pools. */
 run unit_pool_transferBothHalvesOneArche {
-  some g: PoolOcc, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
+  some g: Call, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
     and o.arche = g and precedes[g.tick, o.tick] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
     and a.arche = o.arche and a.pool != o.pool
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
-/** A self-minted transfer's pair cites the transfer row itself — the transfer IS the add's immediate cause. */
-run unit_pool_selfMintedTransferPairCitesTransfer {
-  some o: PoolTransferOcc, a: PoolAddOcc | committed[o] and committed[a] and o.arche = o
-    and a.pool = o.to and a.item = o.item and adjacentCommit[o, a] and a.arche = o
+/** A refused pool write cites a refused activation: the act is atomic (`effectsAgree`), and the refusal is still a row. */
+run unit_pool_refusedAddCitesRefusedActivation {
+  some g: Call, a: PoolAddOcc | refusedAtAdmission[g] and a.arche = g and refusedAtAdmission[a]
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
-/** MF-002 (MP, 2026-10-16): a transfer whose origin a CITING row on the DESTINATION already carries is refused with exactly
-    RDuplicateOrigin, judged at the destination, because the transfer's paired add would be that duplicate. RED before the
-    destination arm: the attempt had no admissible paired add, so `TransferPairing` excluded it instead of refusing it (UNSAT).
-    The source is kept clear of the origin, so the refusal is the destination arm's alone; the citing row `b` keeps the
-    witness independent of MF-001 (whether a self-initiated row takes a slot). */
-run unit_pool_transferOriginLandedOnDestinationRefused {
-  some g: Occurrence, b: PoolOcc, o: PoolTransferOcc |
-    committed[b] and b.pool = o.to and b.arche = g and b.arche != b and precedes[b.tick, o.tick]
-    and o.arche = g
-    and (no c: PoolOcc | committed[c] and c.pool = o.pool and precedes[c.tick, o.tick] and c.arche = g)
-    and refusedAtAdmission[o] and o.admission.because = RDuplicateOrigin
-} for 7 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 9 Tick expect 1
 /** A reversal names the inverse row on the same pool, same item, earlier — and carries its OWN arche (a new context). */
 run unit_pool_reversalNamesInverse {
   some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.reverses = a and r.arche != a.arche
