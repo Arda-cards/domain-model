@@ -32,7 +32,7 @@ run unit_cyc_demandLegChain {
     statusAt[c, s.tick] = IN_PROCESS
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // KQ-S9 in action: with REQUESTED inactive, StartProcessing SKIPS it straight from REQUESTING.
 run unit_cyc_skipsInactiveStatus {
@@ -66,7 +66,7 @@ run unit_cyc_poolAttachesThenFills {
     some stateOfCycleAt[sp.cycle, a.tick].sPool                  // still attached on the cycle side
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // TOMBSTONE: `unit_cyc_residuePoolAttaches` stood here (RESIDUE ALLOWED — a pool with
 // left-over stock could attach DIRECTLY). RETIRED — reverses the 2026-07-03 residue-at-attach
@@ -82,7 +82,7 @@ run unit_start_usedPoolRefused {
     refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // The POSITIVE companion: a FRESH pool (no committed history before the attach tick) is
 // accepted normally — freshness does not block an ordinary first attach.
@@ -90,13 +90,13 @@ run unit_start_freshPoolAccepted {
   some sp: StartProcessingOcc | committed[sp]
     and no b: PoolOcc | committed[b] and b.pool = (resolve[sp.pool] & InventoryPool) and precedes[b.tick, sp.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // EXCLUSIVITY: attaching a pool held by another LIVE cycle is refused with RPoolInUse.
 run unit_cyc_poolInUseRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and RPoolInUse in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // HOMOGENEITY (DT-015 R1, MP 2026-07-16): attaching a pool of a DIFFERENT Item than the card
 // demands is refused with exactly RPoolWrongItem (the sight-of-card guard — the admission reads
@@ -105,7 +105,7 @@ run unit_cyc_poolInUseRefused {
 run unit_cyc_poolWrongItemRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and o.admission.because = RPoolWrongItem
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // ROLLOVER completes the predecessor — as TWO rows since Q25 resolved (COORDINATOR-Q199 R3, model cut 2026-10-01, M1):
 // the completion retire on the still-open predecessor at a completable status, then the successor's genesis, adjacent
@@ -163,7 +163,7 @@ run unit_cyc_productionFailureRequeues {
     and no stateOfCycleAt[o.cycle, o.tick].sPool
     and liveCycleAt[o.cycle, o.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // ── reason-precise refusals ─────────────────────────────────────────────────────────────────────
 // A backward jump (Accept after IN_PROCESS) is refused with exactly RBackward.
@@ -176,7 +176,7 @@ run unit_cyc_backwardRefused {
 run unit_cyc_skippedActiveRefused {
   some o: StartProcessingOcc | refusedAtAdmission[o] and o.admission.because = RSkippedActive
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
 // Operating on a withdrawn (closed) cycle is refused with RClosed among the reasons.
 run unit_cyc_closedRefused {
