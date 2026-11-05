@@ -29,9 +29,9 @@ run int_ord_loads {
     some resolve[a.subject.orderRef] & Order
     demandStatusAt[d, a.tick] = DS_RELEASED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
+      11 Tick, 10 EntityId, 10 Snapshot, 2 Note expect 1
 
 // ── the O2 Submit arc on the REAL demand log: demand Create → Release (real chaining/effects),
 // order AddLine attaches the RELEASED item, demand StartProduction (the saga's first leg — its
@@ -52,7 +52,7 @@ run int_ord_submitArc {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      12 Tick, 14 EntityId, 14 Snapshot, 9 Occurrence, 2 Note expect 1
+      14 Tick, 14 EntityId, 14 Snapshot, 12 Occurrence, 2 Note expect 1
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8 (mirrors unit_ord_buildAndSubmit):
       // Submit requires a LINKED vendor, so the arc carries the BA Create fixture (PDEV-241 re-base)
 
@@ -66,9 +66,9 @@ run int_ord_cancelReturnsToQueue {
     no holdingLineOf[d, c.tick]
     demandStatusAt[d, c.tick] = DS_RELEASED       // demand knew nothing of the order (O3)
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 Tick, 11 EntityId, 11 Snapshot, 2 Note expect 1
+      12 Tick, 11 EntityId, 11 Snapshot, 2 Note expect 1
 
 // ── law re-discharge on the composed stack ──────────────────────────────────────────────────────
 assert int_ord_contract_demandIndivisible { demandIndivisible }
