@@ -48,7 +48,7 @@ run unit_cyr_retireAfterWithdrawRefused {
   some w: WithdrawOcc, o: RetireCycleOcc | committed[w] and o.subject = w.subject and precedes[w.tick, o.tick]
     and refusedAtAdmission[o] and RClosed in o.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── refused on a cycle that never started — RNotStarted, the cycle's RPoolNotCreated (Q199 M3; was RClosed) ─
 run unit_cyr_retireNeverStartedRefused {
@@ -61,7 +61,7 @@ run unit_cyr_withdrawAfterRetireRefused {
   some o: RetireCycleOcc, w: WithdrawOcc | committed[o] and w.subject = o.subject and precedes[o.tick, w.tick]
     and refusedAtAdmission[w] and RClosed in w.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── the forward kinds are Mutate shapes: none commits after either retire ─────────────────────
 assert unit_cyr_nothingAfterRetire { lc/nothingAfterRetire }
@@ -129,7 +129,7 @@ run unit_cyr_forwardOnWithdrawnIsClosed {
   some w: WithdrawOcc, o: AcceptOcc | committed[w] and o.subject = w.subject and precedes[w.tick, o.tick]
     and refusedAtAdmission[o] and RClosed in o.admission.because and RNotStarted not in o.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── attached-once (V019): a pool a committed StartProcessing named is USED — re-attaching it after ProductionFailure refuses ──
 run unit_cyr_reattachAfterFailureRefused {
@@ -144,7 +144,7 @@ run unit_cyr_reattachAfterFailureRefused {
                                                                                 //   the refusal conjuncts below and the command was SAT on both models (08:19Z)
     and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 10 Tick, 10 Occurrence, 9 Snapshot, 2 Note expect 1
 
 // ── attached-once admission control: a REFUSED attach commits nothing, so a retry naming the same pool is admitted ──
 run unit_cyr_retryAfterRefusedAttachAdmitted {
