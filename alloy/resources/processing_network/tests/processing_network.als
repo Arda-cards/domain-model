@@ -1,4 +1,5 @@
 module resources/processing_network/tests/processing_network
+// Reflects dafny-domain src/resources/processing-network/tests/processing-network-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open resources/processing_network/processing_network_implementation

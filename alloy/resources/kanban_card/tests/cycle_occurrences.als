@@ -1,4 +1,5 @@
 module resources/kanban_card/tests/cycle_occurrences
+// Reflects dafny-domain src/resources/kanban-card/tests/kanban-card-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/kanban_card/kanban_card_implementation
 open resources/kanban_card/kanban_card_contracts

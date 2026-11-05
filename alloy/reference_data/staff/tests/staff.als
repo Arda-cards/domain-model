@@ -1,4 +1,5 @@
 module reference_data/staff/tests/staff
+// Reflects dafny-domain src/reference-data/staff/tests/staff-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
  * STAFF — module suite (DT-022 TQ-7(b) cut 6; LOG-CARRIED since DT-023 cut 7c). The

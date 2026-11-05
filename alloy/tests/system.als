@@ -1,4 +1,5 @@
 module tests/system
+// Reflects dafny-domain src/system/tests/system-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 // Whole-system / cross-domain suite for the live entity model; sys_* commands.
 // Re-pointed 2026-07-01 from the kanban BASELINE to the current split model (KC-MH-9): this root now

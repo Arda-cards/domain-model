@@ -1,4 +1,5 @@
 module resources/inventory_item/tests/inventory_pool
+// Reflects dafny-domain src/resources/inventory-item/tests/inventory-pool-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/inventory_item/inventory_pool
 

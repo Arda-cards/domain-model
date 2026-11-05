@@ -1,4 +1,5 @@
 module reference_data/business_affiliate/tests/business_affiliate
+// Reflects dafny-domain src/reference-data/business-affiliate/tests/business-affiliate-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/business_affiliate/business_affiliate_implementation

@@ -1,4 +1,5 @@
 module reference_data/shared/tests/shared
+// Reflects dafny-domain src/reference-data/shared/tests/shared-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/item/item_implementation

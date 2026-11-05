@@ -1,4 +1,5 @@
 module resources/inventory_item/tests/unit/inventory_item
+// Reflects dafny-domain src/resources/inventory-item/tests/inventory-item-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/inventory_item/inventory_item_implementation
 open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)

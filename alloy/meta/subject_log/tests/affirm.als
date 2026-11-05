@@ -1,4 +1,5 @@
 module meta/subject_log/tests/affirm
+// Reflects dafny-domain src/meta/tests/affirm-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/action/stateful
 open meta/subject_log/subject_log[Widget, WidgetState] as wl

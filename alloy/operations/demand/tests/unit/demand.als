@@ -1,4 +1,5 @@
 module operations/demand/tests/unit/demand
+// Reflects dafny-domain src/operations/demand/tests/demand-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open operations/demand/demand_implementation
 open operations/demand/demand_contracts

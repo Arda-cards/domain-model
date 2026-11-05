@@ -1,4 +1,5 @@
 module shared/time/tests/calendar
+// Reflects dafny-domain src/shared/time/tests/calendar-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open shared/time/calendar
 

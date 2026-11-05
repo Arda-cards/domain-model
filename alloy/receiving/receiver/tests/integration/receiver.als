@@ -1,4 +1,5 @@
 module receiving/receiver/tests/integration/receiver
+// Reflects dafny-domain src/receiving/receiver/tests/receiver-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open receiving/receiver/receiver_implementation
 open receiving/receiver/receiver_contracts

@@ -1,4 +1,5 @@
 module reference_data/item/tests/item
+// Reflects dafny-domain src/reference-data/item/tests/item-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/item/item_implementation

@@ -1,4 +1,5 @@
 module operations/demand/tests/unit/demand_reset
+// Reflects dafny-domain src/operations/demand/tests/demand-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open operations/demand/demand_reset
 open reference_data/item/item_mock

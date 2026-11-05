@@ -1,4 +1,5 @@
 module meta/model_time/tests/model_time
+// Reflects dafny-domain src/meta/tests/model-time-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/model_time/model_time
 

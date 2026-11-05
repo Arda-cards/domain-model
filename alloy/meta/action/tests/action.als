@@ -1,4 +1,5 @@
 module meta/action/tests/action
+// Reflects dafny-domain src/meta/tests/trace-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/action/action
 open meta/model_time/model_time   // precedes, notAfter (over Tick) — for the projection

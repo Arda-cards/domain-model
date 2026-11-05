@@ -1,5 +1,8 @@
 # Manufacturing Domain Model — `alloy/`
 
+> The reference model is the Dafny tree (`dafny-domain`, MP's ruling of 2026-11-04). This tree reflects it and adds the
+> extensions Dafny's tools cannot do; see `EXTENSIONS.md` for the classes, the inventory and what the cut of 2026-11-05 retired.
+
 Alloy model of the manufacturing domain — the behavioral / model-finding model,
 grounded in the public standard ontologies cached for reference in `../owl/`
 (BFO/IOF/QUDT — source-of-truth, not maintained here). The directory tree mirrors the

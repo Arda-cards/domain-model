@@ -1,4 +1,5 @@
 module meta/profiles/tests/profiles
+// Reflects dafny-domain src/meta/tests/profiles-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/profiles/timed_log   // transitively: domain_log, baseline, profile
 
