@@ -24,7 +24,6 @@ run unit_action_committed { some a: Op | committed[a] } for 4 expect 1
 // ONE gate (MP, Journal 193772; TN-003 row 9; the Dafny spine has no post-commit check): an admitted action IS committed.
 // RED on the tree before this cut: the second gate could refuse an admitted action (SAT against expectation).
 run unit_action_admittedNotCommitted { some a: Op | a.admission = Accepted and not committed[a] } for 4 expect 0
-| a.admission = Accepted and a.commit in Rejected } for 4 expect 1
 
 // Every refusal carries at least one reason.
 assert unit_action_refusalHasReason { all a: Action | not committed[a] implies some refusalReasons[a] }
@@ -37,7 +36,7 @@ check unit_action_successNoReason for 5 expect 0
 // The two named outcomes PARTITION Action: every action satisfies exactly one.
 assert unit_action_outcomesPartition {
   all a: Action | (committed[a] or refusedAtAdmission[a]) and not (committed[a] and refusedAtAdmission[a])
-}|
+}
     (committed[a] or refusedAtAdmission[a] or refusedAtCommit[a])
     and not (committed[a] and refusedAtAdmission[a])
     and not (committed[a] and refusedAtCommit[a])
