@@ -26,8 +26,9 @@ module meta/activation/activation
  *  - `EffectsFollow` and `CallersPrecede` are the kernel's `ArcheOriginPrecedes`; `TicksDisjoint` is `OneOccurrencePerTick`;
  *    the cross-service skeleton World and `NoProperCycle` are the one Occurrence universe of a root and the kernel's
  *    `unit_occ_archeNoProperCycle`. They are re-checked, not re-stated, in tests/activation.als.
- *  - A refused activation's reasons are NOT tied to its effects' (the Dafny law ties the verdict only, R4): the solver
- *    may mint any Reason for a refused Call.
+ *  - A refused activation's reasons are NOT tied to its effects' (R4): the reasons are
+ *    the effects' reasons, one atom family on both rows, so Dafny's lifting (`Same`, the demand's `DVerdict`) is the identity.
+ *  - `LogsTicksDisjoint` (two entity logs of one service share no tick) is `OneOccurrencePerTick` again.
  *
  * ADOPTION (DT-015 R2, R6): an implementation module opens this module, declares `one sig XService extends Service {}`
  * and states, beside its chaining fact, `fact XActivated { activated[XService, xlog/SubjectOcc] }` — one per log it
@@ -69,9 +70,11 @@ fun effectsOf[a: Activation, rows: set Occurrence]: set Occurrence { { o: rows |
 /** effectsCited — every row of the log cites an activation OF THIS SERVICE: no effect without its act, and the act is the
     service's own (Dafny `EffectsCited` over the service's activation log). */
 pred effectsCited[s: Service, rows: set Occurrence] { all o: rows | o.arche.service = s }
-/** effectsAgree — an effect's verdict is its activation's: a committed activation's effects are all committed, a refused
-    one's all refused. The act is atomic; a refused effect is still a row, as the runtime records it (Dafny `EffectsAgree`). */
-pred effectsAgree[rows: set Action] { all o: rows | committed[o] iff committed[o.arche] }
+/** effectsAgree — an effect's verdict IS its activation's, the WHOLE verdict: a committed activation's effects are all
+    committed, a refused one's all refused FOR THE SAME REASONS (Dafny `EffectsAgree` with the identity lifting `Same`; the
+    reasons are one atom family here, so no lifting is needed). The act is atomic; a refused effect is still a row, as the
+    runtime records it. Equal reason sets settle the commit bit too: a refusal carries `some` reasons, a commit none. */
+pred effectsAgree[rows: set Action] { all o: rows | refusalReasons[o] = refusalReasons[o.arche] }
 /** activated — the per-service law an implementation module adopts for each log it owns, beside its chaining fact: the
     log's rows each cite an activation of the service and agree with its verdict. Following it (`ArcheOriginPrecedes`) and
     sharing no tick with it (`OneOccurrencePerTick`) are the kernel's. */
