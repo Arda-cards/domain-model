@@ -669,3 +669,39 @@ run unit_ord_refusedGenesisNotRecordedLineRefusalRecorded {
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the binding and assignee pin facts are guard arms (reflects dafny-domain src/procurement/order/order.dfy
+// BindingPinViol, AssigneeRefViol) ──
+// A binding write whose vendor role selector comes without its pin is refused with exactly RVendorPinUnsound. RED before the arm:
+// `SupplierBindingPinAgrees` was a DEFINITIONAL fact over every binding value, so the shape was unrepresentable (UNSAT).
+run unit_ord_vendorPinUnsoundRefused {
+  some o: CreateOrderOcc | some o.supplier.vendorRole and no o.supplier.vendorPin
+    and refusedAtAdmission[o] and o.admission.because = RVendorPinUnsound
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 1
+// A binding write pinning a vendor version that is not the current one at the write is refused with exactly RVendorPinStale.
+run unit_ord_vendorPinStaleRefused {
+  some o: CreateOrderOcc, p: o.supplier.vendorPin | not pinsCurrentBa[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RVendorPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 1
+// A details write pinning a staff version that is not the current one at the write is refused with exactly RAssigneePinStale.
+run unit_ord_assigneePinStaleRefused {
+  some o: UpdateOrderDetailsOcc, p: o.assignee | not pinsCurrentStaff[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RAssigneePinStale
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
+// The currency laws are THEOREMS of the arms (Dafny BindingPinCurrency, AssigneePinCurrency): committed writes pin current versions.
+check unit_ord_bindingPinCurrencyHolds {
+  all o: CreateOrderOcc + UpdateSupplierOcc | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 0
+check unit_ord_assigneePinCurrencyHolds {
+  all o: UpdateOrderDetailsOcc | (committed[o] and some o.assignee) implies pinsCurrentStaff[o.assignee, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 0

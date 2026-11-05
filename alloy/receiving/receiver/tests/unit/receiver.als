@@ -440,3 +440,49 @@ run unit_rcv_atRestAfterRelease {
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the carrier pin and line item pin facts are guard arms (reflects dafny-domain
+// src/receiving/receiver/receiver.dfy CarrierViol, ItemPinViol) ──
+// A header write whose carrier role selector comes without its pin is refused with exactly RCarrierPinUnsound. RED before the
+// arm: `ReceiverCarrierPinAgrees` was a DEFINITIONAL fact over every header record, so the shape was unrepresentable (UNSAT).
+run unit_rcv_carrierPinUnsoundRefused {
+  some o: CreateReceiverOcc | some o.carrierRole and no o.carrierPin
+    and refusedAtAdmission[o] and o.admission.because = RCarrierPinUnsound
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 1
+// A header write pinning a carrier version that is not the current one at the write is refused with exactly RCarrierPinStale.
+run unit_rcv_carrierPinStaleRefused {
+  some o: CreateReceiverOcc, p: o.carrierPin | not pinsCurrentBa[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RCarrierPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 1
+// A line write pinning an item version that is not the current one at the write is refused with exactly RItemPinStale.
+run unit_rcv_lineItemPinStaleRefused {
+  some o: UpdateReceivingLineOcc, p: o.item | not pinsCurrentItem[p, o.tick] and rlPre[o].sStatus = RL_RECEIVING
+    and refusedAtAdmission[o] and o.admission.because = RItemPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 1
+// The currency laws are THEOREMS of the arms (Dafny CarrierPinCurrency, ItemPinCurrency): committed writes pin current versions.
+check unit_rcv_carrierPinCurrencyHolds {
+  all o: ReceiverHeaderOcc | (committed[o] and some o.carrierPin) implies pinsCurrentBa[o.carrierPin, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 0
+check unit_rcv_lineItemPinCurrencyHolds {
+  all o: AddReceivingLineOcc + UpdateReceivingLineOcc | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 0

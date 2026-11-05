@@ -118,9 +118,9 @@ run unit_pool_refusedAddCitesRefusedActivation {
 run unit_pool_reversalNamesInverse {
   some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.reverses = a and r.arche != a.arche
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
-/** An add cannot "reverse" an add (the inverse-kind discipline). */
+/** A COMMITTED add never "reverses" an add (the inverse-kind discipline; since QA704 Q4 (a) an arm, so stated over committed rows). */
 run unit_pool_reversalWrongKindImpossible {
-  some disj a, b: PoolAddOcc | b.reverses = a
+  some disj a, b: PoolAddOcc | committed[b] and b.reverses = a
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 0
 
 // ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — the pool's member and the per-log trace law:
@@ -164,3 +164,18 @@ run unit_pool_transferBackdatedDestinationRefused {
     some w: prevPoolWrite[o, o.to] | earlierThan[o.at, w.at]
   }
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the reversal discipline is a guard arm (reflects dafny-domain src/resources/inventory-item/inventory-pool.dfy, RReversalUnlawful) ──
+/** A remove naming a REFUSED add as the row it reverses is refused with RReversalUnlawful: the reversed row must be a COMMITTED
+    inverse row on the same pool, same item, earlier. RED before the arm: `ReversalDiscipline` was a FACT over every row, so the
+    refused-add reversal was unrepresentable (UNSAT). */
+run unit_pool_reversalUnlawfulRefused {
+  some a: PoolAddOcc, r: PoolRemoveOcc | r.reverses = a and refusedAtAdmission[a] and refusedAtAdmission[r]
+    and RReversalUnlawful in r.admission.because
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+/** An add naming an add is refused RReversalUnlawful (the inverse-kind discipline, now a refusal). */
+run unit_pool_reversalWrongKindRefused {
+  some disj a, b: PoolAddOcc | b.reverses = a and refusedAtAdmission[b] and RReversalUnlawful in b.admission.because
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+/** The discipline is a THEOREM over committed rows (Dafny `ReversalDiscipline`): a committed row's reversed row is lawful. */
+check unit_pool_reversalDisciplineHolds { reversalDiscipline } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 0

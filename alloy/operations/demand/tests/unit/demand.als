@@ -533,3 +533,19 @@ run unit_dem_completeHoldingDatedAtCommits {
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
       11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the holding pool's item pin is a guard arm of StartProduction (reflects dafny-domain
+// src/operations/demand/demand.dfy StartProductionViol, RWrongItem) ──
+// A StartProduction naming a holding whose pool carries ANOTHER item's pin is refused with RWrongItem. RED before the arm:
+// `StartProductionHoldingPoolPin` was a FACT over committed rows and no arm carried the reason, so the refusal was unrepresentable.
+run unit_dem_startProductionWrongItemRefused {
+  some o: StartProductionOcc | refusedAtAdmission[o] and RWrongItem in o.admission.because
+    and some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note expect 1
+// The law is a THEOREM of the arm: a committed StartProduction's resolved holding pool carries the demand's item pin (M3.2).
+check unit_dem_holdingPoolPinHolds {
+  all o: StartProductionOcc | committed[o] implies
+    (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note expect 0
