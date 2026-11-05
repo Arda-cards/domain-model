@@ -105,11 +105,13 @@ fact SupplierBindingExtensional {
 // to a real BusinessAffiliate BEARING a VENDOR role — "name-only" means a minimal
 // BusinessAffiliate, never a role-less link), and the selector is a VENDOR role of the
 // PINNED version. Tenancy stays guard-side.
+pred bindingPinAgrees[b: SupplierBinding] {
+  some b.vendorPin iff some b.vendorRole
+  some b.vendorRole implies roleSelectorAgrees[b.vendorPin, b.vendorRole, VENDOR]
+}
 pred supplierBindingPinAgrees {
-  all o: CreateOrderOcc + UpdateSupplierOcc | committed[o] implies let b = o.supplier {
-    some b.vendorPin iff some b.vendorRole
-    some b.vendorRole implies roleSelectorAgrees[b.vendorPin, b.vendorRole, VENDOR]
-  }
+  all o: CreateOrderOcc    | committed[o] implies bindingPinAgrees[o.supplier]
+  all o: UpdateSupplierOcc | committed[o] implies bindingPinAgrees[o.supplier]
 }
 
 // ── the line's item reference — IDENTITY + READ-TIME EFFECTIVE VERSION (cut 10, PDEV-1536) ──────

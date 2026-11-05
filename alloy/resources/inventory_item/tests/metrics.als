@@ -121,19 +121,19 @@ pred inRange { all a, b, c: amountsInPlay | sLeq[a, b] implies sLeq[a.splus[c], 
 run unit_invmet_inRangeSat {
   clocksAligned and inRange
   some c: CountCell | no c.cLevel and #membersOf[c] = 2 and not isZero[cellTotal[c]]
-} } for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 // The boundary witness under the premise: UNSAT — no aggregate usable classifies NEGATIVE in range.
 run unit_invmet_usableConeLiftsInRange {
   clocksAligned and inRange
   some c: CountCell | classify[cellUsable[c]] = NEGATIVE
-} } for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 0
 // The bounded theorem (Dafny UsableNonNegative, read at the source S-05): under the premise every cell's usable is ZERO or POSITIVE.
 assert unit_invmet_usableNonNegativeInRange {
   (clocksAligned and inRange) implies all c: CountCell | classify[cellUsable[c]] in (ZERO + POSITIVE)
 }
-check unit_invmet_usableNonNegativeInRange } for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+check unit_invmet_usableNonNegativeInRange for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 0
 
 // A QUIET window repeats the level (LOCF): no committed occurrence in (τ₁, τ₂] ⟹ same members,

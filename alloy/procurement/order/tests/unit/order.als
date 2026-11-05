@@ -697,7 +697,8 @@ run unit_ord_assigneePinStaleRefused {
       10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
 // The currency laws are THEOREMS of the arms (Dafny BindingPinCurrency, AssigneePinCurrency): committed writes pin current versions.
 check unit_ord_bindingPinCurrencyHolds {
-  all o: CreateOrderOcc + UpdateSupplierOcc | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
+  all o: CreateOrderOcc    | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
+  all o: UpdateSupplierOcc | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 0

@@ -41,8 +41,8 @@ fun itemSuppliesBefore[i: Item, t: Tick]: set ItemSupply {
     pinned version (`PinsSoundAt`). RSupplierPinStale: a pin that is not the vendor's current version at the write
     (`PinsCurrentAt`; was the fact `ItemSupplyPinCurrency`). The contract laws are their theorems over committed history. */
 fun itemContentViol[o: ItemWriteOcc]: set Reason {
-  ((some s: o.supplies | s.tenantId != o.subject.tenantId or (some i: Item - o.subject | s in itemSuppliesBefore[i, o.tick]))
-    or (some resolve[o.defaultSupply] and resolve[o.defaultSupply] not in o.supplies)
+  (((some s: o.supplies | s.tenantId != o.subject.tenantId or (some i: Item - o.subject | s in itemSuppliesBefore[i, o.tick]))
+     or (some resolve[o.defaultSupply] and resolve[o.defaultSupply] not in o.supplies))
    => RSupplyNotOwned else none)
   + ((some s: o.supplies | not (some s.supplierPin iff some s.supplierRole)
        or (some s.supplierPin and s.supplierPin.subject.tenantId != s.tenantId)

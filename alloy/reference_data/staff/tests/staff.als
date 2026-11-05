@@ -61,7 +61,7 @@ run unit_stf_retiredDeleteRefused {
     committed[d] and d2.subject = d.subject and precedes[d.tick, d2.tick]
     d2.admission in Rejected and d2.admission.because = RStaffRetired
   }
-} for 5 but 5 Tick, 4 Snapshot, 3 Occurrence, 6 EntityId expect 1
+} for 5 but 7 Tick, 4 Snapshot, 5 Occurrence, 6 EntityId expect 1
 
 // A pinnable version exists; and a pin survives retirement (the grandfather half).
 run unit_stf_pinSurvivesRetirement {

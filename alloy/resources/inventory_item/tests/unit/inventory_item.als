@@ -71,7 +71,7 @@ run unit_occ_resurrectionRefused {
     committed[d] and d.target = c.target and precedes[d.tick, c.tick]
     refusedAtAdmission[c] and RAlreadyExists in c.admission.because
   }
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 
 // A committed Split exists: both sides' records produced, the new item live, the origin still live.
 run unit_occ_splitProjects {
@@ -101,7 +101,7 @@ run unit_occ_movePreservesSealed {
 // Move on a LOCKED item is REFUSED with exactly RLocked (ForceMove — the privileged override — on demand).
 run unit_occ_moveLockedRefused {
   some o: MoveOcc | refusedAtAdmission[o] and o.admission.because = RLocked
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 
 // ── theorems (check; UNSAT = holds) — invariants DERIVED from the witnessed guards ───────────────
 // No committed consume overdraws (the guard, seen from the projection side).
@@ -274,23 +274,23 @@ run unit_occ_deleteNonEmptyRefused {
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 run unit_occ_consumeDisabledRefused {
   some o: ConsumeOcc | refusedAtAdmission[o] and RUnfit in o.admission.because
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_replenishLockedRefused {
   some o: ReplenishOcc | refusedAtAdmission[o] and o.admission.because = RLocked
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_splitSerializedRefused {
   some o: SplitOcc | refusedAtAdmission[o] and RSerialized in o.admission.because
 } for 6 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 run unit_occ_mergeDifferentItemRefused {
   some o: MergeOcc | refusedAtAdmission[o] and o.admission.because = RIncompatible
     and o.target.itemPin.subject != o.absorbed.itemPin.subject
-} for 6 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 6 but 2 RoleDetail, 3 Scalar, 5 Int, 8 Occurrence, 8 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_sealEmptyRefused {
   some o: SealOcc | refusedAtAdmission[o] and o.admission.because = REmpty
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_lockAlreadyLockedRefused {
   some o: LockOcc | refusedAtAdmission[o] and o.admission.because = RNotApplicable
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_nonPositiveRefused {
   some o: inventory_item_types/CreateOcc | refusedAtAdmission[o] and o.admission.because = RNonPositive
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1

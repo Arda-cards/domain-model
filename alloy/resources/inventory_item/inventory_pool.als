@@ -130,12 +130,15 @@ pred reversalDiscipline {
     of the INVERSE kind and the same item (a transfer's inverse swaps source and destination). `reversalDiscipline` above is its
     theorem over committed rows. */
 pred lawfulReversal[o: PoolOcc] {
-  (o in PoolAddOcc implies let r = o.reverses & PoolRemoveOcc | some r and committed[r] and r.subject = o.subject
-      and r.item = (o & PoolAddOcc).item and precedes[r.tick, o.tick])
-  (o in PoolRemoveOcc implies let r = o.reverses & PoolAddOcc | some r and committed[r] and r.subject = o.subject
-      and r.item = (o & PoolRemoveOcc).item and precedes[r.tick, o.tick])
-  (o in PoolTransferOcc implies let r = o.reverses & PoolTransferOcc | some r and committed[r] and r.to = o.subject
-      and r.subject = (o & PoolTransferOcc).to and r.item = (o & PoolTransferOcc).item and precedes[r.tick, o.tick])
+  (o in PoolAddOcc implies (some (o.reverses & PoolRemoveOcc) and committed[o.reverses & PoolRemoveOcc]
+      and (o.reverses & PoolRemoveOcc).subject = o.subject and (o.reverses & PoolRemoveOcc).item = (o & PoolAddOcc).item
+      and precedes[(o.reverses & PoolRemoveOcc).tick, o.tick]))
+  (o in PoolRemoveOcc implies (some (o.reverses & PoolAddOcc) and committed[o.reverses & PoolAddOcc]
+      and (o.reverses & PoolAddOcc).subject = o.subject and (o.reverses & PoolAddOcc).item = (o & PoolRemoveOcc).item
+      and precedes[(o.reverses & PoolAddOcc).tick, o.tick]))
+  (o in PoolTransferOcc implies (some (o.reverses & PoolTransferOcc) and committed[o.reverses & PoolTransferOcc]
+      and (o.reverses & PoolTransferOcc).to = o.subject and (o.reverses & PoolTransferOcc).subject = (o & PoolTransferOcc).to
+      and (o.reverses & PoolTransferOcc).item = (o & PoolTransferOcc).item and precedes[(o.reverses & PoolTransferOcc).tick, o.tick]))
 }
 fun reversalViol[o: PoolOcc]: set Reason { ((some o.reverses and not lawfulReversal[o]) => RReversalUnlawful else none) }
 

@@ -116,8 +116,8 @@ fun carrierPinViol[o: ReceiverHeaderOcc]: set Reason {
 }
 /** lineItemPinViol — QA704 Q4 (a): a capture write re-pins the item's CURRENT version (dafny-domain `ItemPinViol`, RItemPinStale —
     the item log's atom reused; was the fact LineExpectedItemPinCurrency, DT-023 cut 7a). */
-fun lineItemPinViol[o: AddReceivingLineOcc + UpdateReceivingLineOcc]: set Reason {
-  ((some o.item and not pinsCurrentItem[o.item, o.tick]) => RItemPinStale else none)
+fun lineItemPinViol[p: lone ItemOcc, t: Tick]: set Reason {
+  ((some p and not pinsCurrentItem[p, t]) => RItemPinStale else none)
 }
 /** attachSumViol — the §8.3.3(d) Σ-expected clause, CASE-WISE (exact at 0/1 pre-existing
     resolved members; ≥2 is the documented ceiling — suite scopes stay within it BY DESIGN):
@@ -181,7 +181,7 @@ fun addLineViol[o: AddReceivingLineOcc]: set Reason {
                                  // acceptance decision — only currently defined items
                                  // may be received without an order behind them
   + attachSumViol[o, o.attribution, o.expectedQty]   // the newborn's cap is the payload's
-  + lineItemPinViol[o]   // QA704 Q4 (a)
+  + lineItemPinViol[o.item, o.tick]   // QA704 Q4 (a)
   + ((some o.attribution and attributionStartedBefore[o.attribution, o.tick]) => RAttributionStarted else none)   // MF-004
 }
 fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
@@ -193,7 +193,7 @@ fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
       and some o.item and not itemLiveAt[o.item.subject, o.tick])
      => RRetiredRef else none)   // D3 blind-receiving refinement: re-pin on a line with
                                  // no attributions is a blind acceptance — gated
-  + lineItemPinViol[o]   // QA704 Q4 (a)
+  + lineItemPinViol[o.item, o.tick]   // QA704 Q4 (a)
 }
 // DT-023 cut 7a: capture-window writes RE-PIN the item's CURRENT version (the Q-A floating
 // semantics — sExpectedItem floats until the Receive freeze). The RRetiredRef gate follows
