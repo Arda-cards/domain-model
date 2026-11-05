@@ -110,9 +110,9 @@ fact CycleOccIsTheLog { CycleOcc = clog/SubjectOcc }   //   extend the lifecycle
 fun cycle[o: CycleOcc]: one CardCycle { o.subject }
 
 sig RequestOcc            extends lc/CreateOcc { qtyOverride: lone Quantity } { bindings = subject + qtyOverride }   // the GENESIS (Create shape)
-// `AcceptOcc` / `StartProcessingOcc` / `ShelveOcc` cite the claim chain's RESERVE / ACT_RESERVE (`arche`) when the act is a
-// demand saga's leg (DT-029 E6, chain A) — kanban stays HOLDER-BLIND: the citation discipline is the demand module's fact
-// (`operations/demand/demand_claim.als`, `CycleCitations`), never a kanban law.
+// `AcceptOcc` / `StartProcessingOcc` / `ShelveOcc` cite the ACTIVATION that wrote them (`arche`, DT-015 D1) — kanban stays
+// HOLDER-BLIND: who caused the act is read from the causal tree, never a kanban law. (The claim chain whose RESERVE they
+// cited left the tree on 2026-11-05, TN-003 row 2.)
 sig AcceptOcc             extends lc/MutateOcc {} { bindings = subject }
 sig ShelveOcc             extends lc/MutateOcc {} { bindings = subject }
 sig StartProcessingOcc    extends lc/MutateOcc { pool: one EntityId } { bindings = subject + pool }   // ATTACHES the pool (exclusive while the cycle lives).

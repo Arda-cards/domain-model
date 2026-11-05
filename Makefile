@@ -58,7 +58,7 @@ check-layering:
 	[ $$fail -eq 0 ] && echo "OK: layering respected (meta -/-> shared -/-> domains; DT-017 mock discipline)" || exit 1
 
 ## check-open-params: model-gate rule 10 — every parameter of a parametric `open` is alias-qualified or declared locally
-##   (tools/open-params-gate.py; --selftest runs its 14 cases). Sibling: tools/adoption-gate.py (rule 9, adopted preds owe a check).
+##   (tools/open-params-gate.py; --selftest runs its 14 cases). (tools/adoption-gate.py, the intent-log adoption gate, left with the intent log on 2026-11-05.)
 check-open-params:
 	python3 tools/open-params-gate.py --selftest > /dev/null && python3 tools/open-params-gate.py alloy
 

@@ -11,7 +11,7 @@ conventions.
 
 ```
 alloy/
-├── meta/           kernel.als · std/{bfo,iof,qudt}.als (vendored stubs) · util.als · tests/
+├── meta/           kernel.als · std/{bfo,qudt}.als (vendored stubs) · util.als · tests/
 ├── reference_data/ item.als                                    (+ tests/)
 ├── resources/      station · operator · loop · kanban_card · job · inventory_item   (+ tests/)
 ├── system/ procurement/ shop_access/ fulfillment/ operations/ receiving/ shipping/ oam/ workflows_and_integrations/   (stubbed)

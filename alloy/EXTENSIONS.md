@@ -25,7 +25,7 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
 4. `make check-alloy` runs the kept roots only.
 
-## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is the Alloy cut's work)
+## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is the Alloy cut's work; step A's removals marked)
 
 The counts are commands per root today. The class is the ROOT's default; a command may be reclassified in the cut.
 
@@ -34,7 +34,7 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `conventions/call_first_saga/tests/call_first_saga.als` | 5 | 1 | teaching material: kept compiling, stale header (MP's confirmation 3) |
 | `conventions/denormalized_observables/tests/denormalized_observables.als` | 3 | 2 | teaching material: kept compiling, stale header (MP's confirmation 3) |
 | `conventions/inductive_invariant/tests/inductive_invariant.als` | 2 | 5 | teaching material: kept compiling, stale header (MP's confirmation 3) |
-| `conventions/intent_log/tests/intent_log.als` | 14 | 7 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
+| `conventions/intent_log/tests/intent_log.als` | 14 | 7 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `conventions/metrics/tests/metrics.als` | 4 | 1 | teaching material: kept compiling, stale header (MP's confirmation 3) |
 | `conventions/notification_convergence/tests/notification_convergence.als` | 4 | 2 | teaching material: kept compiling, stale header (MP's confirmation 3) |
 | `conventions/pinning_freezing/tests/pinning_freezing.als` | 4 | 2 | teaching material: kept compiling, stale header (MP's confirmation 3) |
@@ -42,7 +42,7 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `meta/action/tests/action.als` | 5 | 6 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/action/tests/attributed.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/action/tests/stateful.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
-| `meta/intent_log/tests/intent_log.als` | 16 | 14 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
+| `meta/intent_log/tests/intent_log.als` | 16 | 14 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `meta/keyed_value_algebra/tests/keyed_monoid.als` | 5 | 9 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/keyed_value_algebra/tests/keyed_order.als` | 4 | 6 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/keyed_value_algebra/tests/keyed_sum.als` | 2 | 4 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
@@ -64,8 +64,8 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `operations/demand/tests/integration/demand.als` | 3 | 2 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 | `operations/demand/tests/unit/delivery_retire.als` | 6 | 3 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 | `operations/demand/tests/unit/demand.als` | 42 | 19 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
-| `operations/demand/tests/unit/demand_claim.als` | 11 | 7 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
-| `operations/demand/tests/unit/demand_movement.als` | 10 | 3 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
+| `operations/demand/tests/unit/demand_claim.als` | 11 | 7 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
+| `operations/demand/tests/unit/demand_movement.als` | 10 | 3 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `operations/demand/tests/unit/demand_reset.als` | 2 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 | `procurement/order/tests/integration/order.als` | 3 | 2 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 | `procurement/order/tests/unit/order.als` | 51 | 16 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
@@ -95,9 +95,9 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `soak/sliced/cycle_pool_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/demand_holding_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/demand_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/intent_log_arche_inductive.als` | 4 | 7 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
-| `soak/sliced/intent_log_arche_movement_inductive.als` | 9 | 6 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
-| `soak/sliced/intent_log_claim_inductive.als` | 2 | 4 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
+| `soak/sliced/intent_log_arche_inductive.als` | 4 | 7 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
+| `soak/sliced/intent_log_arche_movement_inductive.als` | 9 | 6 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
+| `soak/sliced/intent_log_claim_inductive.als` | 2 | 4 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `soak/sliced/kanban_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/order_frozen_outside_draft_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/order_header_detail_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |

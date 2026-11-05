@@ -25,8 +25,8 @@ module meta/action/stateful
 open meta/action/action
 
 /** Snapshot — an opaque state record: the value of a subject's mutable payload at one moment.
-    Domains extend it with their concrete record type; it doubles as the future bitemporal
-    version payload (meta/bitemporal). */
+    Domains extend it with their concrete record type. (The bitemporal version payload is the
+    runtime's, RA-02, 2026-11-05; the meta/bitemporal stub left with TN-003 row 3.) */
 sig Snapshot {}
 
 /** StatefulAction — an action that carries the snapshots its guards read and its Effect produced. */
