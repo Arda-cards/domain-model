@@ -54,6 +54,12 @@ run unit_act_lyingVerdict {
   some e: DeskEffect | committed[e] and not committed[e.arche]
 } for 5 expect 0
 
+// An effect refused for ANOTHER reason than its activation is unrepresentable: the agreement is the whole verdict (Dafny
+// `EffectsAgree` with `Same`, the dafny-domain PR 31 review; R4). RED on the tree before bd05604: only the commit bit agreed.
+run unit_act_otherReason {
+  some e: DeskEffect | refusedAtAdmission[e] and refusalReasons[e] != refusalReasons[e.arche]
+} for 5 expect 0
+
 // An entity row is never cited: it is a leaf of the tree (D1).
 run unit_act_effectCited {
   some o: Occurrence, e: DeskEffect + BarEffect | o.arche = e
