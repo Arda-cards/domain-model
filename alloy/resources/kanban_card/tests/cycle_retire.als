@@ -164,19 +164,20 @@ check unit_cyr_poolAttachedOnce for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quant
 // naming the same UNRESOLVED pool id satisfied them vacuously (probe at a7417a0: SAT, SAT; resolved control UNSAT). RED-FIRST:
 // at the tests commit the three commands below are AGAINST expectation (the old arm admits the second attach; the old law has a
 // counterexample); the model commit (law over `EntityId`, the attached-once disjunct outside the resolution nesting) turns them.
-// ── a second committed attach naming the same UNRESOLVED id is refused RPoolNotFresh (RED at tests-4: admitted) ──
-run unit_cyr_secondAttachSameDanglingIdRefused {
-  some disj s1, s2: StartProcessingOcc | committed[s1] and s1.pool = s2.pool and no resolve[s1.pool] and precedes[s1.tick, s2.tick]
-    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
+// (The two dangling-id finders of 2026-10-02, `unit_cyr_secondAttachSameDanglingIdRefused` and
+// `unit_cyr_reattachSameDanglingIdAfterFailureRefused`, RETIRED with QA704 Q2 (b), 2026-11-05: a committed attach of an
+// unresolved id is no longer representable — the first attach is refused RNoSuchPool, below. The attached-once law over the id
+// stays, with its resolved controls.)
+// ── QA704 Q2 (b) (dafny-domain PR 33, MD-074): an attach naming a pool that does not exist, or a pool retired before the act, is
+//    refused RNoSuchPool. RED before the arm: the atom does not exist; the old guard admitted the dangling id (TN-001 S-08) ──
+run unit_cyr_startProcessingNoSuchPoolRefused {
+  some o: StartProcessingOcc | not namedPoolLive[o.pool, o.tick] and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
-// ── re-attach with the same UNRESOLVED id after a committed ProductionFailure is refused (RED at tests-4: it committed) ──
-run unit_cyr_reattachSameDanglingIdAfterFailureRefused {
-  some s1, s2: StartProcessingOcc, f: ProductionFailureOcc |
-    committed[s1] and committed[f] and f.subject = s1.subject and precedes[s1.tick, f.tick] and precedes[f.tick, s2.tick]
-    and s2.pool = s1.pool and no resolve[s1.pool]
-    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+// The law is a THEOREM of the arm (Dafny StartedPoolLive): a committed attach's pool is live as of the act.
+assert unit_cyr_startedPoolLive { all o: StartProcessingOcc | committed[o] implies namedPoolLive[o.pool, o.tick] }
+check unit_cyr_startedPoolLive for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 // ── the law over the PAYLOAD, stated inline so it does not depend on the model's own `poolAttachedOnce` text: at most one
 //    committed StartProcessing per pool id, resolved or not (RED at tests-4: a counterexample with a dangling id) ──
