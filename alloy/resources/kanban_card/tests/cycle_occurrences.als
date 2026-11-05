@@ -84,11 +84,13 @@ run unit_start_usedPoolRefused {
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
-// The POSITIVE companion: a FRESH pool (no committed history before the attach tick) is
-// accepted normally — freshness does not block an ordinary first attach.
+// The POSITIVE companion: a FRESH pool is accepted normally — freshness does not block an ordinary first attach. Since QA704
+// Q2 (b) the pool must EXIST (a committed genesis before the attach, the only row the solver may place), so fresh reads as Q42
+// has it: no committed MEMBERSHIP row and no earlier attach — "no committed history at all" is unsatisfiable now.
 run unit_start_freshPoolAccepted {
-  some sp: StartProcessingOcc | committed[sp]
-    and no b: PoolOcc | committed[b] and b.pool = (resolve[sp.pool] & InventoryPool) and precedes[b.tick, sp.tick]
+  some sp: StartProcessingOcc, p: resolve[sp.pool] & InventoryPool | committed[sp]
+    and (some g: CreatePoolOcc | committed[g] and g.subject = p and precedes[g.tick, sp.tick])
+    and no b: PoolOcc - CreatePoolOcc | committed[b] and b.subject = p and precedes[b.tick, sp.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 9 Occurrence, 9 Tick, 9 Snapshot expect 1
 
