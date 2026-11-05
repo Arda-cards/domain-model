@@ -57,7 +57,8 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `meta/state_machine/tests/machine.als` | 1 | 3 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/subject_log/tests/affirm.als` | 4 | 5 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/subject_log/tests/lifecycle.als` | 8 | 6 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
-| `meta/subject_log/tests/subject_log.als` | 6 | 6 | RETIRED with D3/D4 (the duplicate-origin law, the intent chains) |
+| `meta/subject_log/tests/subject_log.als` | 5 | 6 | REFLECTS Dafny (step B, 2026-11-05: the duplicate-origin commands left with D3; the sibling witnesses arrived): runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
+| `meta/activation/tests/activation.als` | 10 | 5 | NEW in step B (2026-11-05): REFLECTS dafny-domain src/meta/tests/activation-tests.dfy; runs kept as finders (class 1), the negative controls among them; checks RETIRED (Dafny proves them) |
 | `meta/tests/kernel.als` | 5 | 1 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/time/tests/duration.als` | 2 | 4 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `meta/time/tests/time.als` | 4 | 6 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
@@ -114,8 +115,12 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 - D3: `meta/subject_log/tests/subject_log.als`'s duplicate-origin commands (`unit_slog_archeSelfMintedReactionAllowed` and its pair), the pool's `RDuplicateOrigin` witnesses in `resources/inventory_item/tests/inventory_pool.als`.
 - D4: `meta/intent_log/`, `operations/demand/demand_claim.als`, `demand_movement.als`, their roots, `soak/sliced/intent_log_*`, `conventions/intent_log/`, `meta/examples/ex20_intent_log.als`.
 - D5: `meta/bitemporal.als`, `shared/std/iof.als`.
+- D1 to D3 (step B): `ArcheUnique`, `archeUniquePerSubject`, `archeDuplicate`, the pool's `RDuplicateOrigin` atom and arms; the activation module arrives (`meta/activation/activation.als`, NOT parametric on the service — see its header) and the nine log-owning modules adopt it.
+- TN-003 row 9 (step C, MP's ruling Journal 193772): the second gate — `commit`, `CommitOnlyIfAdmitted`, `refusedAtCommit`, the commit half of `refusalReasons`, `commitAlwaysAccepts` and every adoption, `unit_action_commitRejected`.
+- QA704 Q4 (a) (step D): the fourteen content facts are guard arms with the model's codes (`RStaffNameTaken`, `RRoleNotOwned`, `RSupplyNotOwned`, `RSupplierPinUnsound`, `RSupplierPinStale`, `RLicensePlateTaken`, `RSerialTaken`, `RItemPinStale`, `RReversalUnlawful`, `RWrongItem` at StartProduction, `RVendorPinUnsound`, `RVendorPinStale`, `RAssigneePinStale`, `RCarrierPinUnsound`, `RCarrierPinStale`); the laws are theorems over committed history, checked in the roots. QA704 Q3 (a): `demand_reset.als` KEPT as a class-2 extension of `ResetSnapsToSum` (confined for the solver budget). S-05: the in-range premise and the bounded theorem `unit_invmet_usableNonNegativeInRange` (class 2) beside the boundary witness.
 
 ## Open
 
-- OQ-1 (DT-015): whether this tree takes D1 verbatim (`arche` on an occurrence = its activation). SAMWISE proposes verbatim.
+- OQ-1 (DT-015): RULED, QA708 (a) with the activation atom standing for `ActId` (MP, 2026-11-05); taken verbatim in step B.
+- QA704 Q2 (b): the `RNoSuchPool` arms at StartProduction and StartProcessing and the holding's liveness at RecordProduction mirror dafny-domain's PR 4 when it lands.
 - The per-command classification of the 300-odd `check` commands: done root by root in the cut, with the Dafny lemma named for each kept one.

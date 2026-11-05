@@ -204,3 +204,23 @@ run unit_cyr_refusedOnLiveRecorded {
   some o: ShelveOcc | refusedAtAdmission[o] and liveAtOcc[o] and lc/recorded[o]
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+
+// ── DT-015 D2/R4 (dafny-domain#31 review, 2026-11-05): the rollover under activations is TWO calls ──────────────────
+// The completion retire is one call (its activation committed); the successor's genesis is the CASCADE call that activation
+// makes — its own activation, citing the retire's, with its own verdict. Here the request is refused while the retire commits:
+// the service stays activated, each row agreeing with its own activation (`effectsAgree`); the two rows under ONE activation
+// could not (reflects kanban-card-tests.dfy `RolloverRefusedSuccessor`; the Alloy pair `rolloverPair` was always two rows admitted
+// on their own).
+run unit_cyr_rolloverRefusedSuccessorTwoActivations {
+  some disj a, b: Call, disj c1, c2: CardCycle, r: RetireCycleOcc, g: RequestOcc |
+    committed[a] and r.arche = a and committed[r] and r.subject = c1
+    and b.arche = a and refusedAtAdmission[b] and g.arche = b and refusedAtAdmission[g]
+    and g.subject = c2 and c2.precededBy = c1 and precedes[r.tick, g.tick]
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 1
+// The same two rows under one activation are unrepresentable: no verdict agrees with a committed retire and a refused request.
+run unit_cyr_rolloverOneActivationCannotSplitVerdict {
+  some a: Call, r: RetireCycleOcc, g: RequestOcc |
+    r.arche = a and committed[r] and g.arche = a and refusedAtAdmission[g] and g.subject.precededBy = r.subject
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0
