@@ -114,17 +114,30 @@ fact PoolWritesTimed { poolWriteKinds in Timed }
     item — an add reversing a remove, a remove reversing an add, a transfer reversing a transfer whose `to` is this one's
     source and whose source is this one's `to`. The late-movement detector (the owner's module) excludes rows named by a
     committed reversal, so a repair never trips its own detector (DT-027 §7). */
-fact ReversalDiscipline {
-  all o: PoolAddOcc    | some o.reverses implies (o.reverses in PoolRemoveOcc and committed[o.reverses & PoolRemoveOcc]
+pred reversalDiscipline {
+  all o: PoolAddOcc    | (committed[o] and some o.reverses) implies (o.reverses in PoolRemoveOcc and committed[o.reverses & PoolRemoveOcc]
                                                   and (o.reverses & PoolRemoveOcc).subject = o.subject and (o.reverses & PoolRemoveOcc).item = o.item
                                                   and precedes[(o.reverses & PoolRemoveOcc).tick, o.tick])
-  all o: PoolRemoveOcc | some o.reverses implies (o.reverses in PoolAddOcc and committed[o.reverses & PoolAddOcc]
+  all o: PoolRemoveOcc | (committed[o] and some o.reverses) implies (o.reverses in PoolAddOcc and committed[o.reverses & PoolAddOcc]
                                                   and (o.reverses & PoolAddOcc).subject = o.subject and (o.reverses & PoolAddOcc).item = o.item
                                                   and precedes[(o.reverses & PoolAddOcc).tick, o.tick])
-  all o: PoolTransferOcc | some o.reverses implies (o.reverses in PoolTransferOcc and committed[o.reverses & PoolTransferOcc]
+  all o: PoolTransferOcc | (committed[o] and some o.reverses) implies (o.reverses in PoolTransferOcc and committed[o.reverses & PoolTransferOcc]
                                                   and (o.reverses & PoolTransferOcc).to = o.subject and (o.reverses & PoolTransferOcc).subject = o.to
                                                   and (o.reverses & PoolTransferOcc).item = o.item and precedes[(o.reverses & PoolTransferOcc).tick, o.tick])
 }
+/** lawfulReversal — QA704 Q4 (a), DT-009 Q27: the reversal discipline as the guard condition it is in dafny-domain
+    src/resources/inventory-item/inventory-pool.dfy (RReversalUnlawful): the named row is a COMMITTED row on the SAME pool, EARLIER,
+    of the INVERSE kind and the same item (a transfer's inverse swaps source and destination). `reversalDiscipline` above is its
+    theorem over committed rows. */
+pred lawfulReversal[o: PoolOcc] {
+  (o in PoolAddOcc implies let r = o.reverses & PoolRemoveOcc | some r and committed[r] and r.subject = o.subject
+      and r.item = (o & PoolAddOcc).item and precedes[r.tick, o.tick])
+  (o in PoolRemoveOcc implies let r = o.reverses & PoolAddOcc | some r and committed[r] and r.subject = o.subject
+      and r.item = (o & PoolRemoveOcc).item and precedes[r.tick, o.tick])
+  (o in PoolTransferOcc implies let r = o.reverses & PoolTransferOcc | some r and committed[r] and r.to = o.subject
+      and r.subject = (o & PoolTransferOcc).to and r.item = (o & PoolTransferOcc).item and precedes[r.tick, o.tick])
+}
+fun reversalViol[o: PoolOcc]: set Reason { ((some o.reverses and not lawfulReversal[o]) => RReversalUnlawful else none) }
 
 // ── refusal reasons ──────────────────────────────────────────────────────────────────────────────
 one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
@@ -134,7 +147,8 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
         RPoolStarted,    // cut 2 (Q29): genesis on a pool that already has committed history
         RPoolNotCreated, // Q45 (MP, 2026-09-10: "Yes — distinguish them"): an AFFIRM of a pool that never existed — distinct from RPoolClosed (retired)
         RPoolClosed,     // cut 2: the pool is not live — never created, or already retired (the family's arm; also a transfer's DESTINATION)
-        RPoolNotEmpty    // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
+        RPoolNotEmpty,   // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
+        RReversalUnlawful // QA704 Q4 (a), DT-009 Q27: a movement naming a reversed row that is not the committed inverse row on this pool (was the fact ReversalDiscipline)
         extends Reason {}
 /** RBackdatedPoolWrite — the RBackdated family's pool member (COORDINATOR-Q527): a write dated BEFORE the pool's newest
     committed write — accepting it would put the pool's stamps out of causal order (`poolStampsMonotone`). The runtime's
@@ -171,6 +185,7 @@ fun retirePoolViol[o: RetirePoolOcc]: set Reason {
 }
 fun poolAddViol[o: PoolAddOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2: never created / retired — the family's arm
+  + reversalViol[o]                                          // QA704 Q4 (a): the reversed row must be the committed inverse
   + ((o.item.itemPin.subject != o.pool.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.pool.tenantId) => RWrongTenant   else none)
   + ((o.item in o.pre.holds)              => RAlreadyMember else none)
@@ -182,6 +197,7 @@ fun poolAddViol[o: PoolAddOcc]: set Reason {
 }
 fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2
+  + reversalViol[o]                                          // QA704 Q4 (a)
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527
 }
@@ -194,6 +210,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2: the SOURCE must be live …
   + ((not lc/liveSubjectAt[o.to, o.tick]) => RPoolClosed else none)   // … and so must the DESTINATION (its paired add is a Mutate on `to`)
   + ((o.to = o.subject) => RSameTarget else none)
+  + reversalViol[o]                                          // QA704 Q4 (a)
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + ((o.item.itemPin.subject != o.to.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)

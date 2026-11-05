@@ -172,14 +172,15 @@ fact ReceiverStateExtensional {
     or a.sOperator != b.sOperator
     or a.sInternalNotes != b.sInternalNotes
 }
-// Pin-target agreement is DEFINITIONAL (the SupplierBindingPinAgrees precedent): pin and
+// Pin-target agreement was DEFINITIONAL; since QA704 Q4 (a) (DT-009 Q27) it is the RCarrierPinUnsound ARM of the header
+// writes (receiver_implementation carrierPinViol) and this pred is its THEOREM over committed writes: pin and
 // selector come TOGETHER (DT-023 cut 8 — a carrier link always names its CARRIER role),
 // and the selector is a CARRIER role of the PINNED version. Tenancy stays guard-side
 // (carrierTenancyViol).
-fact ReceiverCarrierPinAgrees {
-  all s: ReceiverState {
-    some s.sCarrierPin iff some s.sCarrierRole
-    some s.sCarrierRole implies roleSelectorAgrees[s.sCarrierPin, s.sCarrierRole, CARRIER]
+pred receiverCarrierPinAgrees {
+  all o: ReceiverHeaderOcc | committed[o] implies {
+    some o.carrierPin iff some o.carrierRole
+    some o.carrierRole implies roleSelectorAgrees[o.carrierPin, o.carrierRole, CARRIER]
   }
 }
 
@@ -363,7 +364,9 @@ one sig RReceiverStarted,    // create: this receiver already has committed hist
         ROverAllocated,      // receive: Σ allocation would exceed the accepted count (§8.3.3 d)
         RActualRecorded,     // record-actual: the set-once facet is already present (§8.3.3 b)
         RAttributionStarted, // attach: this attribution already has committed history (genesis-once)
-        RAttributionClosed   // the attribution is unusable (never started, or detached)
+        RAttributionClosed,  // the attribution is unusable (never started, or detached)
+        RCarrierPinUnsound,  // QA704 Q4 (a), DT-009 Q27: a header write whose carrier pin and role selector do not come together or agree (was the fact ReceiverCarrierPinAgrees)
+        RCarrierPinStale     // QA704 Q4 (a): a header write pinning a carrier version not current at the write (was the fact CarrierPinCurrency); RItemPinStale on the line writes is the item log's atom, reused
         extends Reason {}
 
 // ── the read API (per-role; L9) ─────────────────────────────────────────────────────────────────

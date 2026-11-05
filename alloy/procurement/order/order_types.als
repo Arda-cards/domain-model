@@ -99,13 +99,14 @@ fact SupplierBindingExtensional {
     a.name != b.name or a.vendorPin != b.vendorPin or a.vendorRole != b.vendorRole
     or a.base != b.base or a.overrides != b.overrides
 }
-// Pin-target agreement is DEFINITIONAL (the ItemLinePinAgrees precedent): pin and selector
+// Pin-target agreement was DEFINITIONAL; since QA704 Q4 (a) (DT-009 Q27) it is the RVendorPinUnsound ARM of the binding writes
+// (order_implementation bindingPinViol) and this pred is its THEOREM over committed writes: pin and selector
 // come TOGETHER (DT-023 cut 8, the PDEV-241 re-base: every present vendor reference points
 // to a real BusinessAffiliate BEARING a VENDOR role — "name-only" means a minimal
 // BusinessAffiliate, never a role-less link), and the selector is a VENDOR role of the
 // PINNED version. Tenancy stays guard-side.
-fact SupplierBindingPinAgrees {
-  all b: SupplierBinding {
+pred supplierBindingPinAgrees {
+  all o: CreateOrderOcc + UpdateSupplierOcc | committed[o] implies let b = o.supplier {
     some b.vendorPin iff some b.vendorRole
     some b.vendorRole implies roleSelectorAgrees[b.vendorPin, b.vendorRole, VENDOR]
   }
@@ -322,7 +323,10 @@ one sig ROrderStarted,      // create: this order already has committed history 
                             //   or not denominated in the line's item (C3b, MP 2026-07-10 — wrong
                             //   item, or a free-form target line: an empty itemRef resolution can never agree)
         RLinesOpen,         // close: a live line is still L_OPEN
-        RNoDemand           // record-receipt: the line is free-form (no received tracking — F7)
+        RNoDemand,          // record-receipt: the line is free-form (no received tracking — F7)
+        RVendorPinUnsound,  // QA704 Q4 (a), DT-009 Q27: a binding write whose vendor pin and role selector do not come together or agree (was the fact SupplierBindingPinAgrees)
+        RVendorPinStale,    // QA704 Q4 (a): a binding write pinning a vendor version not current at the write (was the fact BindingPinCurrency)
+        RAssigneePinStale   // QA704 Q4 (a): a details write pinning a staff version not current at the write (was the fact AssigneePinCurrency)
         extends Reason {}
 /** RDemandAttached — RemoveLine on a line still servicing a demand (two acts: detach first — MP 2026-09-09). */
 one sig RDemandAttached extends Reason {}

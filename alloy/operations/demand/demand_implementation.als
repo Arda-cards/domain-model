@@ -129,6 +129,8 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_RELEASED) => RBadState else none)
   + ((some p: resolve[o.holding] & InventoryPool | p.tenantId != o.subject.tenantId)
      => RForeignRef else none)
+  + ((some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject)
+     => RWrongItem else none)   // QA704 Q4 (a), DT-009 Q27: M3.2 as the arm it is in dafny-domain StartProductionViol (was the fact StartProductionHoldingPoolPin)
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_RELEASED
       and some c: preMemberCycles[o] | statusAt[c, o.tick] != IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every live member's StartProcessing (saga's first legs) already committed
@@ -318,15 +320,8 @@ fact DemandEffectWitness {
   // (DeleteDemandOcc's tombstone: the lifecycle module's `RetireEffect`, since 2026-09-09)
 }
 
-/** StartProductionHoldingPoolPin — M3.2 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the MINTED
-    holding pool carries the demand's item pin (already how PDEV-1528 built it at runtime).
-    Genesis is runtime-side (no create kind for pools), so this is stated wherever the model
-    CAN name the minted pool (`resolve[o.holding] & InventoryPool`) — an annotation on the
-    resolved pool, not a create-kind effect; vacuously true when `o.holding` doesn't resolve. */
-fact StartProductionHoldingPoolPin {
-  all o: StartProductionOcc | committed[o] implies
-    (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
-}
+// (M3.2, the minted holding pool carries the demand's item pin — DT-020 §8.5.3 / SPEARHEAD-D1 A′-2 — is the RWrongItem arm of
+// startProductionViol since QA704 Q4 (a); its law is the theorem tests/unit/demand.als unit_dem_holdingPoolPinHolds.)
 
 // (NO cross-log enforcement facts — C/OP, 2026-07-06: the guards above ARE the saga commit
 // gates; the commit-gate contract laws are THEOREMS of them, and the quiescence law
