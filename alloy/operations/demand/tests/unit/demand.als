@@ -550,3 +550,38 @@ check unit_dem_holdingPoolPinHolds {
     (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note expect 0
+
+// ── QA704 Q2 (b) (MP, 2026-11-05; dafny-domain#33, MD-074): a named holding pool must EXIST and be LIVE ─────────────────────
+// A StartProduction naming a holding that resolves to no live pool (no pool, or a pool retired before the act) is refused
+// RNoSuchPool. RED before the arm: the reason atom does not exist; the old guard admitted the dangling holding (TN-001 S-08).
+run unit_dem_startProductionNoSuchPoolRefused {
+  some o: StartProductionOcc | some o.holding and not namedPoolLive[o.holding, o.tick]
+    and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note expect 1
+// The holding retired between two deliveries: a RecordProduction on the IN_PROCESS demand is refused RNoSuchPool (reading A: the
+// delivery's genesis refuses the same condition, so the second Deliver refuses whole; this witness is the direct record).
+run unit_dem_recordProductionHoldingRetiredRefused {
+  some o: RecordProductionOcc, p: InventoryPool | liveAtOccD[o] and dPre[o].sStatus = DS_IN_PROCESS
+    and p in resolve[dPre[o].sHolding] and poolRetiredAt[p, o.tick]
+    and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool,
+      12 EntityId, 11 Tick, 10 Occurrence, 10 Snapshot, 2 Note expect 1
+// The delivery's genesis under the same condition is refused RNoSuchPool (the pair keeps one verdict).
+run unit_dem_createDeliveryHoldingRetiredRefused {
+  some c: CreateDeliveryOcc, d: resolve[c.subject.demandRef] & DemandItem, p: InventoryPool |
+    demandStatusAt[d, c.tick] = DS_IN_PROCESS and p in resolve[demandStateAt[d, c.tick].sHolding] and poolRetiredAt[p, c.tick]
+    and refusedAtAdmission[c] and RNoSuchPool in c.admission.because
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool,
+      12 EntityId, 11 Tick, 10 Occurrence, 10 Snapshot, 2 Note expect 1
+// The laws are THEOREMS of the arms (Dafny StartedHoldingLive, RecordedHoldingLive): a committed act's holding is live at its tick.
+check unit_dem_startedHoldingLive {
+  all o: StartProductionOcc | (committed[o] and some o.holding) implies namedPoolLive[o.holding, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note expect 0
+check unit_dem_recordedHoldingLive {
+  all o: RecordProductionOcc | (committed[o] and some dPre[o].sHolding) implies namedPoolLive[dPre[o].sHolding, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool, 10 EntityId, 9 Occurrence, 9 Tick, 2 Note expect 0
