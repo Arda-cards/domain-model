@@ -272,7 +272,9 @@ fact TransferPairing {
 pred splitInPool[s: SplitOcc, a: PoolAddOcc] {
   committed[s] and committed[a] and a.item = s.nu and adjacentCommit[s, a]
   and s.target in heldAt[a.pool, s.tick]
-  and a.arche = s.arche   // Q7 = A inherits: the residue's add carries the split's causal signature
+  and a.arche.arche = s.arche   // Q7 = A THROUGH THE TREE (DT-015 D1; dafny-domain SplitInPool, 14b45db): the add is a pool-service act CALLED by
+                                //   the split's item-service activation — one id cannot be two services' activation (effectsCited), so the
+                                //   causal signature is read one step up: the add's activation cites the split's
 }
 
 // ── the projections (wrappers over the spine's reads — public surface preserved) ────────────────
