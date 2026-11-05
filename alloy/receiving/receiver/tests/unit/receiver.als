@@ -494,3 +494,40 @@ check unit_rcv_receiverCarrierPinAgreesHolds { receiverCarrierPinAgrees }
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 0
+
+// ── MF-004 (found by the bots on dafny-domain#32, 2026-11-05; confirmed in both trees): the line-side attach guards mirror
+// the partner's arm. An attribution whose OWN log is started (attached once, since detached) is refused by `AttachAttribution`
+// (`RAttributionStarted`, genesis-once); the line-side `AppendAttribution` and the attributed `AddReceivingLine` must refuse it
+// too, or the pairing fact `AttachComposesWithAppend` EXCLUDES the attempt silently (knowledge-base: a pairing fact excludes
+// what the partner guard refuses). RED before the arms: both runs UNSAT (the attempt had no admissible partner).
+run unit_rcv_appendStartedAttributionRefused {
+  some g: AttachAttributionOcc, o: AppendAttributionOcc |
+    committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+    and some o.pre and o.attribution not in rlPre[o].sAttributions
+    and refusedAtAdmission[o] and RAttributionStarted in o.admission.because
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+run unit_rcv_addLineStartedAttributionRefused {
+  some g: AttachAttributionOcc, o: AddReceivingLineOcc |
+    committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+    and refusedAtAdmission[o] and RAttributionStarted in o.admission.because
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+// The line-side guard excludes exactly what the partner refuses: a committed append or attributed add never names an attribution
+// already started (the premise the paired composite's preservation needs — dafny-domain STYLE.md SO-1 (a)).
+check unit_rcv_lineAttachAgreesWithPartner {
+  all o: AppendAttributionOcc | committed[o] implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+  all o: AddReceivingLineOcc | (committed[o] and some o.attribution) implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 0
