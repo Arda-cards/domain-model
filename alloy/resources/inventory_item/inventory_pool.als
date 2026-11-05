@@ -91,7 +91,7 @@ sig AffirmPoolOcc extends aff/AffirmOcc {} { bindings = subject + affirmed }
 sig PoolAddOcc    extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 sig PoolRemoveOcc extends lc/MutateOcc { item: one InventoryItem, reverses: lone PoolOcc } { bindings = subject + item + arche + reverses }
 // B-mov (DT-029 E6 / SAMWISE-S1 as ruled, 2026-09-03): every movement row binds its causal signature `arche` (kernel field;
-// the caller's RESERVE row id, or itself when self-minted — MP's Q7 rule: every row an act writes carries the act's `arche`)
+// the ACTIVATION that wrote it, DT-015 D1 — MP.s Q7 rule: every row an act writes carries the act.s `arche`)
 // and `reverses` — the row this movement UNDOES (a reversal is a NEW context: it carries its own `arche`; S1 item 2).
 // `reverses` is typed `lone PoolOcc`, never `lone univ`: a field over `univ` is a |PoolOcc| × |univ| relation and inflated every
 // root opening this module by ~60 % primary vars (the receiver canary, B-mov's P4 falsified 2026-09-04); `ReversalDiscipline`
@@ -134,11 +134,7 @@ one sig RWrongItem, RWrongTenant, RAlreadyMember, RNotMember,
         RPoolStarted,    // cut 2 (Q29): genesis on a pool that already has committed history
         RPoolNotCreated, // Q45 (MP, 2026-09-10: "Yes — distinguish them"): an AFFIRM of a pool that never existed — distinct from RPoolClosed (retired)
         RPoolClosed,     // cut 2: the pool is not live — never created, or already retired (the family's arm; also a transfer's DESTINATION)
-        RPoolNotEmpty,   // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
-        RDuplicateOrigin // B-mov (DT-029 E5 S-2 / S1 item 3): a movement citing an `arche` a COMMITTED row on this pool
-                         //   already carries — the idempotent callee's typed refusal ("already landed"); the runtime's
-                         //   typed duplicate refusal. LOCAL atom: this module opens no pattern layer, and the pattern's
-                         //   `RDuplicateArche` would clash in the flat namespace with a root that opens both.
+        RPoolNotEmpty    // cut 2 (Q17): retire refused — the pool still holds a LIVE member (retire EMPTY: transfer out first)
         extends Reason {}
 /** RBackdatedPoolWrite — the RBackdated family's pool member (COORDINATOR-Q527): a write dated BEFORE the pool's newest
     committed write — accepting it would put the pool's stamps out of causal order (`poolStampsMonotone`). The runtime's
@@ -182,21 +178,18 @@ fun poolAddViol[o: PoolAddOcc]: set Reason {
   // theorem — an add is refused if the item is currently held by ANY OTHER pool at this
   // tick (RAlreadyMember above only catches the SAME pool).
   + ((some q: InventoryPool - o.pool | o.item in heldAt[q, o.tick]) => RHeldElsewhere else none)
-  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov: a re-sent origin on this pool is refused, typed (the module FACT `ArcheUnique` needs the refusal — Q8)
   + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527
 }
 fun poolRemoveViol[o: PoolRemoveOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2
   + ((o.item not in o.pre.holds) => RNotMember else none)
-  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
   + poolBackdatedViol[o, o.subject]                           // COORDINATOR-Q527
 }
 /** poolTransferViol — M2b: RSameTarget (a no-op move), RNotMember (the item isn't at the
     SOURCE — `subject`/`from`), RWrongItem/RWrongTenant judged at the DESTINATION (`to`) — the
     same item-agreement shape `poolAddViol` uses, since the destination gain IS an ordinary
-    add (`transferPairing`). RDuplicateOrigin on BOTH pools: the source's is the row's own
-    `archeDuplicate`; the destination's (MF-002, MP 2026-10-16) refuses a transfer whose origin
-    a committed row on `to` already carries, because its paired add would be that duplicate. */
+    add (`transferPairing`). (The origin arms on both pools left with the per-row origin law, DT-015 D3:
+    one activation may write the transfer and its paired add, and any other row, on either pool.) */
 fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   lc/liveViol[o, RPoolClosed]                                 // cut 2: the SOURCE must be live …
   + ((not lc/liveSubjectAt[o.to, o.tick]) => RPoolClosed else none)   // … and so must the DESTINATION (its paired add is a Mutate on `to`)
@@ -204,16 +197,7 @@ fun poolTransferViol[o: PoolTransferOcc]: set Reason {
   + ((o.item not in o.pre.holds) => RNotMember else none)
   + ((o.item.itemPin.subject != o.to.itemPin.subject) => RWrongItem else none)
   + ((o.item.tenantId != o.to.tenantId) => RWrongTenant else none)
-  + (plog/archeDuplicate[o] => RDuplicateOrigin else none)   // B-mov
   + poolBackdatedViol[o, o.subject] + poolBackdatedViol[o, o.to]   // COORDINATOR-Q527: judged at the SOURCE and the DESTINATION (its paired add carries this stamp — TransferPairing)
-  // MF-002 (MP, 2026-10-16): the DESTINATION side of the same slot. The paired add on `to` carries `o.arche`
-  // (`TransferPairing`), so its own `archeDuplicate` fires exactly when an earlier committed row on `to` carries
-  // that origin; this arm tests the same condition on the transfer, so the attempt is REFUSED with a reason
-  // instead of having no admissible pair (and being silently excluded). It mirrors `archeDuplicate`'s slot test
-  // with the subject set to `to` (a self-minted transfer never trips it: nothing before it can cite it), so a
-  // ruling on MF-001 (whether a self-initiated row takes a slot) changes this arm together with that predicate.
-  + ((some b: PoolOcc | committed[b] and b.subject = o.to and precedes[b.tick, o.tick] and b.arche = o.arche)
-     => RDuplicateOrigin else none)
 }
 fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // Q43 + Q45: never-created and retired are DISTINCT atoms; stale is the pattern's
 fact PoolAdmissionWitness {
@@ -253,17 +237,15 @@ pred adjacentCommit[a, b: Occurrence] {
     OWN guard (`poolTransferViol`) already judges `RWrongItem`/`RWrongTenant` at the
     DESTINATION — the same clauses the paired add's guard evaluates — and the item was JUST
     removed from every other pool (this transfer's own source effect), so the paired add's
-    `RAlreadyMember`/`RHeldElsewhere` cannot fire. Nor can its `RDuplicateOrigin` (the
-    transfer's destination-side origin arm judges the same slot — MF-002, MP 2026-10-16) or its
-    `RBackdatedPoolWrite` (one stamp on both rows, judged at the destination — COORDINATOR-Q527).
+    `RAlreadyMember`/`RHeldElsewhere` cannot fire. Nor can its `RBackdatedPoolWrite` (one stamp on both rows, judged at the destination — COORDINATOR-Q527).
     Before each of those arms, the offending transfer had no admissible pair and was EXCLUDED
     rather than refused: the pairing is always admissible once the transfer itself is. */
 fact TransferPairing {
   all o: PoolTransferOcc | committed[o] implies
     (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
        and a.arche = o.arche   // Q7 = A (MP, 2026-09-03): the paired half carries the transfer's causal signature — one act, one
-                                //   `arche` on both rows; adjacency stays as the model's "same transaction"; when the transfer is
-                                //   self-minted the pair cites the transfer row itself (it IS the add's immediate cause)
+                                //   `arche` on both rows (the one activation that wrote them, DT-015 D1); adjacency stays as
+                                //   the model.s "same transaction"
        and a.at = o.at)        // COORDINATOR-Q527: one act, one STAMP — the transfer's guard judged the destination's newest write, so the paired add's own arm cannot fire
 }
 
