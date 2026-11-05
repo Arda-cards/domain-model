@@ -23,11 +23,15 @@ open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // sa
 open meta/subject_log/lifecycle[dt/DemandItem, dt/DemandState] as lc       // same params ⇒ the SAME shapes instance
 open meta/subject_log/subject_log[dt/ProductionDelivery, dt/PDState] as pdlog  // the second subject's spine (§8.1.2)
 open meta/subject_log/lifecycle[dt/ProductionDelivery, dt/PDState] as pdlc     // same params ⇒ the SAME shapes instance (cut 2)
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
 fact DemandChaining      { dlog/chained }
 fact DemandCommitAccepts { dlog/commitAlwaysAccepts }   // v1 result policy (no commit-gate refusals)
 fact PDChaining          { pdlog/chained }
+one sig DemandService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact DemandActivated      { activated[DemandService, dlog/SubjectOcc] }
+fact PDActivated          { activated[DemandService, pdlog/SubjectOcc] }
 fact PDCommitAccepts     { pdlog/commitAlwaysAccepts }
 
 // ── the §8.1.2 ATOMIC compositions (enforcement facts — the model's rendering of the ONE

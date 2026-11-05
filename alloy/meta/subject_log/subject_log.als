@@ -28,6 +28,8 @@ module meta/subject_log/subject_log[Subject, Rec]
  *   sig RequestOcc extends clog/SubjectOcc { ... } { bindings = subject + ... }
  *   fact MyChain { clog/chained }               // adopt the chaining law
  *   fact MyCommit { clog/commitAlwaysAccepts }  // v1 result policy, if wanted
+ *   one sig MyService extends Service {}       // with `open meta/activation/activation` (DT-015 D1 to D3):
+ *   fact MyActivated { activated[MyService, clog/SubjectOcc] }   // every row cites the activation that wrote it
  *   ... guards/effects; reads via clog/recordAt[s, t] ...
  */
 

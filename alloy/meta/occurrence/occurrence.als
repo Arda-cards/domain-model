@@ -23,17 +23,16 @@ abstract sig Occurrence {
                          //   Immutable with the occurrence (acts never change after commit).
                          //   Distinct from RECORD-carried notes (shared/note's `Note` atoms
                          //   on state records — LOCF-read, freeze-governed).
-  arche: one Occurrence  // ORIGIN identity (DT-029 E1; MP 2026-08-28: "use arche across the board"; TOTAL since
-                         //   MP's D13 ruling A, 2026-09-03 — "first hand: my ruling is A"): the
-                         //   occurrence this one originates from — the immediate CALLER's context, i.e. the
-                         //   caller's own RESERVE row when this row is the leg of an intent (meta/intent_log).
-                         //   SELF-INITIATED means the row cites ITSELF (`o.arche = o`, `selfInitiated`): no
-                         //   caller context; the runtime's NOT-NULL `arche_id` column carries the row's own id
-                         //   (MP 3.1: no branch, no null) and maps to this field by IDENTITY — `arche_id = id`
-                         //   IS `o.arche = o`, no encoding between model and column (D-4 as reversed by A).
-                         //   Uniqueness is per (arche, SUBJECT) and is a FACT of
-                         //   meta/subject_log (`ArcheUnique`, D-3 as amended by Q8 2026-09-03); no root / audit column ever exists (MP 3.2: the call tree is walkable
-                         //   through this one field).
+  arche: one Occurrence  // THE ACT THAT WROTE THIS ROW (DT-029 E1, "use arche across the board", MP 2026-08-28; TOTAL since
+                         //   MP's D13 ruling A, 2026-09-03; the ACTIVATION since DT-015 D1, 2026-11-05, reflecting
+                         //   dafny-domain src/meta/activation.dfy): an entity row cites the activation that wrote it; an
+                         //   activation cites its caller's activation, or ITSELF when it is an origin — the arrival of a
+                         //   cause from outside (`o.arche = o`, `selfInitiated`). The runtime's NOT-NULL `arche_id` column
+                         //   carries the activation id (MP 3.1: no branch, no null). Which occurrences may be cited, and
+                         //   which may self-cite, is `meta/activation/activation`'s (its two module facts); the kernel
+                         //   states only the one universal truth below. No per-row uniqueness: one act may write several
+                         //   rows on one subject (MP, Journal 192741; `ArcheUnique` left the spine, DT-015 D3). No root /
+                         //   audit column ever exists (MP 3.2: the call tree is walkable through this one field).
 }
 
 /** Ticks linearize occurrences — at most one occurrence per tick — so the causal order is a strict
@@ -44,12 +43,13 @@ fact OneOccurrencePerTick { all disj a, b: Occurrence | a.tick != b.tick }
 pred occPrecedes[a, b: Occurrence] { precedes[a.tick, b.tick] }
 
 /** selfInitiated — the occurrences that cite THEMSELVES: no caller context. The self-loop is the ONE spelling
-    of "self-initiated" — the field is total, like the runtime column (MP's D13 ruling A, 2026-09-03). */
+    of "self-initiated" — the field is total, like the runtime column (MP's D13 ruling A, 2026-09-03). Under
+    `meta/activation/activation` these are exactly the ORIGINS: the self-citing activations (DT-015 D1). */
 fun selfInitiated: set Occurrence { { o: Occurrence | o.arche = o } }
 
 /** A CITED origin is STRICTLY earlier than the occurrence citing it: origins never point forward; the only
     occurrence an occurrence may cite at its own tick is itself (self-initiation, exempt below). Proper cycles
     are a THEOREM of strict precedence, checked in the tests (unit_occ_archeNoProperCycle), never a fact. The
-    one universal, cheap truth about origins — everything else about `arche` is adopted per log
-    (meta/subject_log) or derived per pattern (meta/intent_log). */
+    one universal, cheap truth about origins — everything else about `arche` is `meta/activation/activation`'s
+    (DT-015 D1 to D3). */
 fact ArcheOriginPrecedes { all o: Occurrence | o.arche != o implies precedes[o.arche.tick, o.tick] }

@@ -9,9 +9,12 @@ open reference_data/staff/staff_contracts
 open reference_data/staff/staff_types as st   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[st/StaffMember, st/StaffState] as stlog  // same params ⇒ the SAME spine instance
 open meta/subject_log/lifecycle[st/StaffMember, st/StaffState] as lc      // same params ⇒ the SAME shapes instance
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact StaffChain { stlog/chained }
+one sig StaffService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact StaffActivated { activated[StaffService, stlog/SubjectOcc] }
 fact StaffCommitPolicy { stlog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────

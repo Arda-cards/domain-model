@@ -33,6 +33,7 @@ open receiving/receiver/receiver_types as rt   // rule 10: the parameter below w
 open meta/subject_log/subject_log[rt/Receiver, rt/ReceiverState] as rvlog           // same params ⇒ the SAME spine instances
 open meta/subject_log/subject_log[rt/ReceivingLine, rt/ReceivingLineState] as rllog //   as receiver_types
 open meta/subject_log/subject_log[rt/OrderAttribution, rt/AttributionState] as oalog
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption (DT-015 Q5; three subjects) ─────────────────────────────────────────────────
 fact ReceiverChaining       { rvlog/chained }
@@ -40,6 +41,10 @@ fact ReceiverCommitAccepts  { rvlog/commitAlwaysAccepts }   // v1 result policy 
 fact RcvLineChaining        { rllog/chained }
 fact RcvLineCommitAccepts   { rllog/commitAlwaysAccepts }
 fact AttributionChaining    { oalog/chained }
+one sig ReceiverService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact ReceiverActivated    { activated[ReceiverService, rvlog/SubjectOcc] }
+fact RcvLineActivated     { activated[ReceiverService, rllog/SubjectOcc] }
+fact AttributionActivated { activated[ReceiverService, oalog/SubjectOcc] }
 fact AttributionCommitAccepts { oalog/commitAlwaysAccepts }
 
 // ── the same-module ATOMIC compositions (enforcement facts — NOT in `guarantees`; see the

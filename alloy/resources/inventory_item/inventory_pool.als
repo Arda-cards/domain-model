@@ -37,6 +37,7 @@ open resources/inventory_item/inventory_item_types     // InventoryItem (+ trans
 open meta/subject_log/subject_log[InventoryPool, PoolState] as plog
 open meta/subject_log/lifecycle[InventoryPool, PoolState] as lc   // the SHAPES: Create / Mutate / Retire (DT-030 M2; cut 2, 2026-09-10)
 open meta/subject_log/affirm[InventoryPool, PoolState] as aff     // the AFFIRM act (Q43, 2026-09-10: the module's promised first adopter)
+open meta/activation/activation                 // the activation every row cites (DT-015 D1 to D3)
 open shared/backdating                           // RBackdated — the back-dating refusal family (COORDINATOR-Q527); this module's member is RBackdatedPoolWrite
 
 /** InventoryPool — the IDENTITY of a tenant-scoped set of InventoryItems under one Item; its
@@ -147,6 +148,8 @@ one sig RBackdatedPoolWrite extends RBackdated {}
 // ── the spine adoption: chaining (unconditional — a refused occurrence still read the real
 // membership) + v1 result policy ────────────────────────────────────────────────────────────────
 fact PoolChaining      { plog/chained }
+one sig PoolService extends Service {}
+fact PoolActivated     { activated[PoolService, plog/SubjectOcc] }   // DT-015 R2: every pool row cites the pool service.s act that wrote it
 // (no o.pre = the pool has no committed history: membership reads empty — `none.holds = none`.)
 
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ────────────────────

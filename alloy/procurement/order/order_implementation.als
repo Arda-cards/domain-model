@@ -24,11 +24,15 @@ open meta/subject_log/subject_log[ot/Order, ot/OrderState] as olog          // s
 open meta/subject_log/subject_log[ot/OrderLine, ot/OrderLineState] as llog  // same params ⇒ SAME spine as order_types
 open meta/subject_log/lifecycle[ot/Order, ot/OrderState] as lco   // same params ⇒ the SAME shapes instance as order_types
 open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption ×2 (DT-015 Q5) ───────────────────────────────────────────────────────────────
 fact OrderChaining       { olog/chained }
 fact OrderCommitAccepts  { olog/commitAlwaysAccepts }   // v1 result policy
 fact LineChaining        { llog/chained }
+one sig OrderService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact OrderActivated       { activated[OrderService, olog/SubjectOcc] }
+fact LineActivated        { activated[OrderService, llog/SubjectOcc] }
 fact LineCommitAccepts   { llog/commitAlwaysAccepts }
 
 // ── guard-side reads ────────────────────────────────────────────────────────────────────────────

@@ -14,9 +14,12 @@ open reference_data/business_affiliate/business_affiliate_contracts
 open reference_data/business_affiliate/business_affiliate_types as bat   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[bat/BusinessAffiliate, bat/BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
 open meta/subject_log/lifecycle[bat/BusinessAffiliate, bat/BusinessAffiliateState] as lc      // same params ⇒ the SAME shapes instance
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact BaChain { balog/chained }
+one sig BusinessAffiliateService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact BaActivated { activated[BusinessAffiliateService, balog/SubjectOcc] }
 fact BaCommitPolicy { balog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────

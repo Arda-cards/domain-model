@@ -13,9 +13,12 @@ open reference_data/item/item_contracts
 open reference_data/item/item_types as it   // rule 10: the parameter below was resolving through a transitive open
 open meta/subject_log/subject_log[it/Item, it/ItemState] as ilog   // same params ⇒ the SAME spine instance as item_types
 open meta/subject_log/lifecycle[it/Item, it/ItemState] as lc       // same params ⇒ the SAME shapes instance
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── the spine adoptions ─────────────────────────────────────────────────────────────────────────
 fact ItemChain { ilog/chained }
+one sig ItemService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact ItemActivated { activated[ItemService, ilog/SubjectOcc] }
 fact ItemCommitPolicy { ilog/commitAlwaysAccepts }
 
 // ── reason-precise admission (the witnessing idiom) ─────────────────────────────────────────────

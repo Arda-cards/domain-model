@@ -19,9 +19,12 @@ open meta/subject_log/subject_log[kt/CardCycle, kt/CycleState] as clog
 open meta/subject_log/lifecycle[kt/CardCycle, kt/CycleState] as lc      // same params ⇒ the SAME shapes instance (cut 2)
 open resources/inventory_item/inventory_pool as ip                       // DIRECT (rule 10): the pool's shapes below are alias-qualified
 open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as plc   // the POOL's shapes (same params ⇒ inventory_pool's instance) — Q42
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── the spine adoption: chaining (unconditional — refusals read the real state) + v1 commit ────
 fact CycleChain         { clog/chained }
+one sig KanbanService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact CycleActivated        { activated[KanbanService, clog/SubjectOcc] }
 fact CycleCommitAccepts { clog/commitAlwaysAccepts }
 
 /** liveAtOcc — the cycle is STARTED and OPEN when `o` executes (what its guards read). */

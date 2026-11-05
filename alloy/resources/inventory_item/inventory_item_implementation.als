@@ -34,6 +34,7 @@ open meta/profiles/domain_log          // PROFILE (DT-012): log anatomy + group/
 open meta/action/stateful                            // StatefulAction (pre/post), committed, committedUpTo, …
 open resources/inventory_item/inventory_item_types   // entity + record + observables + read API
 open resources/inventory_item/transitions            // the value-parameterized cores + g* guard checks
+open meta/activation/activation                    // the activation every row cites (DT-015 D1 to D3)
 
 // The Reason taxonomy, the kinds (IIOcc + the fifteen operation sigs), and the per-role read API
 // (touches, retiringFor, postFor, preFor, schemeOf, unitsOk) are PUBLIC SURFACE — declared in
@@ -201,8 +202,11 @@ fact IIAdmissionWitness {
   all o: SealOcc           | (o.admission = Accepted iff no sealViol[o])           and (o.admission in Rejected implies o.admission.because = sealViol[o])
   all o: UnsealOcc         | (o.admission = Accepted iff no unsealViol[o])         and (o.admission in Rejected implies o.admission.because = unsealViol[o])
 }
+one sig InventoryItemService extends Service {}   // DT-015 R2: the service's activation log
+fact IIActivated { activated[InventoryItemService, IIOcc] }   // every item row cites the act that wrote it
 // No result policy in v1; the ABAC/authorization commit guard is the deferred hook (DT-006 Layer 2).
 fact IICommitAccepts { all o: IIOcc | some o.commit implies o.commit = Accepted }
+| some o.commit implies o.commit = Accepted }
 
 // Record-frame helpers (the frame conjuncts relocate to records — they do not disappear).
 pred samePayloadQty[b, a: InventoryItemState] {
