@@ -92,10 +92,18 @@ run unit_pool_transferSameTargetRefused {
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
 
 // ── splitInPool (M2b composite, a DERIVED predicate — not a kind): a split's new sibling lands
-// in the same pool that held the split target.
+// in the same pool that held the split target. RED at 54b5387 (DAFNY's read): the pred asked `a.arche = s.arche`, unsatisfiable
+// once the item log and the pool log each cite their own service's activation (`effectsCited`) — UNSAT against expectation.
 run unit_pool_splitInPool {
   some s: SplitOcc, a: PoolAddOcc | splitInPool[s, a]
 } for 7 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+// DT-015 D1 through the tree (dafny-domain#31's Copilot finding, DAFNY's read of the mirror 2026-11-05): the split is an item
+// service act and the add a pool service act, so they cannot share an activation; the add's activation is the CALL the split's
+// activation makes (`a.arche.arche = s.arche`). An add under an activation the split's did not call is not the composite.
+run unit_pool_splitInPoolOtherCallerNotComposite {
+  some s: SplitOcc, a: PoolAddOcc | committed[s] and committed[a] and a.item = s.nu and adjacentCommit[s, a]
+    and s.target in heldAt[a.pool, s.tick] and a.arche.arche != s.arche and splitInPool[s, a]
+} for 7 but 2 RoleDetail, 2 Scalar, 3 Int expect 0
 
 // ── the activation (DT-015 D1 to D3): every pool row cites the pool service's act that wrote it ─────────────────────
 /** THE SIBLING WITNESS (MP, Journal 192741): one activation writes TWO committed adds on ONE pool. RED on the tree before
