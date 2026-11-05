@@ -100,7 +100,7 @@ run unit_dem_sagaSettles {
 // Scenario 2 (characteristic refusal): AddCycle after Release → exactly RFrozen.
 run unit_dem_frozenRefused {
   some o: AddCycleOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note expect 1
 
 // Scenario 3a (R7, OPEN): the cycle is withdrawn on its own log; the reaction detaches it and
@@ -114,8 +114,8 @@ run unit_dem_withdrawalReactionSelfCancel {
     no attachedAt[d, dt.tick]
     demandStatusAt[d, cn.tick] = DS_CANCELED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 11 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
 
 // Scenario 3b (R7, RELEASED) — BOUNDARY WITNESS (RECONCILED): the frozen-state dangle is LEGAL,
 // surfaced by retiredMembersAt.
