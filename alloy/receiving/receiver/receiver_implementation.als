@@ -182,6 +182,7 @@ fun addLineViol[o: AddReceivingLineOcc]: set Reason {
                                  // may be received without an order behind them
   + attachSumViol[o, o.attribution, o.expectedQty]   // the newborn's cap is the payload's
   + lineItemPinViol[o]   // QA704 Q4 (a)
+  + ((some o.attribution and attributionStartedBefore[o.attribution, o.tick]) => RAttributionStarted else none)   // MF-004
 }
 fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
   ((no o.pre) => RLineClosed else none)
@@ -203,10 +204,18 @@ fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
 // (Line item-pin currency, DT-023 cut 7a, and carrier-pin currency, cut 7b, are the RItemPinStale and RCarrierPinStale arms
 // above since QA704 Q4 (a); their laws are the theorems tests/unit/receiver.als unit_rcv_lineItemPinCurrencyHolds and
 // unit_rcv_carrierPinCurrencyHolds.)
+/** attributionStartedBefore — MF-004 (2026-11-05): the attribution's OWN log has a committed genesis before `t` — what the partner
+    act `AttachAttribution` refuses (`RAttributionStarted`, genesis-once; `attachAttributionViol`). The line-side carriers mirror
+    the arm, or `AttachComposesWithAppend` excludes the attempt silently (knowledge-base: a pairing fact excludes what the
+    partner guard refuses; reflects dafny-domain PR 4's `AppendAttributionViol` / `AddLineViol` arms). */
+pred attributionStartedBefore[id: EntityId, t: Tick] {
+  some g: AttachAttributionOcc | committed[g] and g.subject.eId = id and precedes[g.tick, t]
+}
 fun appendAttributionViol[o: AppendAttributionOcc]: set Reason {
   ((no o.pre) => RLineClosed else none)
   + ((some o.pre and rlPre[o].sStatus != RL_RECEIVING) => RFrozen else none)
   + ((o.attribution in rlPre[o].sAttributions) => RAlreadyMember else none)
+  + (attributionStartedBefore[o.attribution, o.tick] => RAttributionStarted else none)   // MF-004: the partner's arm, mirrored
   + ((some a: resolve[o.attribution] & OrderAttribution | a.tenantId != o.subject.tenantId)
      => RForeignRef else none)
   + attachSumViol[o, o.attribution, rlPre[o].sExpectedQty]
