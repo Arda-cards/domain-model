@@ -114,11 +114,16 @@ run unit_invmet_usableConeNotLiftable {
 // inequality is a BOUNDED theorem (class 2, alloy/EXTENSIONS.md), never the theorem itself; the witness above is then UNSAT.
 /** amountsInPlay — the scalars the cells read: the members' per-unit amounts and the two folds' cumulative sums. */
 fun amountsInPlay: set Scalar {
-  univ.(InventoryItemState.sActual.byUnit) + univ.(InventoryItemState.sDegraded.byUnit)
+  SZero + univ.(InventoryItemState.sActual.byUnit) + univ.(InventoryItemState.sDegraded.byUnit)
   + univ.(TLine.(ts/Fold.cum)) + univ.(DLine.(ds/Fold.cum))
 }
 /** inRange — translation invariance of the order on the amounts in play (the finite group's order wraps only outside them). */
-pred inRange { all a, b, c: amountsInPlay | sLeq[a, b] implies sLeq[a.splus[c], b.splus[c]] }
+pred inRange {
+  all a, b, c: amountsInPlay | sLeq[a, b] implies sLeq[a.splus[c], b.splus[c]]   // translation by an amount in play (the Σ chain)
+  all a, b: amountsInPlay | sLeq[a, b] implies sLeq[SZero, b.splus[a.sneg]]       // translation by the NEGATION of one (the last step:
+                                                                                   //   degraded ≤ total ⟹ 0 ≤ total − degraded; the
+                                                                                   //   first solver pass found the counter-example without it)
+}
 // The premise is satisfiable with a two-member cell (vacuity guard for the two commands below).
 run unit_invmet_inRangeSat {
   clocksAligned and inRange
