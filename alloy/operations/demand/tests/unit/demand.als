@@ -485,9 +485,9 @@ run unit_dem_completeBackdatedHoldingRefused {
     resolve[dPre[o].sHolding] = p and poolRetiredAt[p, o.tick]
     some w: lastPoolWrite[p, o.tick] | earlierThan[o.at, w.at]
   }
-} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      13 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+} for 11 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 5 Instant,
+      15 Tick, 14 EntityId, 16 Snapshot, 2 Note expect 1
 
 // W2: every committed pool write causally before a committed COMPLETE is dated at or before it (the A5
 // condition as a published law — a theorem of the RBackdatedHolding arm and the pool's own trace law).
