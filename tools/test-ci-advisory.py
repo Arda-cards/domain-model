@@ -31,6 +31,9 @@ class AdvisoryTest(unittest.TestCase):
                 'comments': [{'id': 42, 'user': {'login': 'github-actions[bot]'},
                               'body': '<!-- affected-cones-advisory --> old'}] if comment else [],
             }
+            for page in fixtures['pages']:
+                for run in page['workflow_runs']:
+                    run.setdefault('pull_requests', [{'number': 7}])
             (work / 'fixtures.json').write_text(json.dumps(fixtures))
             gh = work / 'gh'
             gh.write_text(textwrap.dedent('''\
@@ -125,6 +128,24 @@ class AdvisoryTest(unittest.TestCase):
         writes, _, _ = self.run_advisory(pages=[{'workflow_runs': [{'id': 99}]},
                                                 {'workflow_runs': [{'id': 101}, {'id': 100}]}])
         self.assertEqual(writes, [])
+
+    def test_newer_same_sha_run_for_another_pr_does_not_suppress_advisory(self):
+        writes, _, _ = self.run_advisory(pages=[{'workflow_runs': [
+            {'id': 101, 'pull_requests': [{'number': 8}]},
+            {'id': 100, 'pull_requests': [{'number': 7}]},
+        ]}])
+        self.assertEqual(len(writes), 1, 'another PR suppressed this PR advisory')
+
+    def test_run_association_can_include_multiple_prs(self):
+        writes, _, _ = self.run_advisory(pages=[{'workflow_runs': [
+            {'id': 100, 'pull_requests': [{'number': 8}, {'number': 7}]},
+        ]}])
+        self.assertEqual(len(writes), 1)
+
+    def test_unknown_pr_association_does_not_post(self):
+        self.assertEqual(self.run_advisory(pages=[{'workflow_runs': [
+            {'id': 100, 'pull_requests': []},
+        ]}])[0], [])
 
     def test_unknown_latest_run_does_not_post(self):
         self.assertEqual(self.run_advisory(pages=[{'workflow_runs': []}])[0], [])
