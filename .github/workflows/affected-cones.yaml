@@ -81,14 +81,17 @@ jobs:
       - name: pick solver (glucose native, else pure-Java SAT4J — both sound/complete)
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'heavy-cone') }}
         run: |
-          printf 'sig A {}\nrun probe { some A } for 2 expect 1\n' > /tmp/probe.als
-          mkdir -p /tmp/probe-out
-          if java -jar tools/alloy.jar exec -s glucose -c probe -o /tmp/probe-out -f /tmp/probe.als >/dev/null 2>&1; then
+          probe_dir=$(mktemp -d)
+          trap 'rm -rf "$probe_dir"' EXIT
+          printf 'sig A {}\nrun probe { some A } for 2 expect 1\n' > "$probe_dir/probe.als"
+          if java -jar tools/alloy.jar exec -s glucose -c probe -o "$probe_dir/out" -f "$probe_dir/probe.als" > "$probe_dir/probe.log" 2>&1; then
             echo "ALLOY_FLAGS=-s glucose" >> "$GITHUB_ENV"
             echo "solver: glucose (native loaded)"
           else
+            cat "$probe_dir/probe.log"
+            echo "::warning::glucose probe failed; using SAT4J (diagnostics above)"
             echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"
-            echo "solver: SAT4J (glucose native failed to load on this runner)"
+            echo "solver: SAT4J (glucose probe failed on this runner)"
           fi
       - name: run the roots whose cones this PR touched (CONE_BUDGET wall budget; explicit failure on exhaustion)
         id: cone
