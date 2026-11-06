@@ -136,10 +136,11 @@ jobs:
 
   advisory: # the ONLY job with a write token — a fresh runner, no checkout, no PR code; advisory only, never the verdict
     needs: check-affected
-    if: ${{ always() }} # every outcome, including a job-limit kill (which GitHub reports as `cancelled`); a superseded run is excluded by the head guard below
+    if: ${{ always() }} # includes job-limit kills; head/run/label guards below exclude superseded events
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
+      actions: read # compare this run and attempt with newer same-head workflow runs
       pull-requests: write
     continue-on-error: true # a failed post (e.g. a read-only token on a fork PR) never colours the PR; the verdict is check-affected's
     env:
@@ -157,9 +158,6 @@ jobs:
           footer='*Posted by the affected-cones workflow; updated in place on every run.*'
           mode=create # create-or-update; "update" = only an existing comment is refreshed (a clean PR never gets one)
           warn() { echo "::warning::affected-cones: could not $1 the advisory comment (see this step's log); the verdict is check-affected's"; exit 0; }
-          # head guard: a run superseded by a newer push (concurrency cancellation) must not write stale state for an old head
-          current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha) || warn "read the PR head for"
-          [ "$current" = "$HEAD_SHA" ] || { echo "PR head is now $current, not $HEAD_SHA — this run is superseded; nothing posted"; exit 0; }
           case "$OUTCOME" in
             label)
               body="> [!note]
@@ -189,6 +187,23 @@ jobs:
           ids=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
                  --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id") || warn "look up"
           id=$(printf '%s\n' "$ids" | head -n 1)
+          # Concurrency alone is insufficient: always() also runs for cancelled jobs, and
+          # manually re-running an older label event keeps its original run id and label snapshot.
+          # Read all pages; only this workflow's newest same-head PR event may publish.
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/affected-cones.yaml/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=100" \
+                     --paginate --slurp --jq '[.[].workflow_runs[]] | max_by(.id) | .id') || warn "read the latest run for"
+          [ "$latest" = "$GITHUB_RUN_ID" ] || { echo "stale event; nothing posted (newest same-head run: $latest)"; exit 0; }
+          attempt=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_attempt) || warn "read the run attempt for"
+          [ "$attempt" = "$GITHUB_RUN_ATTEMPT" ] || { echo "stale event; nothing posted (newer run attempt)"; exit 0; }
+          # Check live head and label state immediately before posting, after comment discovery.
+          current=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+                      --jq '[.head.sha, ([.labels[].name] | index("heavy-cone") != null)] | @tsv') || warn "read the PR state for"
+          read -r current_head heavy <<< "$current"
+          [ "$current_head" = "$HEAD_SHA" ] || { echo "stale event; nothing posted (PR head moved)"; exit 0; }
+          if { [ "$OUTCOME" = label ] && [ "$heavy" != true ]; } || \
+             { [ "$OUTCOME" != label ] && [ "$heavy" != false ]; }; then
+            echo "stale event; nothing posted (heavy-cone label changed)"; exit 0
+          fi
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@advisory.md > /dev/null || warn "update"
             echo "advisory comment updated: #$id (${OUTCOME:-setup-failed})"
