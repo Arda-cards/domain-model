@@ -52,7 +52,9 @@ class AdvisoryTest(unittest.TestCase):
                 if '/actions/workflows/' in endpoint:
                     expected = ('repos/example/model/actions/workflows/affected-cones.yaml/runs'
                                 '?head_sha=head&event=pull_request&per_page=100')
-                    if endpoint != expected or '--paginate' not in args or '--slurp' not in args:
+                    if '--slurp' in args:
+                        sys.exit('unknown flag: --slurp (runner gh CLI)')
+                    if endpoint != expected or '--paginate' not in args:
                         sys.exit('run lookup must cover this workflow, head, event and all pages')
                     key = 'pages'
                 elif '/actions/runs/' in endpoint:
@@ -68,7 +70,9 @@ class AdvisoryTest(unittest.TestCase):
                 value = fixtures[key]
                 if '--jq' in args:
                     query = args[args.index('--jq') + 1]
-                    result = subprocess.run(['jq', '-r', query], input=json.dumps(value),
+                    payload = '\\n'.join(json.dumps(page) for page in value) \
+                        if key == 'pages' else json.dumps(value)
+                    result = subprocess.run(['jq', '-r', query], input=payload,
                                             text=True, capture_output=True)
                     sys.stdout.write(result.stdout)
                     sys.stderr.write(result.stderr)
