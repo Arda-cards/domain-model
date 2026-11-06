@@ -4,7 +4,7 @@
 # jobs so each stays under the 6-hour job limit on 2-core hosted runners, plus the cookbook
 # (check-examples). Informational — the local `make check-alloy` remains THE push gate and
 # affected-cones.yaml the PR check; the heaviest families exceed what a hosted runner carries
-# (SAT4J fallback, default heap — see the solver ticket).
+# (the wall budget remains finite even with glucose and an explicit JVM heap).
 name: full-regression
 
 on:
@@ -18,6 +18,9 @@ on:
           - auto
           - glucose
           - sat4j
+
+env:
+  JAVA_TOOL_OPTIONS: -Xmx5g # applies to every solver JVM, including cookbook examples
 
 jobs:
   shard:

@@ -48,6 +48,7 @@ jobs:
       budget: ${{ steps.cone.outputs.budget }} # the effective cone timeout actually applied — the second value crossing the job boundary, text only
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      JAVA_TOOL_OPTIONS: -Xmx5g # leave headroom for native solver memory on 7 GB runners
     steps:
       - name: job clock (the cone's timeout is bounded by the job budget remaining when the cone starts)
         run: echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
