@@ -6,8 +6,8 @@ workflow concurrency group cancels older executions, but the advisory uses
 or a manually re-run old label event can therefore reach the comment writer with
 the same head SHA and an obsolete label snapshot.
 
-The advisory job reads the newest `affected-cones.yaml` pull-request run for that
-head SHA across all API pages, compares its id to `GITHUB_RUN_ID`, and verifies
+The advisory job reads the newest `affected-cones.yaml` run associated with this
+PR number and head SHA across all API pages, compares its id to `GITHUB_RUN_ID`, and verifies
 `GITHUB_RUN_ATTEMPT`. After comment discovery, it reads the live PR head and
 `heavy-cone` label. Only a current run whose outcome agrees with that label may
 create or update the marker-keyed bot comment. An obsolete event logs
@@ -19,6 +19,11 @@ manual re-run keeps the old id and increments its attempt. A newer event with th
 same labels still supersedes an older event. The API checks precede the comment
 write, but GitHub offers no atomic compare-and-swap across PR state and comments;
 a new event arriving after the final read is handled by that event's own run.
+
+A branch can back two PRs against different bases. Filter the runs by their
+`pull_requests` associations before selecting the greatest id so a newer run on
+the other PR does not suppress this PR's advisory. An unknown association does
+not authorize a write.
 
 Keep the advisory job free of checkouts and PR-controlled code. Its token has
 `actions: read` and `pull-requests: write`; the solver job stays read-only.
