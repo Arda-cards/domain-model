@@ -428,9 +428,11 @@ check unit_dem_holdingPoolPinMatchesItem for 5 but 2 RoleDetail, 5 Int, 3 Scalar
 run unit_dem_revokeRevokedRefused {
   some o: RevokeDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RDeliveryClosed
     and some o.pre and pdPre[o].sStatus = PD_REVOKED
-} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+      13 Tick, 13 EntityId, 14 Snapshot, 13 Occurrence, 2 Note expect 1
+      // raised at the Alloy cut (2026-11-06): no verdict in 2 h 23 min at the old bounds; SAT in 166 s at these
+      // (12 Occurrence = 2 Call + 10 rows, Snapshot 14 at the bound — each row brings its activation call)
       // census +1 across the board at DT-023 cut 7a: the trace's item-log fixture (the
       // committed CreateItemOcc behind the demand genesis guard) pushed the occurrence
       // count past the old for-8 default this deep witness sat exactly at
