@@ -4,7 +4,7 @@
 # jobs so each stays under the 6-hour job limit on 2-core hosted runners, plus the cookbook
 # (check-examples). Informational — the local `make check-alloy` remains THE push gate and
 # affected-cones.yaml the PR check; the heaviest families exceed what a hosted runner carries
-# (SAT4J fallback, default heap — see the solver ticket).
+# (the wall budget remains finite even with glucose and an explicit JVM heap).
 name: full-regression
 
 on:
@@ -18,6 +18,9 @@ on:
           - auto
           - glucose
           - sat4j
+
+env:
+  JAVA_TOOL_OPTIONS: -Xmx5g # applies to every solver JVM, including cookbook examples
 
 jobs:
   shard:
@@ -62,12 +65,15 @@ jobs:
             glucose) echo "ALLOY_FLAGS=-s glucose" >> "$GITHUB_ENV"; echo "solver: glucose (forced)";;
             sat4j)   echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"; echo "solver: SAT4J (forced)";;
             *)
-              printf 'sig A {}\nrun probe { some A } for 2 expect 1\n' > /tmp/probe.als
-              mkdir -p /tmp/probe-out
-              if java -jar tools/alloy.jar exec -s glucose -c probe -o /tmp/probe-out -f /tmp/probe.als >/dev/null 2>&1; then
+              probe_dir=$(mktemp -d)
+              trap 'rm -rf "$probe_dir"' EXIT
+              printf 'sig A {}\nrun probe { some A } for 2 expect 1\n' > "$probe_dir/probe.als"
+              if java -jar tools/alloy.jar exec -s glucose -c probe -o "$probe_dir/out" -f "$probe_dir/probe.als" > "$probe_dir/probe.log" 2>&1; then
                 echo "ALLOY_FLAGS=-s glucose" >> "$GITHUB_ENV"; echo "solver: glucose (native loaded)"
               else
-                echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"; echo "solver: SAT4J (glucose native failed to load)"
+                cat "$probe_dir/probe.log"
+                echo "::warning::glucose probe failed; using SAT4J (diagnostics above)"
+                echo "ALLOY_FLAGS=" >> "$GITHUB_ENV"; echo "solver: SAT4J (glucose probe failed)"
               fi;;
           esac
       - name: full regression — ${{ matrix.family }} shard
