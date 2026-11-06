@@ -485,9 +485,9 @@ run unit_dem_completeBackdatedHoldingRefused {
     resolve[dPre[o].sHolding] = p and poolRetiredAt[p, o.tick]
     some w: lastPoolWrite[p, o.tick] | earlierThan[o.at, w.at]
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+      13 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
 
 // W2: every committed pool write causally before a committed COMPLETE is dated at or before it (the A5
 // condition as a published law — a theorem of the RBackdatedHolding arm and the pool's own trace law).
@@ -509,9 +509,9 @@ run unit_dem_completeUnretiredEmptyHoldingRefused {
     refusedAtAdmission[o] and o.admission.because = RUndistributed
     resolve[dPre[o].sHolding] = p and no heldAt[p, o.tick] and not poolRetiredAt[p, o.tick]
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+      13 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
 
 // W5 (control): the ruled path commits — the holding pool retired EMPTY, dated before the COMPLETE, then COMPLETE.
 run unit_dem_completeRetiredHoldingCommits {
@@ -520,9 +520,9 @@ run unit_dem_completeRetiredHoldingCommits {
     resolve[dPre[o].sHolding] = p and r.subject = p and precedes[r.tick, o.tick]
     earlierThan[r.at, o.at]
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+      13 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
 
 // W6 (control, the record's E7): the retire dated EXACTLY at the COMPLETE's stamp lets it commit (at-or-before).
 run unit_dem_completeHoldingDatedAtCommits {
@@ -531,9 +531,9 @@ run unit_dem_completeHoldingDatedAtCommits {
     resolve[dPre[o].sHolding] = p and r.subject = p and precedes[r.tick, o.tick]
     r.at = o.at
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+      13 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
 
 // ── QA704 Q4 (a), DT-009 Q27: the holding pool's item pin is a guard arm of StartProduction (reflects dafny-domain
 // src/operations/demand/demand.dfy StartProductionViol, RWrongItem) ──
