@@ -47,6 +47,10 @@ class AdvisoryTest(unittest.TestCase):
                     sys.exit(0)
                 endpoint = args[1]
                 if '/actions/workflows/' in endpoint:
+                    expected = ('repos/example/model/actions/workflows/affected-cones.yaml/runs'
+                                '?head_sha=head&event=pull_request&per_page=100')
+                    if endpoint != expected or '--paginate' not in args or '--slurp' not in args:
+                        sys.exit('run lookup must cover this workflow, head, event and all pages')
                     key = 'pages'
                 elif '/actions/runs/' in endpoint:
                     key = 'run'
@@ -74,8 +78,15 @@ class AdvisoryTest(unittest.TestCase):
                        GITHUB_REPOSITORY='example/model', GITHUB_RUN_ID='100',
                        GITHUB_RUN_ATTEMPT='1', RUN_URL='https://example.invalid/run/100',
                        OUTCOME=outcome, BUDGET='900s', CONE_BUDGET='15m', FAIL_API=fail)
-            result = subprocess.run(['bash', '-e', '-o', 'pipefail', '-c', advisory_script()],
+            trace_dir = os.environ.get('ADVISORY_TRACE_DIR')
+            env['PS4'] = '+${LINENO}: '
+            command = ['bash', '-e', '-o', 'pipefail'] + (['-x'] if trace_dir else [])
+            result = subprocess.run(command + ['-c', advisory_script()],
                                     cwd=work, env=env, capture_output=True, text=True, timeout=10)
+            if trace_dir:
+                trace = Path(trace_dir)
+                trace.mkdir(parents=True, exist_ok=True)
+                (trace / f'{work.name}.log').write_text(result.stderr)
             writes_file = work / 'writes.jsonl'
             writes = [json.loads(line) for line in writes_file.read_text().splitlines()] \
                 if writes_file.exists() else []

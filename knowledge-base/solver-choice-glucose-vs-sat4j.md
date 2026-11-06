@@ -16,6 +16,14 @@ the full gate.
 - When running the jar directly (outside make), pass `-s glucose` yourself or accept the
   slow default.
 
+## CI heap
+
+The `affected-cones` solver job and all `full-regression` solver jobs (including the
+cookbook examples) set `JAVA_TOOL_OPTIONS=-Xmx5g`. Java reads this for every solver
+process, including commands launched by Make. The limit leaves room for JNI solver
+allocations and runner processes on a 7 GB hosted runner. It is a heap ceiling, not
+a limit on the JVM's total resident memory; native solver memory is additional.
+
 ## Why switching is always safe
 
 Both solvers are sound and complete: SAT/UNSAT answers and `expect` verdicts are
