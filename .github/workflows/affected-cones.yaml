@@ -195,7 +195,8 @@ jobs:
           # manually re-running an older label event keeps its original run id and label snapshot.
           # Read all pages; only this workflow's newest same-head event for this PR may publish.
           latest=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/affected-cones.yaml/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=100" \
-                     --paginate --slurp --jq "[.[].workflow_runs[] | select(any(.pull_requests[]?; .number == $PR_NUMBER))] | max_by(.id) | .id") || warn "read the latest run for"
+                     --paginate --jq ".workflow_runs[] | select(any(.pull_requests[]?; .number == $PR_NUMBER)) | .id" \
+                     | jq -s 'max') || warn "read the latest run for"
           [ "$latest" = "$GITHUB_RUN_ID" ] || { echo "stale event; nothing posted (newest same-head run: $latest)"; exit 0; }
           attempt=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .run_attempt) || warn "read the run attempt for"
           [ "$attempt" = "$GITHUB_RUN_ATTEMPT" ] || { echo "stale event; nothing posted (newer run attempt)"; exit 0; }
