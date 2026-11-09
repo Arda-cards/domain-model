@@ -56,7 +56,9 @@ run int_dem_recollationAfterFailure {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
-      16 Tick, 14 EntityId, 14 Snapshot, 15 Occurrence, 2 Note expect 1
+      20 Tick, 18 EntityId, 20 Snapshot, 20 Occurrence, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — no verdict in 4 h at 15 Occurrence in the night window — two demands' rows, the
+      // cycle's, the failure and the re-attach, each with its activation call
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layers) ──────
 assert int_dem_contract_cycleIndivisible { cycleIndivisible }

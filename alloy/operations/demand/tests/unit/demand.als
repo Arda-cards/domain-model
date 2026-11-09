@@ -274,7 +274,10 @@ run unit_dem_badAllocationRefused {
 run unit_dem_undistributedRefused {
   some o: CompleteOcc | refusedAtAdmission[o] and RUndistributed in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 11 Tick, 12 EntityId, 14 Snapshot, 2 Note expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 15 Tick, 16 EntityId, 18 Snapshot,
+      15 Occurrence, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT by proof (2,697 s) at the default Occurrence bound of 7 in the night window —
+      // two cycles' and the demand's rows plus the pool's, each with its activation call, exceed it
 
 run unit_dem_notTerminalRefused {
   some o: DeleteDemandOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal

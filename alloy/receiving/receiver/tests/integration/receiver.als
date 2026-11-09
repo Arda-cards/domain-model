@@ -53,4 +53,6 @@ run int_rcv_latticeCompanion {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 3 InventoryPool, 1 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      16 EntityId, 12 Tick, 14 Snapshot, 4 Quantity, 12 Occurrence, 2 Note expect 1
+      20 EntityId, 16 Tick, 18 Snapshot, 4 Quantity, 17 Occurrence, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — no verdict (cut at 431 s by the night window's end; 3 h 19 min without one at
+      // bb7570a) at 12 Occurrence — three holders' rows and their pools', each with its activation call
