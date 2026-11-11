@@ -1117,3 +1117,23 @@ run unit_dem_cancelPoolNotEmptyRefused {
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
       9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── PR B's contract laws (check; UNSAT = the law holds of the implementation at the scope) ─────────────────────────────────
+// Each scope admits the law's own scenario, by the count in this section's header: a committed Complete of a demand born
+// with an external contribution is 8 occurrences, 9 with an item added to its pool; two demands born with one external
+// contribution each are 7. (`holdingAttachedOnce` has no check here: two committed StartProductions need 13 occurrences,
+// too many for a bounded proof in this root; its witness is unit_dem_twoFreshHoldings and its proof dafny-domain's lemma.)
+assert unit_dem_contract_holdersReleasedAtComplete { holdersReleasedAtComplete }
+check unit_dem_contract_holdersReleasedAtComplete for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      8 Occurrence, 9 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 0
+
+assert unit_dem_contract_completedItemsPlaced { completedItemsPlaced }
+check unit_dem_contract_completedItemsPlaced for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      9 Occurrence, 10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 0
+
+assert unit_dem_contract_contributionPoolExclusiveWhileLive { contributionPoolExclusiveWhileLive }
+check unit_dem_contract_contributionPoolExclusiveWhileLive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 0
