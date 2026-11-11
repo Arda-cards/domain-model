@@ -50,9 +50,8 @@ assert unit_dem_contract_completeRequiresSettled { completeRequiresSettled }
 check unit_dem_contract_completeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
 
-assert unit_dem_contract_completeRequiresDistributed { completeRequiresDistributed }
-check unit_dem_contract_completeRequiresDistributed for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note, 2 Reference expect 0
+// (`completeRequiresDistributed` left the contract with TN-004 row 11, dafny-domain MD-084: the release at Complete is derived
+// from the status, and what the released pools hold is checked by the placements — `completedItemsPlaced`, below.)
 
 assert unit_dem_contract_withdrawnDetachReconciles { withdrawnDetachReconciles }
 check unit_dem_contract_withdrawnDetachReconciles for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -267,13 +266,8 @@ run unit_dem_badAllocationRefused {
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
 
-run unit_dem_undistributedRefused {
-  some o: CompleteOcc | refusedAtAdmission[o] and RUndistributed in o.admission.because
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 2 InventoryItem, 1 InventoryPool, 15 Tick, 16 EntityId, 18 Snapshot,
-      15 Occurrence, 2 Note, 2 Reference expect 1
-      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT by proof (2,697 s) at the default Occurrence bound of 7 in the night window —
-      // two cycles' and the demand's rows plus the pool's, each with its activation call, exceed it
+// (`unit_dem_undistributedRefused` left with its reason: TN-004 row 11, dafny-domain MD-084 — a Complete is no longer refused
+// for a holding that is not retired. What the released pools still hold is the placements' matter: the PR B section below.)
 
 run unit_dem_notTerminalRefused {
   some o: DeleteDemandOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
@@ -465,13 +459,13 @@ assert unit_dem_nothingAfterRetire {
 check unit_dem_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 0
 
-// ── COORDINATOR-Q527 (MP, 2026-10-15: Option B, the RBackdated family) — COMPLETE gates on a RETIRED holding
-// pool whose newest write is dated at or before the COMPLETE's own stamp. The witnesses below were registered
-// with their expected verdicts in the workbook plan note (streams/samwise/q527-model-change-plan.md) BEFORE any
-// run; RED before the arms — see the commit bodies. New commands pin `3 Instant` (before / equal / after).
+// ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — a COMPLETE is refused when its holding pool's newest
+// write is dated after the COMPLETE's own stamp. RESTATED by TN-004 row 11 (dafny-domain MD-084, DT-016 PR B): Option B's
+// other half, the RETIRED-holding gate with its reason RUndistributed, LEFT — the holding is released at rest, no retire is
+// required (W3 is gone, W4 inverts). Commands pin `3 Instant` (before / equal / after).
 
-// W1: the family's demand member — exactly RBackdatedHolding when the holding pool, already RETIRED at the
-// commit (so the retired gate is silent), has its newest write dated AFTER the COMPLETE's own stamp.
+// W1: the family's demand member — exactly RBackdatedHolding when the holding pool, RETIRED at the commit (so it is
+// empty and no placement arm reads it), has its newest write dated AFTER the COMPLETE's own stamp.
 run unit_dem_completeBackdatedHoldingRefused {
   some o: CompleteOcc, p: InventoryPool | {
     refusedAtAdmission[o] and o.admission.because = RBackdatedHolding
@@ -489,17 +483,14 @@ check unit_dem_contract_completeStampedAfterHolding for 5 but 2 RoleDetail, 5 In
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
       8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
 
-// W3: a committed COMPLETE's holding pool is RETIRED at its tick (B's gate as a published law; C5's sibling).
-assert unit_dem_contract_completeRequiresRetiredHolding { completeRequiresRetiredHolding }
-check unit_dem_contract_completeRequiresRetiredHolding for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+// (W3, the check of `completeRequiresRetiredHolding`, left with the law: TN-004 row 11, dafny-domain MD-084.)
 
-// W4: B's own witness — an EMPTY but UNRETIRED holding pool refuses COMPLETE with exactly RUndistributed
-// (before B an empty pool admitted it: the gate read emptiness, not retirement).
-run unit_dem_completeUnretiredEmptyHoldingRefused {
+// W4, INVERTED (dafny-domain DemandTests.CompleteAgainstHolding as restated by PR B): an EMPTY and UNRETIRED holding pool
+// no longer refuses the COMPLETE — it COMMITS. (The command was `unit_dem_completeUnretiredEmptyHoldingRefused`, exactly
+// RUndistributed; the reason is gone, so the witness is restated as the commit it now is.)
+run unit_dem_completeUnretiredEmptyHoldingCommits {
   some o: CompleteOcc, p: InventoryPool | {
-    refusedAtAdmission[o] and o.admission.because = RUndistributed
+    committed[o]
     resolve[dPre[o].sHolding] = p and no heldAt[p, o.tick] and not poolRetiredAt[p, o.tick]
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -937,3 +928,192 @@ run unit_dem_cancelWithExternalOnly {
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
       10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+
+// ══ TN-004, PR B's surface (dafny-domain MD-081 to MD-087; DT-016 PR B, on dafny-domain main at 606c392) ═════════════════════
+// The FINDERS of the eight witnesses PR B added to dafny-domain src/operations/demand/tests/demand-tests.dfy, each named after
+// the witness it finds an instance for. WRITTEN FIRST (test-first, TN-005 section 12): they name the surface the module gains
+// in the next commit — the Complete's `placements` (`Placement`: `PlaceAll.allAt`, `PlacePerPool.byPool`,
+// `PlacePerItem.byLocator`), the reads `releasedPoolIds`, `heldByReleased` and `placedLocator`, and the reasons
+// `RBadPlacement`, `RPlacementIncomplete`, `RUnplaced`. Until that commit this root does not compile: that is the first red.
+// In every scenario the demand's one contribution is EXTERNAL (no card, so no cycle gate), and a StartProduction may name no
+// holding. SCOPES: the log's four dimensions are pinned (`Occurrence`, `Tick`, `EntityId`, `Snapshot`) and the default is 5:
+// a row costs one occurrence, each service's committed rows share one activation, each refusal adds one, a pool's genesis
+// adds one, and the demand's item pin is one more (TN-005 section 11, the first batch's reading).
+
+// ── DemandTests.StartProductionFreshness ───────────────────────────────────────────────────────────────────────────────────
+// The holding a StartProduction names must be FRESH. The pool of the demand's own external contribution: exactly RPoolNotFresh.
+run unit_dem_startProductionExternalPoolRefused {
+  some sp: StartProductionOcc, e: ExternalContribution | {
+    dPre[sp].sStatus = DS_RELEASED and e in dPre[sp].sContributions and sp.holding = e.cPool
+    refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+
+// A holding another demand's committed StartProduction already named: exactly RPoolNotFresh (the demand log's own memory).
+run unit_dem_startProductionUsedHoldingRefused {
+  some disj s1, s2: StartProductionOcc | {
+    committed[s1] and precedes[s1.tick, s2.tick] and s1.subject != s2.subject
+    some s1.holding and s2.holding = s1.holding
+    refusedAtAdmission[s2] and s2.admission.because = RPoolNotFresh
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      14 Occurrence, 15 Tick, 14 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
+// Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
+run unit_dem_twoFreshHoldings {
+  some disj s1, s2: StartProductionOcc | {
+    committed[s1] and committed[s2] and s1.subject != s2.subject
+    some s1.holding and some s2.holding and s1.holding != s2.holding
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      14 Occurrence, 15 Tick, 14 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
+// One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
+// and the demand is no longer live, so nothing of it holds a pool (the release, derived).
+run unit_dem_completePlacedForAll {
+  some o: CompleteOcc, e: ExternalContribution, p: InventoryPool, x: InventoryItem | {
+    committed[o] and o.placements in PlaceAll
+    e in dPre[o].sContributions and p = resolve[e.cPool] and x in heldAt[p, o.tick]
+    e.cPool -> x in heldByReleased[o]
+    stateAt[x, o.tick].sLocator = o.placements.allAt
+    demandStatusAt[o.subject, o.tick] = DS_COMPLETE and not liveDemandAt[o.subject, o.tick]
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.CompletePlacementForms ─────────────────────────────────────────────────────────────────────────────────────
+// The per-pool form: the item sits at the locator given for its pool.
+run unit_dem_completePlacedPerPool {
+  some o: CompleteOcc, e: ExternalContribution, p: InventoryPool, x: InventoryItem | {
+    committed[o] and o.placements in PlacePerPool
+    e in dPre[o].sContributions and p = resolve[e.cPool] and x in heldAt[p, o.tick]
+    stateAt[x, o.tick].sLocator = (o.placements.byPool)[e.cPool]
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// The per-item form: the item's id is in the set of the locator it sits at.
+run unit_dem_completePlacedPerItem {
+  some o: CompleteOcc, e: ExternalContribution, p: InventoryPool, x: InventoryItem | {
+    committed[o] and o.placements in PlacePerItem
+    e in dPre[o].sContributions and p = resolve[e.cPool] and x in heldAt[p, o.tick]
+    x.eId in (o.placements.byLocator)[stateAt[x, o.tick].sLocator]
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.CompleteBadPlacements ──────────────────────────────────────────────────────────────────────────────────────
+// A pool the demand does not release: exactly RBadPlacement (nothing is held, so no other placement arm speaks).
+run unit_dem_completeForeignPoolPlacementRefused {
+  some o: CompleteOcc, q: EntityId | {
+    dPre[o].sStatus = DS_IN_PROCESS and o.placements in PlacePerPool
+    some (o.placements.byPool)[q] and q not in releasedPoolIds[dPre[o]]
+    refusedAtAdmission[o] and o.admission.because = RBadPlacement
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+
+// An item no released pool holds: exactly RBadPlacement.
+run unit_dem_completeItemNotHeldRefused {
+  some o: CompleteOcc, i: EntityId | {
+    dPre[o].sStatus = DS_IN_PROCESS and o.placements in PlacePerItem
+    i in PhysicalLocator.(o.placements.byLocator) and no heldByReleased[o]
+    refusedAtAdmission[o] and o.admission.because = RBadPlacement
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+
+// A HELD item under two locators: RBadPlacement is among the reasons (the item then has no one locator, so
+// RPlacementIncomplete speaks too — dafny-domain `PlacedLocator` gives none unless exactly one set names the item).
+run unit_dem_completeItemTwiceRefused {
+  some o: CompleteOcc, x: InventoryItem, disj l1, l2: PhysicalLocator | {
+    dPre[o].sStatus = DS_IN_PROCESS and o.placements in PlacePerItem
+    x in EntityId.(heldByReleased[o])
+    x.eId in (o.placements.byLocator)[l1] and x.eId in (o.placements.byLocator)[l2]
+    refusedAtAdmission[o] and RBadPlacement in o.admission.because
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.CompleteUnplaced ───────────────────────────────────────────────────────────────────────────────────────────
+// A held item whose pool the per-pool placements do not name: exactly RPlacementIncomplete.
+run unit_dem_completePoolMissingRefused {
+  some o: CompleteOcc, e: EntityId, x: InventoryItem | {
+    e -> x in heldByReleased[o] and o.placements in PlacePerPool and no (o.placements.byPool)[e]
+    refusedAtAdmission[o] and o.admission.because = RPlacementIncomplete
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// A held item no locator's set names: exactly RPlacementIncomplete.
+run unit_dem_completeItemMissingRefused {
+  some o: CompleteOcc, e: EntityId, x: InventoryItem | {
+    e -> x in heldByReleased[o] and o.placements in PlacePerItem
+    x.eId not in PhysicalLocator.(o.placements.byLocator)
+    refusedAtAdmission[o] and o.admission.because = RPlacementIncomplete
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// A held item that does not sit where the placements say, as of the tick: exactly RUnplaced.
+run unit_dem_completeUnplacedRefused {
+  some o: CompleteOcc, e: EntityId, x: InventoryItem | {
+    e -> x in heldByReleased[o] and o.placements in PlaceAll
+    stateAt[x, o.tick].sLocator != o.placements.allAt
+    refusedAtAdmission[o] and o.admission.because = RUnplaced
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.ReleasedPoolsStayUsed ──────────────────────────────────────────────────────────────────────────────────────
+// Released at rest is not fresh: after the Complete released an external contribution's pool (EMPTY throughout: no
+// InventoryItem in scope, so the pool has no membership history and the refusal is the demand log's memory alone), a new
+// demand's external attach of that pool is refused with exactly RPoolNotFresh.
+run unit_dem_releasedExternalPoolStaysUsed {
+  some o: CompleteOcc, a: AttachOcc, e: ExternalContribution | {
+    committed[o] and precedes[o.tick, a.tick] and a.subject != o.subject
+    e in dPre[o].sContributions
+    a.contribution in ExternalContribution and a.contribution.cPool = e.cPool
+    refusedAtAdmission[a] and a.admission.because = RPoolNotFresh
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
+      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+
+// The same for the released HOLDING: a new demand's StartProduction on it is refused with exactly RPoolNotFresh.
+run unit_dem_releasedHoldingStaysUsed {
+  some o: CompleteOcc, sp: StartProductionOcc | {
+    committed[o] and precedes[o.tick, sp.tick] and sp.subject != o.subject
+    some dPre[o].sHolding and sp.holding = dPre[o].sHolding
+    refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
+      15 Occurrence, 16 Tick, 14 EntityId, 17 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── DemandTests.CancelPoolNotEmpty ─────────────────────────────────────────────────────────────────────────────────────────
+// An OPEN demand whose external contribution's pool holds an item: its Cancel is refused with exactly RPoolNotEmpty
+// (QA739 (a); with the pool empty the Cancel commits — unit_dem_cancelWithExternalOnly).
+run unit_dem_cancelPoolNotEmptyRefused {
+  some cn: CancelOcc, e: ExternalContribution, p: InventoryPool | {
+    e in dPre[cn].sContributions and p = resolve[e.cPool] and some heldAt[p, cn.tick]
+    refusedAtAdmission[cn] and cn.admission.because = RPoolNotEmpty
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
