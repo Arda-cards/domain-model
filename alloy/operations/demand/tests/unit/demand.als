@@ -589,9 +589,12 @@ check unit_dem_recordedHoldingLive {
 // `RNotContribution`, `RNotExternal`. Until that commit this root does not compile: that is the first red.
 // The references (an external reference, a card's reference override, a work order) are ONE inert value, `Reference`,
 // pinned at 2 in every command (alloy/CLAUDE.md gotcha 7). A reference that is some card's serial is that `CardSerial`.
-// SCOPES ARE FIRST ESTIMATES, NOT YET RUN. The two-kind sum (`ContributionsSum`) is in the confined root
-// tests/unit/demand_quantity.als. PR B's eight witnesses (the placements, the freshness of the holding, Cancel's pool arm)
-// follow when dafny-domain #35 merges.
+// SCOPES: sized by what a scenario costs in occurrences — one per row, one activation per service for its committed rows,
+// one more per distinct refusal, one for a pool's genesis, one for the demand's item pin (the first batch's reading,
+// 2026-11-11: 24 of 33 found their instance as first written; 5 proved none at a bound below this count and 4 were cut
+// by the batch's time cap at an oversized default; those nine now pin `Occurrence` and take 5 as the default). The
+// two-kind sum (`ContributionsSum`) is in the confined root tests/unit/demand_quantity.als. PR B's eight witnesses (the
+// placements, the freshness of the holding, Cancel's pool arm) are the section at the end of this root.
 
 // ── DemandTests.EmptyBirthThenRelease ──────────────────────────────────────────────────────────────────────────────────────
 // A demand born with no contribution: its Release is refused with exactly RNoContribution.
@@ -627,9 +630,9 @@ run unit_dem_releaseAfterExternalContribution {
     dPre[r].sContributions = a.contribution
     demandStatusAt[d, r.tick] = DS_RELEASED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.ContributionIdOnceAndReferenceUnique ───────────────────────────────────────────────────────────────────────
 // A second attach under an id the demand's log already carried is refused with exactly RContributionStarted.
@@ -639,9 +642,9 @@ run unit_dem_contributionStartedRefused {
     a2.contribution.cid = a1.contribution.cid
     refusedAtAdmission[a2] and a2.admission.because = RContributionStarted
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
-      10 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // Two external contributions under one reference: the second is refused with exactly RDuplicateReference.
 run unit_dem_duplicateReferenceRefused {
@@ -652,9 +655,9 @@ run unit_dem_duplicateReferenceRefused {
     a2.contribution.externalReference = a1.contribution.externalReference
     refusedAtAdmission[a2] and a2.admission.because = RDuplicateReference
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
-      10 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // A card contribution whose DEFAULT reference (its card's serial) equals a live external contribution's reference is refused
 // the same: the uniqueness compares the references as read, not as stored.
@@ -666,9 +669,9 @@ run unit_dem_cardSerialClashRefused {
     e.contribution.externalReference = referenceOf[cc]
     refusedAtAdmission[k] and k.admission.because = RDuplicateReference
   }
-} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.CardSerialDefault ──────────────────────────────────────────────────────────────────────────────────────────
 // A card contribution attached with no override keeps none in the state and READS its card's serial.
@@ -693,9 +696,9 @@ run unit_dem_rolloverBeforeDetachRefused {
     referenceOf[c1] = referenceOf[c2]
     refusedAtAdmission[a2] and a2.admission.because = RDuplicateReference
   }
-} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
-      13 Tick, 12 EntityId, 14 Snapshot, 12 Occurrence, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 12 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
 
 // After the detach the successor attaches, and reads the same serial: the default does not collide with an entry that left.
 run unit_dem_rolloverAfterDetachCommits {
@@ -705,9 +708,9 @@ run unit_dem_rolloverAfterDetachCommits {
     a2.contribution = c2 and no c1.referenceOverride and no c2.referenceOverride
     referenceOf[c1] = referenceOf[c2]
   }
-} for 11 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
-      14 Tick, 12 EntityId, 16 Snapshot, 13 Occurrence, 2 Note, 2 Reference expect 1
+      13 Occurrence, 14 Tick, 12 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.ExternalPoolArms ───────────────────────────────────────────────────────────────────────────────────────────
 // A committed external attach: its pool exists and is live, is in the demand's tenant and carries the demand's item.
@@ -747,9 +750,9 @@ run unit_dem_externalWrongItemRefused {
     a.contribution = e and p = resolve[e.cPool] and p.itemPin.subject != a.subject.itemPin.subject
     refusedAtAdmission[a] and a.admission.because = RWrongItem
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
 
 // The pool was already named by another external attach: exactly RPoolNotFresh (the kanban module's atom, reused).
 run unit_dem_externalPoolNotFreshRefused {
@@ -761,9 +764,9 @@ run unit_dem_externalPoolNotFreshRefused {
     a2.contribution.externalReference != a1.contribution.externalReference
     refusedAtAdmission[a2] and a2.admission.because = RPoolNotFresh
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.EditAndRemove ──────────────────────────────────────────────────────────────────────────────────────────────
 // An edit of an external contribution sets the fields it carries (quantity and reference) and keeps the pool and the id.
@@ -922,9 +925,9 @@ run unit_dem_distributeExternalFill {
   some o: DistributeOcc, e: ExternalContribution | {
     committed[o] and e in dPre[o].sContributions and e.cid in o.fills
   }
-} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution,
-      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 4 Quantity, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.CancelWithExternalOnly ─────────────────────────────────────────────────────────────────────────────────────
 // A Cancel commits on an OPEN demand whose contributions are all external: RHasCards reads the card contributions only.
