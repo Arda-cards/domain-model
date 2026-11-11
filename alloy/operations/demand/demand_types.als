@@ -7,10 +7,16 @@ module operations/demand/demand_types
  * Production/Source Station. IDENTITY derives from (Item, Source Station) — but that pair is
  * NOT unique (R1 amended 2026-07-06: multiple DemandItems per pair coexist in different
  * states; whether multiple OPEN ones are allowed is CALLER POLICY, not a module law — the
- * collation decision belongs to whoever invokes CreateWithCycle/AddCycle). First module of
+ * collation decision belongs to whoever invokes CreateWithContribution/AddContribution). First module of
  * the operations/ domain.
  *
- * PUBLIC OPERATION SURFACE (DT-017 L9): the 15 kinds, the Reason taxonomy, and the read API
+ * CONTRIBUTIONS (TN-004, 2026-11-05; reflects dafny-domain MD-076 to MD-080): a demand's composition is its set of
+ * CONTRIBUTIONS — a card contribution names a card cycle, an external contribution carries its own reference, quantity
+ * and pool. The stored, advisory intent (`sDemandQty`) and the membership (`sMembership`) are gone: the quantity is a
+ * READ (the keyed sum of the live contributions, confined to demand_quantity.als) and the membership is DERIVED
+ * (`attachedAt`: the cycles the card contributions name), so the order and the receiver read what they read before.
+ *
+ * PUBLIC OPERATION SURFACE (DT-017 L9): the kinds, the Reason taxonomy, and the read API
  * live here. Laws are named predicates in demand_contracts.als; machinery + pairing
  * enforcement in demand_implementation.als; consumers' unit roots open demand_mock.als.
  *
@@ -33,6 +39,8 @@ open meta/subject_log/lifecycle[DemandItem, DemandState] as lc     // the SHAPES
 open meta/subject_log/subject_log[ProductionDelivery, PDState] as pdlog  // the SECOND subject (§8.1.2, DT-020 build cut 3)
 open meta/subject_log/lifecycle[ProductionDelivery, PDState] as pdlc    // the SHAPES for the delivery log (DT-030 M2; cut 2, 2026-09-10)
 open shared/values                                   // Quantity
+open shared/note                                     // Note — the demand's and the contribution's notes (TN-004)
+open shared/reference                                // Reference — external references and the work order (TN-004)
 open reference_data/item/item_types                  // Item (collation-key target; TYPES only)
 open resources/processing_network/processing_network_types   // Station (collation-key target; TYPES only)
 open resources/kanban_card/kanban_card_types          // CardCycle + the cycle log surface + KanbanCard (TYPES — DT-017; the kanban four-file cut retired the INTERIM direct open, 2026-07-08)
@@ -63,28 +71,67 @@ fact DemandItemRefIntegrity {
   all d: DemandItem | let st = resolve[d.stationRef] | some st implies st in Station
 }
 
+/** RefText — a reference as a contribution carries or reads it: a free `Reference`, or the text of some card's serial (a
+    `CardSerial`). ONE space, so a card's default reference (its serial) and an external reference can be compared. */
+fun RefText: set univ { CardSerial + Reference }
+
+/** Contribution — one source of a demand's quantity (TN-004): a VALUE that carries its own id (`cid`, caller-minted at the
+    attach and used once per demand) and an optional note. A state holds a set of them, at most one per id — the Alloy
+    spelling of dafny-domain's `map<ContributionId, DemandContribution>` (MD-076). */
+abstract sig Contribution {
+  cid:        one  EntityId,   // the contribution's id: the key within its demand
+  cUserNotes: lone Note        // the caller's note on this contribution
+}
+/** CardContribution — the contribution of a kanban card cycle: its quantity is the cycle's effective quantity, its reference
+    the override given here or, by default, the card's serial (a READ — `referenceOf`; MD-077). */
+sig CardContribution extends Contribution {
+  cycle:             one  EntityId,   // → CardCycle (soft ref)
+  referenceOverride: lone RefText     // the caller's reference; absent ⇒ the card's serial is read
+}
+/** ExternalContribution — a contribution with no card: its own reference, its own quantity, and its own pool, which it
+    holds exclusively while the demand is live. */
+sig ExternalContribution extends Contribution {
+  externalReference: one RefText,     // the caller's reference: unique among the demand's contributions
+  quantity:          one Quantity,    // the contributed quantity
+  cPool:             one EntityId     // → InventoryPool: the contribution's own pool (fresh at the attach)
+}
+// Value semantics: a contribution IS its fields.
+fact ContributionExtensional {
+  all disj a, b: CardContribution |
+    a.cid != b.cid or a.cUserNotes != b.cUserNotes or a.cycle != b.cycle or a.referenceOverride != b.referenceOverride
+  all disj a, b: ExternalContribution |
+    a.cid != b.cid or a.cUserNotes != b.cUserNotes or a.externalReference != b.externalReference
+    or a.quantity != b.quantity or a.cPool != b.cPool
+}
+
 // ── the state record ────────────────────────────────────────────────────────────────────────────
 /** DemandState — one moment's mutable payload of a DemandItem (a value; extensional). */
 sig DemandState extends Snapshot {
-  sStatus:    one  DemandStatus,   // where the task stands (R5)
-  sDemandQty: lone Quantity,       // the stored, ADVISORY intent total (R3b): no cone, may float free of the members' sum
-  sMembership: set EntityId,       // → CardCycle (soft refs; DEMAND-SIDE ONLY — R2; may retain withdrawn cycles — R7)
-  sHolding:   lone EntityId        // → InventoryPool (R8): production deliveries accumulate here; must be EMPTY at Complete
+  sStatus:           one  DemandStatus,   // where the task stands (R5)
+  sContributions:    set  Contribution,   // the composition (TN-004): at most one contribution per id; may retain a
+                                          //   card contribution whose cycle was withdrawn, until its DetachWithdrawn (R7)
+  sHolding:          lone EntityId,       // → InventoryPool (R8): production deliveries accumulate here
+  sUserNotes:        lone Note,           // the caller's notes on the demand: writable until the tombstone
+  sWorkOrder:        lone Reference,      // the work-order number: an OPEN-only field
+  sFulfillmentNotes: lone Note            // the fulfillment notes: writable while OPEN or RELEASED
 }
 
 // Value semantics: a state IS its fields.
 fact DemandStateExtensional {
   all disj a, b: DemandState |
-    a.sStatus != b.sStatus or a.sDemandQty != b.sDemandQty or a.sMembership != b.sMembership
-    or a.sHolding != b.sHolding
+    a.sStatus != b.sStatus or a.sContributions != b.sContributions or a.sHolding != b.sHolding
+    or a.sUserNotes != b.sUserNotes or a.sWorkOrder != b.sWorkOrder or a.sFulfillmentNotes != b.sFulfillmentNotes
 }
+// The contributions of a state are keyed by their id (the map's key).
+fact ContributionsKeyedById { all s: DemandState | all disj a, b: s.sContributions | a.cid != b.cid }
+// A contribution value exists only where something carries it: a state, or an attach (a refused one included).
+fact NoOrphanContribution { all c: Contribution | c in DemandState.sContributions + AttachOcc.contribution }
 
 // Record-carried refs are TYPED (soft — dangling/cross-Universe allowed; tenancy is guard-side).
 fact DemandRefIntegrity {
-  all s: DemandState {
-    (let h = resolve[s.sHolding] | some h implies h in InventoryPool)
-    all m: s.sMembership | let c = resolve[m] | some c implies c in CardCycle
-  }
+  all s: DemandState | (let h = resolve[s.sHolding] | some h implies h in InventoryPool)
+  all c: CardContribution     | let k = resolve[c.cycle] | some k implies k in CardCycle
+  all c: ExternalContribution | let p = resolve[c.cPool] | some p implies p in InventoryPool
 }
 
 // ── the SECOND subject: ProductionDelivery (§8.1.2, DT-020 build cut 3) ─────────────────────────
@@ -119,36 +166,51 @@ one sig PD_CREATED, PD_REVOKED extends PDStatus {}
 sig PDState extends Snapshot { sStatus: one PDStatus }
 fact PDStateExtensional { all disj a, b: PDState | a.sStatus != b.sStatus }
 
-// ── the kinds — the 15 operations (product-register names in comments) ─────────────────────────
-/** Create — start a card-less demand task (births the DemandItem OPEN, seeds the intent). */
-sig CreateDemandOcc extends lc/CreateOcc { qty: lone Quantity }
-  { bindings = subject + qty }   // item/station ride the ENTITY (immutable structure), not the payload
-/** MemberOcc — the member-addressing kinds' shared field, `member` declared ONCE so union quantifiers over
-    these kinds stay unambiguous. A SUBSET sig since 2026-09-09: CreateWithCycle is a Create shape, the other
-    three are Mutate shapes, so no `extends` parent can hold all four (the throwaway of that day: two
-    declarations of one field are refused over a union receiver; one field on a subset sig is not). */
-sig MemberOcc in dlog/SubjectOcc { member: one EntityId }
-fact MemberOccExtent {
-  MemberOcc = CreateWithCycleOcc + AddCycleOcc + RemoveCycleOcc + DetachWithdrawnOcc
-  all o: CreateWithCycleOcc | o.bindings = o.subject + o.qty + o.member
-  all o: AddCycleOcc + RemoveCycleOcc + DetachWithdrawnOcc | o.bindings = o.subject + o.member
+// ── the kinds (product-register names in comments) ─────────────────────────────────────────────
+/** Create — start a demand task with no contribution yet (births the DemandItem OPEN; TN-004: the quantity is read from the
+    contributions, so the genesis carries none). */
+sig CreateDemandOcc extends lc/CreateOcc {} { bindings = subject }   // item/station ride the ENTITY (immutable structure), not the payload
+/** AttachOcc — the two kinds that attach a contribution share the field, `contribution` declared ONCE so union quantifiers
+    over them stay unambiguous. A SUBSET sig: CreateWithContribution is a Create shape and AddContribution a Mutate shape, so no
+    `extends` parent can hold both (the MemberOcc precedent of 2026-09-09). */
+sig AttachOcc in dlog/SubjectOcc { contribution: one Contribution }
+/** TargetOcc — the kinds that name an EXISTING contribution by its id share the field `target` (the same device). */
+sig TargetOcc in dlog/SubjectOcc { target: one EntityId }
+/** NotesOcc — the three kinds that write a note share the field `notes`; none given CLEARS the note (the same device). */
+sig NotesOcc in dlog/SubjectOcc { notes: lone Note }
+fact ContributionOccExtents {
+  AttachOcc = CreateWithContributionOcc + AddContributionOcc
+  TargetOcc = RemoveContributionOcc + EditContributionOcc + SetContributionNotesOcc + DetachWithdrawnOcc
+  NotesOcc  = SetUserNotesOcc + SetFulfillmentNotesOcc + SetContributionNotesOcc
+  all o: AttachOcc | o.bindings = o.subject + o.contribution
+  all o: RemoveContributionOcc + DetachWithdrawnOcc | o.bindings = o.subject + o.target
+  all o: EditContributionOcc | o.bindings = o.subject + o.target + o.newQuantity + o.newReference
+  all o: SetContributionNotesOcc | o.bindings = o.subject + o.target + o.notes
+  all o: SetUserNotesOcc + SetFulfillmentNotesOcc | o.bindings = o.subject + o.notes
 }
-/** CreateWithCycle — start a task from its first demand signal (births + attaches; C/OP
-    call-first: the caller invokes the cycle's Accept FIRST, this commit is the saga's gate). */
-sig CreateWithCycleOcc extends lc/CreateOcc { qty: lone Quantity }
-/** AddCycle — collate a further signal (C/OP call-first, after the cycle's Accept). */
-sig AddCycleOcc extends lc/MutateOcc {}
-/** RemoveCycle — return a signal to the queue (C/OP call-first, after the cycle's Shelve). */
-sig RemoveCycleOcc extends lc/MutateOcc {}
-/** DetachWithdrawn — reconcile a withdrawn attachment (R7: the system reaction to the
-    cycle-withdrawal notification — CONVERGENT/NOTIFICATION; the same kind is the manual repair). */
+/** CreateWithContribution — start a task from its first contribution (births + attaches). For a card contribution this is
+    C/OP call-first: the caller invokes the cycle's Accept FIRST, and this commit is the saga's gate. */
+sig CreateWithContributionOcc extends lc/CreateOcc {}
+/** AddContribution — attach a further contribution, under the freeze (a card: C/OP call-first, after the cycle's Accept; an
+    external one: its pool must be live, in tenant, of the demand's item, and fresh). */
+sig AddContributionOcc extends lc/MutateOcc {}
+/** RemoveContribution — detach a contribution, under the freeze (a card: C/OP call-first, after the cycle's Shelve; an
+    external one: only while its pool is empty). */
+sig RemoveContributionOcc extends lc/MutateOcc {}
+/** EditContribution — set a contribution's fields, under the freeze: the quantity (an external contribution only) and the
+    reference (an external one's own, a card one's override). A field not given is left as it is. */
+sig EditContributionOcc extends lc/MutateOcc { newQuantity: lone Quantity, newReference: lone RefText }
+/** SetContributionNotes — write a contribution's note; NOT under the freeze, admitted until the demand's tombstone. */
+sig SetContributionNotesOcc extends lc/MutateOcc {}
+/** SetUserNotes — write the demand's user notes; admitted in every status, until the tombstone. */
+sig SetUserNotesOcc extends lc/MutateOcc {}
+/** SetWorkOrder — write the work-order number; OPEN only. None given clears it. */
+sig SetWorkOrderOcc extends lc/MutateOcc { workOrder: lone Reference } { bindings = subject + workOrder }
+/** SetFulfillmentNotes — write the fulfillment notes; while OPEN or RELEASED. */
+sig SetFulfillmentNotesOcc extends lc/MutateOcc {}
+/** DetachWithdrawn — reconcile a card contribution whose cycle was withdrawn (R7: the system reaction to the
+    cycle-withdrawal notification — CONVERGENT/NOTIFICATION; the same kind is the manual repair). Names the contribution's id. */
 sig DetachWithdrawnOcc extends lc/MutateOcc {}
-/** AdjustQty — SET the intent total (R3b). */
-sig AdjustQtyOcc extends lc/MutateOcc { qty: one Quantity } { bindings = subject + qty }
-/** ResetQty — snap the intent to the attached sum (THE arity-4 entrant — Σ semantics CONFINED to
-    demand_reset.als + its dedicated root; elsewhere the effect frames everything else and leaves
-    sDemandQty unconstrained — R3b confinement). */
-sig ResetQtyOcc extends lc/MutateOcc {} { bindings = subject }
 /** Release — hand to the station; the freeze instant (R5). */
 sig ReleaseOcc extends lc/MutateOcc {} { bindings = subject }
 /** Reopen — take back a release (R5, PDEV-215; members are still REQUESTED — R8). */
@@ -172,7 +234,7 @@ sig RecordProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bindi
     (cut 9, MP 2026-08-14 — the received quantity is financially binding). */
 sig ExtractProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bindings = subject + delivery }
 /** Distribute — allocate accumulated production (⟲, R8): a DATA-DRIVEN distribution matrix
-    (per-member quantities) + the caller's fullness assertion `fills` (intent-capturing — the
+    (per-contribution quantities, keyed by the contribution's id — TN-004) + the caller's fullness assertion `fills` (intent-capturing — the
     keyed-Quantity partial order may be INDETERMINATE). C/OP call-first: the caller moves each
     fill → READY (cycle CompleteProcessing) first; this commit gates on fills being READY. */
 sig DistributeOcc extends lc/MutateOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
@@ -217,9 +279,9 @@ sig RevokeDeliveryOcc extends pdlc/MutateOcc {} { bindings = subject }   // a st
     (D13 §6). Revoke stays a Mutate: REVOKED is a status, not the end of history. */
 sig RetireDeliveryOcc extends pdlc/RetireOcc {} { bindings = subject }
 
-/** demandMutators — the composition/intent mutators under the R5 freeze (OPEN-only, RFrozen). */
+/** demandMutators — the composition mutators under the R5 freeze (OPEN-only, RFrozen). SetContributionNotes is NOT one. */
 fun demandMutators: set dlog/SubjectOcc {
-  AddCycleOcc + RemoveCycleOcc + AdjustQtyOcc + ResetQtyOcc + DetachWithdrawnOcc
+  AddContributionOcc + RemoveContributionOcc + EditContributionOcc + DetachWithdrawnOcc
 }
 /** demandOccKinds — ALL demand occurrence kinds (the module family, alias-free for roots). Renamed from demandKinds 2026-07-08: `kind` binds to OCCURRENCE, never the module/entity (interaction-terminology section occurrence-kind). */
 fun demandOccKinds: set dlog/SubjectOcc { dlog/SubjectOcc }
@@ -240,13 +302,21 @@ one sig RDemandStarted,     // create: this subject already has committed histor
                             //   call-first: the CYCLE operation happens first, the demand commit is
                             //   the gate — dangling/closed/wrong-status refuse conservatively)
         RCycleLive,         // DetachWithdrawn: the cycle is still live (nothing to reconcile)
-        RNotAttached,       // remove/detach: the cycle is not a member
+        RNotAttached,       // (declared, no longer raised: TN-004 replaced it by RNotContribution; dafny-domain MD-079 keeps the atom)
         RHasCards,          // cancel with attached cycles (R5)
         RBadAllocation,     // distribute: allocation keys / fills outside the live membership (R8)
         RUndistributed,     // complete: the holding pool is not yet RETIRED at the commit — content may remain or arrive
                             //   (R8; COORDINATOR-Q527 B: the retire leg, admitted only EMPTY, precedes the commit)
-        RNotTerminal        // delete: the subject is not COMPLETE/CANCELED
+        RNotTerminal,       // delete: the subject is not COMPLETE/CANCELED
+        RNoContribution,    // release: the demand has no live contribution (TN-004)
+        RContributionStarted, // attach: this demand's log already carried the contribution's id (used once, a removed id included)
+        RDuplicateReference,  // attach/edit: another contribution of this demand reads the same reference
+        RNotContribution,   // remove/edit/notes/detach: the id names no contribution of this demand
+        RNotExternal        // edit: a quantity given for a card contribution (its quantity is its cycle's)
         extends Reason {}
+// REUSED for the external contribution's pool (TN-004; the kanban and pool modules' atoms, dafny-domain MD-079):
+// RPoolNotFresh (the pool was already named by an attach), RPoolNotEmpty (remove while the pool holds an item),
+// RNoSuchPool, RWrongItem.
 // The PD subject's reasons (§8.1.2/§8.1.4; cut 3). RWrongItem is REUSED from the pool module
 // (same semantic — item disagreement; the order module's reuse precedent).
 one sig RDeliveryStarted,      // create-delivery: this PD already has committed history (genesis-once)
@@ -264,16 +334,24 @@ one sig RBackdatedHolding extends RBackdated {}
 
 // ── the read API (per-role; L9) ─────────────────────────────────────────────────────────────────
 /** dPre / dPost — an occurrence's records, TYPED (the DT-017 Snapshot field-name collision fix:
-    `sStatus`/`sMembership` are ambiguous against CycleState in this cone). */
+    `sStatus` is ambiguous against CycleState in this cone). */
 fun dPre [o: dlog/SubjectOcc]: lone DemandState { o.pre  & DemandState }
 fun dPost[o: dlog/SubjectOcc]: lone DemandState { o.post & DemandState }
-/** preMemberCycles — the LIVE resolved member cycles as an operation reads them (pre-record). */
-fun preMemberCycles[o: dlog/SubjectOcc]: set CardCycle {
-  { c: CardCycle | (some m: dPre[o].sMembership | resolve[m] = c) and liveCycleAt[c, o.tick] }
+/** cyclesOf — the card cycles a set of contributions names, RESOLVED (soft refs may dangle out of scope). */
+fun cyclesOf[cs: set Contribution]: set CardCycle {
+  { k: CardCycle | some c: cs & CardContribution | resolve[c.cycle] = k }
 }
-/** preLiveMemberRefs — the member REFS whose cycles are live as an operation reads them. */
-fun preLiveMemberRefs[o: dlog/SubjectOcc]: set EntityId {
-  { m: dPre[o].sMembership | some c: CardCycle | resolve[m] = c and liveCycleAt[c, o.tick] }
+/** liveContributionsOf — the contributions that COUNT at `t`: every external one, and a card one while its cycle is live. */
+fun liveContributionsOf[cs: set Contribution, t: Tick]: set Contribution {
+  (cs & ExternalContribution) + { c: cs & CardContribution | some k: CardCycle | resolve[c.cycle] = k and liveCycleAt[k, t] }
+}
+/** preMemberCycles — the LIVE resolved cycles of the card contributions as an operation reads them (pre-record). */
+fun preMemberCycles[o: dlog/SubjectOcc]: set CardCycle {
+  { c: cyclesOf[dPre[o].sContributions] | liveCycleAt[c, o.tick] }
+}
+/** preLiveContributionIds — the ids of the contributions live as an operation reads them (Distribute's keys and fills). */
+fun preLiveContributionIds[o: dlog/SubjectOcc]: set EntityId {
+  liveContributionsOf[dPre[o].sContributions, o.tick].cid
 }
 /** demandStateAt — LOCF of records: the demand item's payload as of `t`. */
 fun demandStateAt[d: DemandItem, t: Tick]: lone DemandState { dlog/recordAt[d, t] }
@@ -289,10 +367,12 @@ pred liveDemandAt[d: DemandItem, t: Tick] {
 pred deletedAt[d: DemandItem, t: Tick] {
   some o: DeleteDemandOcc | committed[o] and o.subject = d and notAfter[o.tick, t]
 }
-/** attachedAt — the membership refs RESOLVED to cycles (soft refs may dangle out of scope). */
-fun attachedAt[d: DemandItem, t: Tick]: set CardCycle {
-  { c: CardCycle | some m: demandStateAt[d, t].sMembership | resolve[m] = c }
-}
+/** contributionsAt — the demand's contributions as of `t` (a withdrawn card's entry included, until its detach). */
+fun contributionsAt[d: DemandItem, t: Tick]: set Contribution { demandStateAt[d, t].sContributions }
+/** liveContributionsAt — the contributions that count at `t` (TN-004: the quantity sums these). */
+fun liveContributionsAt[d: DemandItem, t: Tick]: set Contribution { liveContributionsOf[contributionsAt[d, t], t] }
+/** attachedAt — the MEMBERSHIP, derived (dafny-domain MD-080): the cycles the card contributions name, RESOLVED. */
+fun attachedAt[d: DemandItem, t: Tick]: set CardCycle { cyclesOf[contributionsAt[d, t]] }
 /** attachedLiveAt — membership ∩ live cycles: the EFFECTIVE composition (R7). */
 fun attachedLiveAt[d: DemandItem, t: Tick]: set CardCycle {
   { c: attachedAt[d, t] | liveCycleAt[c, t] }
@@ -324,6 +404,20 @@ fun effectiveQtyMap[c: CardCycle]: Unit -> lone Scalar {
 }
 /** qtyMap — a lone Quantity as its keyed map (none = the keyed zero; the kit's uniform encoding). */
 fun qtyMap[q: Quantity]: Unit -> lone Scalar { q.byUnit }
+/** contributionQtyMap — ONE contribution's quantity as a keyed map: an external one's own, a card one's cycle's effective
+    quantity (empty when the cycle does not resolve). The SUM over the live contributions is demand_quantity.als's. */
+fun contributionQtyMap[c: Contribution]: Unit -> lone Scalar {
+  (c in ExternalContribution) => c.quantity.byUnit else effectiveQtyMap[cyclesOf[c]]
+}
+
+// ── the reference (TN-004: unique among a demand's contributions, AS READ) ──────────────────────
+/** referenceOf — a contribution's EFFECTIVE reference: an external one's own; a card one's override, or by default its
+    card's serial (dafny-domain MD-077: the default is a read over the card, never stored). Empty when a card
+    contribution has no override and its cycle does not resolve. */
+fun referenceOf[c: Contribution]: lone RefText {
+  (c in ExternalContribution) => c.externalReference
+  else ((some c.referenceOverride) => c.referenceOverride else (cycles.(cyclesOf[c])).serialNumber)
+}
 
 // ── the PD read API (§8.1.2; per-role, L9) ──────────────────────────────────────────────────────
 /** pdPre / pdPost — a PD occurrence's records, TYPED (the DT-017 collision fix, per subject). */

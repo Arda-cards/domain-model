@@ -44,7 +44,7 @@ open operations/demand/demand_types
 pred cycleIndivisible { all t: Tick, c: CardCycle | lone demandOf[c, t] }
 
 // ── C2 · the freeze family (R5) — single-log law ────────────────────────────────────────────────
-/** Composition/intent mutators commit only in OPEN (Release is the freeze instant). */
+/** Composition mutators (attach, remove, edit, detach) commit only in OPEN (Release is the freeze instant). */
 pred frozenOutsideOpen {
   all o: demandMutators | committed[o] implies dPre[o].sStatus = DS_OPEN
 }
@@ -53,13 +53,13 @@ pred frozenOutsideOpen {
 /** A committed attach saw its member ACCEPTED (cycle at REQUESTED — the prior cycle-side Accept
     is the saga's first leg; refusal flows back on ITS response). */
 pred attachRequiresAccepted {
-  all o: CreateWithCycleOcc + AddCycleOcc | committed[o] implies
-    statusAt[resolve[o.member] & CardCycle, o.tick] = REQUESTED
+  all o: AttachOcc | (committed[o] and o.contribution in CardContribution) implies
+    statusAt[cyclesOf[o.contribution], o.tick] = REQUESTED
 }
 /** A committed remove saw its member SHELVED back to the queue (cycle at REQUESTING). */
 pred removeRequiresShelved {
-  all o: RemoveCycleOcc | committed[o] implies
-    statusAt[resolve[o.member] & CardCycle, o.tick] = REQUESTING
+  all o: RemoveContributionOcc, c: dPre[o].sContributions & CardContribution |
+    (committed[o] and c.cid = o.target) implies statusAt[cyclesOf[c], o.tick] = REQUESTING
 }
 /** A committed StartProduction saw EVERY live member already IN_PROCESS (the caller's
     cycle-side StartProcessing calls preceded the commit). */
@@ -72,7 +72,7 @@ pred startProductionRequiresStarted {
     the keyed partial order may be indeterminate, R8). */
 pred distributeRequiresReady {
   all o: DistributeOcc | committed[o] implies
-    (all m: o.fills | statusAt[resolve[m] & CardCycle, o.tick] = READY)
+    (all c: dPre[o].sContributions & CardContribution | c.cid in o.fills implies statusAt[cyclesOf[c], o.tick] = READY)
 }
 /** A committed Complete saw every live member SETTLED — none still IN_PROCESS (each settled by
     the caller: inventory → CompleteProcessing/READY, none → ProductionFailure/REQUESTING). The
@@ -121,16 +121,15 @@ pred completeStampedAfterHolding {
 }
 
 // ── C6 · the withdrawal reaction (R7) — CONVERGENT/NOTIFICATION ─────────────────────────────────
-/** The reaction kind reconciles: a committed DetachWithdrawn removes the member and decrements
-    the intent by the member's genesis-fixed quantity. The quiescence reading ("no withdrawn
+/** The reaction kind reconciles: a committed DetachWithdrawn removes the withdrawn card's contribution and nothing
+    else (TN-004: there is no stored intent to decrement — the quantity is read from the live contributions, and the
+    withdrawn card had already left them). The quiescence reading ("no withdrawn
     member in an OPEN demand at quiescence") is the runtime law probe's job — in-flight
     intermediates are LEGAL (suite boundary witness), the emitter cannot fix a miss, the
     listener (this kind) restores. */
 pred withdrawnDetachReconciles {
   all o: DetachWithdrawnOcc | committed[o] implies {
-    dPost[o].sMembership = dPre[o].sMembership - o.member
-    qtyMap[dPost[o].sDemandQty] =
-      add[qtyMap[dPre[o].sDemandQty], negate[effectiveQtyMap[resolve[o.member] & CardCycle]]]
+    dPost[o].sContributions = { c: dPre[o].sContributions | c.cid != o.target }
   }
 }
 
@@ -222,6 +221,47 @@ pred holdingExclusiveWhileLive {
         implies (no c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p)
     }
   }
+}
+
+// ── C10 · the contributions (TN-004; reflects dafny-domain MD-076 to MD-080) — single-log laws ──
+// Each is a LEMMA of the reference model (dafny-domain src/operations/demand/demand-contract.dfy), proven there for every
+// log. They are stated here so consumers and finders can name them. They are NOT in `guarantees` yet: a predicate joins the
+// mock's promise only after one bounded check has shown it agrees with the guards as written here (TN-005 D4).
+/** releasedHasContribution — a committed Release saw at least one LIVE contribution (Dafny `ReleasedHasContribution`). */
+pred releasedHasContribution {
+  all o: ReleaseOcc | committed[o] implies some liveContributionsOf[dPre[o].sContributions, o.tick]
+}
+/** contributionIdOnce — a contribution id is attached at most ONCE on a demand's log, a removed id included (Dafny
+    `ContributionIdOnce`). */
+pred contributionIdOnce {
+  all disj a, b: AttachOcc |
+    (committed[a] and committed[b] and a.subject = b.subject) implies a.contribution.cid != b.contribution.cid
+}
+/** referenceUniquePerDemand — at every moment two contributions of one demand read different references (Dafny
+    `ReferenceUniquePerDemand`; "read": a card's default is its card's serial). */
+pred referenceUniquePerDemand {
+  all d: DemandItem, t: Tick | all disj a, b: contributionsAt[d, t] |
+    (some referenceOf[a] and some referenceOf[b]) implies referenceOf[a] != referenceOf[b]
+}
+/** contributionPoolMatchesItem — a committed external attach's pool is live, in the demand's tenant and carries the demand's
+    item (Dafny `ContributionPoolMatchesItem` with its tenancy sibling). */
+pred contributionPoolMatchesItem {
+  all o: AttachOcc, e: ExternalContribution | (committed[o] and o.contribution = e) implies
+    (some p: resolve[e.cPool] & InventoryPool |
+       poolLiveAt[p, o.tick] and p.tenantId = o.subject.tenantId and p.itemPin.subject = o.subject.itemPin.subject)
+}
+/** contributionPoolAttachedOnce — no pool is named by two committed external attaches, of any demands (Dafny
+    `ContributionPoolAttachedOnce`: the freshness arm's theorem). */
+pred contributionPoolAttachedOnce {
+  all disj a, b: AttachOcc |
+    (committed[a] and committed[b] and (a.contribution + b.contribution) in ExternalContribution)
+      implies a.contribution.cPool != b.contribution.cPool
+}
+/** notesWritableUntilRetire — a committed notes write (the demand's, or a contribution's) precedes the demand's tombstone
+    (Dafny `NotesWritableUntilRetire`). */
+pred notesWritableUntilRetire {
+  all o: SetUserNotesOcc + SetContributionNotesOcc, dl: DeleteDemandOcc |
+    (committed[o] and committed[dl] and dl.subject = o.subject) implies precedes[o.tick, dl.tick]
 }
 
 // ── C7 · terminal closure (SL-4 instance, R5/R7) — single-log law ───────────────────────────────
