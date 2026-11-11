@@ -590,3 +590,360 @@ check unit_dem_recordedHoldingLive {
   all o: RecordProductionOcc | (committed[o] and some dPre[o].sHolding) implies namedPoolLive[dPre[o].sHolding, o.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool, 10 EntityId, 9 Occurrence, 9 Tick, 2 Note expect 0
+
+// ══ TN-004, the demand's contributions (dafny-domain MD-076 to MD-080; PR A, on dafny-domain main at 0040544) ════════════════
+// The FINDERS of the witnesses PR A added to dafny-domain src/operations/demand/tests/demand-tests.dfy, each named after the
+// witness it finds an instance for. WRITTEN FIRST (test-first, TN-005 section 10): they name the contribution surface the
+// module gains in the next commit — `Contribution` (`CardContribution`, `ExternalContribution`, keyed by `cid`), the state's
+// `sContributions`, the kinds `CreateWithContributionOcc`, `AddContributionOcc`, `RemoveContributionOcc`,
+// `EditContributionOcc`, `SetContributionNotesOcc`, `SetUserNotesOcc`, `SetWorkOrderOcc`, `SetFulfillmentNotesOcc`, the reads
+// `contributionsAt` and `referenceOf`, and the reasons `RNoContribution`, `RContributionStarted`, `RDuplicateReference`,
+// `RNotContribution`, `RNotExternal`. Until that commit this root does not compile: that is the first red.
+// SCOPES ARE FIRST ESTIMATES, NOT YET RUN. The two-kind sum (`ContributionsSum`) is in the confined root
+// tests/unit/demand_quantity.als. PR B's eight witnesses (the placements, the freshness of the holding, Cancel's pool arm)
+// follow when dafny-domain #35 merges.
+
+// ── DemandTests.EmptyBirthThenRelease ──────────────────────────────────────────────────────────────────────────────────────
+// A demand born with no contribution: its Release is refused with exactly RNoContribution.
+run unit_dem_emptyReleaseRefused {
+  some d: DemandItem, c: CreateDemandOcc, r: ReleaseOcc | {
+    c.subject = d and r.subject = d and committed[c] and precedes[c.tick, r.tick]
+    no dPre[r].sContributions
+    refusedAtAdmission[r] and r.admission.because = RNoContribution
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 6 EntityId, 2 Note expect 1
+
+// After ONE card contribution the Release commits (the card's Accept came first: call-first).
+run unit_dem_releaseAfterCardContribution {
+  some d: DemandItem, c: CreateDemandOcc, a: AddContributionOcc, r: ReleaseOcc | {
+    c.subject = d and a.subject = d and r.subject = d
+    committed[c] and committed[a] and committed[r]
+    precedes[c.tick, a.tick] and precedes[a.tick, r.tick]
+    a.contribution in CardContribution
+    dPre[r].sContributions = a.contribution
+    demandStatusAt[d, r.tick] = DS_RELEASED
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// After ONE external contribution the Release commits too: no card is needed.
+run unit_dem_releaseAfterExternalContribution {
+  some d: DemandItem, c: CreateDemandOcc, a: AddContributionOcc, r: ReleaseOcc | {
+    c.subject = d and a.subject = d and r.subject = d
+    committed[c] and committed[a] and committed[r]
+    precedes[c.tick, a.tick] and precedes[a.tick, r.tick]
+    a.contribution in ExternalContribution
+    dPre[r].sContributions = a.contribution
+    demandStatusAt[d, r.tick] = DS_RELEASED
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// ── DemandTests.ContributionIdOnceAndReferenceUnique ───────────────────────────────────────────────────────────────────────
+// A second attach under an id the demand's log already carried is refused with exactly RContributionStarted.
+run unit_dem_contributionStartedRefused {
+  some a1, a2: AddContributionOcc | {
+    a1.subject = a2.subject and committed[a1] and precedes[a1.tick, a2.tick]
+    a2.contribution.cid = a1.contribution.cid
+    refusedAtAdmission[a2] and a2.admission.because = RContributionStarted
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
+      10 Tick, 12 EntityId, 10 Snapshot, 2 Note expect 1
+
+// Two external contributions under one reference: the second is refused with exactly RDuplicateReference.
+run unit_dem_duplicateReferenceRefused {
+  some a1, a2: AddContributionOcc | {
+    a1.subject = a2.subject and committed[a1] and precedes[a1.tick, a2.tick]
+    (a1.contribution + a2.contribution) in ExternalContribution
+    a2.contribution.cid != a1.contribution.cid
+    a2.contribution.externalReference = a1.contribution.externalReference
+    refusedAtAdmission[a2] and a2.admission.because = RDuplicateReference
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
+      10 Tick, 12 EntityId, 10 Snapshot, 2 Note expect 1
+
+// A card contribution whose DEFAULT reference (its card's serial) equals a live external contribution's reference is refused
+// the same: the uniqueness compares the references as read, not as stored.
+run unit_dem_cardSerialClashRefused {
+  some e, k: AddContributionOcc, cc: CardContribution | {
+    e.subject = k.subject and committed[e] and precedes[e.tick, k.tick]
+    e.contribution in ExternalContribution and k.contribution = cc
+    no cc.referenceOverride
+    e.contribution.externalReference = referenceOf[cc]
+    refusedAtAdmission[k] and k.admission.because = RDuplicateReference
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
+      10 Tick, 12 EntityId, 12 Snapshot, 2 Note expect 1
+
+// ── DemandTests.CardSerialDefault ──────────────────────────────────────────────────────────────────────────────────────────
+// A card contribution attached with no override keeps none in the state and READS its card's serial.
+run unit_dem_cardSerialDefault {
+  some a: AddContributionOcc, cc: CardContribution | {
+    committed[a] and a.contribution = cc and no cc.referenceOverride
+    cc in dPost[a].sContributions
+    referenceOf[cc] = (cycles.(resolve[cc.cycle] & CardCycle)).serialNumber
+    some referenceOf[cc]
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// Across a rollover of one card: attaching the successor cycle BEFORE the withdrawn one is detached is refused with exactly
+// RDuplicateReference (both read the card's serial; the withdrawn entry is still in the state).
+run unit_dem_rolloverBeforeDetachRefused {
+  some w: WithdrawOcc, a2: AddContributionOcc, disj c1, c2: CardContribution | {
+    committed[w] and precedes[w.tick, a2.tick]
+    c1 in dPre[a2].sContributions and (resolve[c1.cycle] & CardCycle) = w.subject
+    a2.contribution = c2 and c1.cycle != c2.cycle
+    no c1.referenceOverride and no c2.referenceOverride
+    referenceOf[c1] = referenceOf[c2]
+    refusedAtAdmission[a2] and a2.admission.because = RDuplicateReference
+  }
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
+      13 Tick, 12 EntityId, 14 Snapshot, 12 Occurrence, 2 Note expect 1
+
+// After the detach the successor attaches, and reads the same serial: the default does not collide with an entry that left.
+run unit_dem_rolloverAfterDetachCommits {
+  some dt: DetachWithdrawnOcc, a2: AddContributionOcc, disj c1, c2: CardContribution | {
+    dt.subject = a2.subject and committed[dt] and committed[a2] and precedes[dt.tick, a2.tick]
+    dt.target = c1.cid and c1 in dPre[dt].sContributions
+    a2.contribution = c2 and no c1.referenceOverride and no c2.referenceOverride
+    referenceOf[c1] = referenceOf[c2]
+  }
+} for 11 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
+      14 Tick, 12 EntityId, 16 Snapshot, 13 Occurrence, 2 Note expect 1
+
+// ── DemandTests.ExternalPoolArms ───────────────────────────────────────────────────────────────────────────────────────────
+// A committed external attach: its pool exists and is live, is in the demand's tenant and carries the demand's item.
+run unit_dem_externalPoolAttached {
+  some a: AddContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    committed[a] and a.contribution = e and p = resolve[e.cPool]
+    poolLiveAt[p, a.tick] and p.tenantId = a.subject.tenantId
+    p.itemPin.subject = a.subject.itemPin.subject
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// The pool does not exist, or is retired: exactly RNoSuchPool.
+run unit_dem_externalNoSuchPoolRefused {
+  some a: AddContributionOcc, e: ExternalContribution | {
+    a.contribution = e and not namedPoolLive[e.cPool, a.tick]
+    refusedAtAdmission[a] and a.admission.because = RNoSuchPool
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// The pool is another tenant's: RForeignRef is among the reasons.
+run unit_dem_externalForeignPoolRefused {
+  some a: AddContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    a.contribution = e and p = resolve[e.cPool] and p.tenantId != a.subject.tenantId
+    refusedAtAdmission[a] and RForeignRef in a.admission.because
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// The pool carries another item: exactly RWrongItem.
+run unit_dem_externalWrongItemRefused {
+  some a: AddContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    a.contribution = e and p = resolve[e.cPool] and p.itemPin.subject != a.subject.itemPin.subject
+    refusedAtAdmission[a] and a.admission.because = RWrongItem
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+
+// The pool was already named by another external attach: exactly RPoolNotFresh (the kanban module's atom, reused).
+run unit_dem_externalPoolNotFreshRefused {
+  some a1, a2: AddContributionOcc | {
+    committed[a1] and precedes[a1.tick, a2.tick]
+    (a1.contribution + a2.contribution) in ExternalContribution
+    a2.contribution.cPool = a1.contribution.cPool
+    a2.contribution.cid != a1.contribution.cid
+    a2.contribution.externalReference != a1.contribution.externalReference
+    refusedAtAdmission[a2] and a2.admission.because = RPoolNotFresh
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
+      10 Tick, 12 EntityId, 12 Snapshot, 2 Note expect 1
+
+// ── DemandTests.EditAndRemove ──────────────────────────────────────────────────────────────────────────────────────────────
+// An edit of an external contribution sets the fields it carries (quantity and reference) and keeps the pool and the id.
+run unit_dem_editExternalSetsFields {
+  some ed: EditContributionOcc, disj e0, e1: ExternalContribution | {
+    committed[ed] and some ed.newQuantity and some ed.newReference
+    e0 in dPre[ed].sContributions and e0.cid = ed.target
+    e1 in dPost[ed].sContributions and e1.cid = ed.target
+    e1.quantity = ed.newQuantity and e1.externalReference = ed.newReference
+    e1.quantity != e0.quantity and e1.externalReference != e0.externalReference
+    e1.cPool = e0.cPool
+    e0 not in dPost[ed].sContributions
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 4 Quantity, 2 Note expect 1
+
+// An edit of a card contribution's reference sets the override, and the read follows it.
+run unit_dem_editCardReference {
+  some ed: EditContributionOcc, disj c0, c1: CardContribution | {
+    committed[ed] and no ed.newQuantity and some ed.newReference
+    c0 in dPre[ed].sContributions and c0.cid = ed.target and no c0.referenceOverride
+    c1 in dPost[ed].sContributions and c1.cid = ed.target
+    referenceOf[c1] = ed.newReference and referenceOf[c1] != referenceOf[c0]
+    c1.cycle = c0.cycle
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// A quantity on a card contribution: exactly RNotExternal (a card's quantity is its cycle's).
+run unit_dem_editQuantityOnCardRefused {
+  some ed: EditContributionOcc, c0: CardContribution | {
+    c0 in dPre[ed].sContributions and c0.cid = ed.target and some ed.newQuantity
+    refusedAtAdmission[ed] and ed.admission.because = RNotExternal
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// An edit after the Release: exactly RFrozen (the edit is a composition mutator).
+run unit_dem_editFrozenRefused {
+  some ed: EditContributionOcc | {
+    dPre[ed].sStatus = DS_RELEASED and ed.target in dPre[ed].sContributions.cid
+    refusedAtAdmission[ed] and ed.admission.because = RFrozen
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// An edit naming no contribution of the demand: exactly RNotContribution.
+run unit_dem_editUnknownRefused {
+  some ed: EditContributionOcc | {
+    dPre[ed].sStatus = DS_OPEN and ed.target not in dPre[ed].sContributions.cid
+    refusedAtAdmission[ed] and ed.admission.because = RNotContribution
+  }
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note expect 1
+
+// Removing an external contribution whose pool holds an item: exactly RPoolNotEmpty (the pool module's atom, reused).
+run unit_dem_removeExternalNotEmptyRefused {
+  some rm: RemoveContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    e in dPre[rm].sContributions and e.cid = rm.target and p = resolve[e.cPool]
+    some heldAt[p, rm.tick]
+    refusedAtAdmission[rm] and rm.admission.because = RPoolNotEmpty
+  }
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution,
+      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 4 Quantity, 2 Note expect 1
+
+// Removing it while its pool is empty commits, and the entry is gone.
+run unit_dem_removeExternalCommits {
+  some rm: RemoveContributionOcc, e: ExternalContribution | {
+    committed[rm] and e in dPre[rm].sContributions and e.cid = rm.target
+    rm.target not in dPost[rm].sContributions.cid
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// ── DemandTests.FieldWrites ────────────────────────────────────────────────────────────────────────────────────────────────
+// The three field kinds of an OPEN demand write what they carry, and each reads back from the state.
+run unit_dem_fieldWrites {
+  some d: DemandItem, u: SetUserNotesOcc, w: SetWorkOrderOcc, n: SetContributionNotesOcc, t: Tick | {
+    u.subject = d and w.subject = d and n.subject = d
+    committed[u] and committed[w] and committed[n]
+    some u.notes and some w.workOrder and some n.notes
+    notAfter[u.tick, t] and notAfter[w.tick, t] and notAfter[n.tick, t]
+    demandStateAt[d, t].sUserNotes = u.notes
+    demandStateAt[d, t].sWorkOrder = w.workOrder
+    some c: demandStateAt[d, t].sContributions | c.cid = n.target and c.cUserNotes = n.notes
+  }
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 1 WorkOrder,
+      12 Tick, 10 EntityId, 14 Snapshot, 2 Note expect 1
+
+// A write carrying nothing CLEARS the field.
+run unit_dem_fieldClears {
+  some u1, u2: SetUserNotesOcc | {
+    u1.subject = u2.subject and committed[u1] and committed[u2] and precedes[u1.tick, u2.tick]
+    some u1.notes and no u2.notes
+    some dPre[u2].sUserNotes and no dPost[u2].sUserNotes
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note expect 1
+
+// The fulfillment notes are written on a RELEASED demand.
+run unit_dem_fulfillmentNotesOnReleased {
+  some f: SetFulfillmentNotesOcc | {
+    committed[f] and some f.notes and dPre[f].sStatus = DS_RELEASED
+    dPost[f].sFulfillmentNotes = f.notes
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// ── DemandTests.NotesWindows ───────────────────────────────────────────────────────────────────────────────────────────────
+// The user notes stay writable on a CLOSED demand, until its tombstone.
+run unit_dem_userNotesOnClosedCommits {
+  some u: SetUserNotesOcc | committed[u] and dPre[u].sStatus in (DS_COMPLETE + DS_CANCELED)
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note expect 1
+
+// After the tombstone the same write is refused with exactly RDemandClosed.
+run unit_dem_userNotesAfterDeleteRefused {
+  some dl: DeleteDemandOcc, u: SetUserNotesOcc | {
+    dl.subject = u.subject and committed[dl] and precedes[dl.tick, u.tick]
+    refusedAtAdmission[u] and u.admission.because = RDemandClosed
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 10 Tick, 8 EntityId, 10 Snapshot, 2 Note expect 1
+
+// The work order is an OPEN-only field: on a RELEASED demand its write is refused with exactly RBadState.
+run unit_dem_workOrderReleasedRefused {
+  some w: SetWorkOrderOcc | {
+    dPre[w].sStatus = DS_RELEASED
+    refusedAtAdmission[w] and w.admission.because = RBadState
+  }
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 WorkOrder,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
+
+// The fulfillment notes close at StartProduction: on an IN_PROCESS demand the write is refused with exactly RBadState.
+run unit_dem_fulfillmentNotesInProcessRefused {
+  some f: SetFulfillmentNotesOcc | {
+    dPre[f].sStatus = DS_IN_PROCESS
+    refusedAtAdmission[f] and f.admission.because = RBadState
+  }
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution,
+      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 2 Note expect 1
+
+// ── DemandTests.DistributeExternalFill ─────────────────────────────────────────────────────────────────────────────────────
+// A Distribute may name an external contribution among its fills: nothing is gated on it (it has no cycle to be READY).
+run unit_dem_distributeExternalFill {
+  some o: DistributeOcc, e: ExternalContribution | {
+    committed[o] and e in dPre[o].sContributions and e.cid in o.fills
+  }
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution,
+      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 4 Quantity, 2 Note expect 1
+
+// ── DemandTests.CancelWithExternalOnly ─────────────────────────────────────────────────────────────────────────────────────
+// A Cancel commits on an OPEN demand whose contributions are all external: RHasCards reads the card contributions only.
+run unit_dem_cancelWithExternalOnly {
+  some cn: CancelOcc | {
+    committed[cn] and some dPre[cn].sContributions
+    dPre[cn].sContributions in ExternalContribution
+    demandStatusAt[cn.subject, cn.tick] = DS_CANCELED
+  }
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note expect 1
