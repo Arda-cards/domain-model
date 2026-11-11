@@ -239,15 +239,33 @@ sig ExtractProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bind
     fill → READY (cycle CompleteProcessing) first; this commit gates on fills being READY. */
 sig DistributeOcc extends lc/MutateOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
   { bindings = subject + allocation.Quantity + EntityId.allocation + fills }
-/** Complete — declare the production run done (R8): requires the holding pool RETIRED (COORDINATOR-Q527
-    Option B, MP 2026-10-15: the caller's retire leg, which the pool admits only EMPTY, precedes this commit)
-    with its newest write dated at or before this commit's own stamp (A5), and every live member SETTLED.
-    C/OP call-first: the caller settles each still-IN_PROCESS member first — inventory →
-    CompleteProcessing (READY), none → ProductionFailure (REQUESTING, back in the queue) — and retires
-    the holding; this commit gates on no member left IN_PROCESS and the holding retired. The resulting
-    quantity MAY differ from the intent (R3b advisory). STAMPED (`CompleteTimed`): the one demand kind
-    carrying the domain-time stamp, read against the holding pool's writes. */
-sig CompleteOcc extends lc/MutateOcc {} { bindings = subject }
+/** Placement — where the items a Complete releases go (TN-004 rows 12 to 14; dafny-domain MD-082 `Placement`): one locator
+    for all, one per released pool, or one per item. A VALUE carried by the Complete. Call-first: the items were MOVED
+    before the Complete is called; its arms CHECK, the Complete never moves. */
+abstract sig Placement {}
+/** PlaceAll — one locator for everything the released pools hold (dafny-domain `ForAll`). */
+sig PlaceAll extends Placement { allAt: one PhysicalLocator }
+/** PlacePerPool — one locator per released pool, keyed by the pool's id (dafny-domain `PerPool`). */
+sig PlacePerPool extends Placement { byPool: EntityId -> lone PhysicalLocator }
+/** PlacePerItem — one locator per item: each locator's set of inventory-item ids (dafny-domain `PerItem`). */
+sig PlacePerItem extends Placement { byLocator: PhysicalLocator -> EntityId }
+// Value semantics: a placement IS its fields, and exists only where a Complete carries it (a refused one included).
+fact PlacementExtensional {
+  all disj a, b: PlaceAll     | a.allAt != b.allAt
+  all disj a, b: PlacePerPool | a.byPool != b.byPool
+  all disj a, b: PlacePerItem | a.byLocator != b.byLocator
+}
+fact NoOrphanPlacement { all p: Placement | p in CompleteOcc.placements }
+/** Complete — declare the production run done (R8), naming where the released items sit (`placements`, TN-004 rows 12 to
+    14): every live member SETTLED, the holding pool's newest write dated at or before this commit's own stamp (A5), and
+    every item the released pools hold already at its placed locator. C/OP call-first: the caller settles each
+    still-IN_PROCESS member first — inventory → CompleteProcessing (READY), none → ProductionFailure (REQUESTING, back in
+    the queue) — and MOVES the items; this commit gates on both. The released pools (the holding and each external
+    contribution's) are released AT REST by the status alone: no retire is required (TN-004 row 11, dafny-domain MD-084;
+    COORDINATOR-Q527 Option B's retired-holding gate left). The resulting quantity MAY differ from the intent (R3b
+    advisory). STAMPED (`CompleteTimed`): the one demand kind carrying the domain-time stamp, read against the holding
+    pool's writes. */
+sig CompleteOcc extends lc/MutateOcc { placements: one Placement } { bindings = subject + placements }
 fact CompleteTimed { CompleteOcc in Timed }   // COORDINATOR-Q527: the stamp the A5 condition compares
 /** Cancel — abandon an OPEN task (R5: guard requires NO attached cycles — RHasCards). */
 sig CancelOcc extends lc/MutateOcc {} { bindings = subject }
@@ -305,8 +323,11 @@ one sig RDemandStarted,     // create: this subject already has committed histor
         RNotAttached,       // (declared, no longer raised: TN-004 replaced it by RNotContribution; dafny-domain MD-079 keeps the atom)
         RHasCards,          // cancel with attached cycles (R5)
         RBadAllocation,     // distribute: allocation keys / fills outside the live membership (R8)
-        RUndistributed,     // complete: the holding pool is not yet RETIRED at the commit — content may remain or arrive
-                            //   (R8; COORDINATOR-Q527 B: the retire leg, admitted only EMPTY, precedes the commit)
+        RBadPlacement,        // complete: the placements name a pool the demand does not release, an item no released pool
+                              //   holds, or an item under two locators (TN-004 row 13)
+        RPlacementIncomplete, // complete: a held item the placements give no locator (TN-004 row 13)
+        RUnplaced,            // complete: a held item does not sit, as of the tick, where the placements say (row 14, call-first)
+                              // (RUndistributed LEFT with the retired-holding gate: TN-004 row 11, dafny-domain MD-084)
         RNotTerminal,       // delete: the subject is not COMPLETE/CANCELED
         RNoContribution,    // release: the demand has no live contribution (TN-004)
         RContributionStarted, // attach: this demand's log already carried the contribution's id (used once, a removed id included)
@@ -315,8 +336,9 @@ one sig RDemandStarted,     // create: this subject already has committed histor
         RNotExternal        // edit: a quantity given for a card contribution (its quantity is its cycle's)
         extends Reason {}
 // REUSED for the external contribution's pool (TN-004; the kanban and pool modules' atoms, dafny-domain MD-079):
-// RPoolNotFresh (the pool was already named by an attach), RPoolNotEmpty (remove while the pool holds an item),
-// RNoSuchPool, RWrongItem.
+// RPoolNotFresh (the pool was already named by an attach — and, since PR B, the HOLDING a StartProduction names was
+// already used, MD-083), RPoolNotEmpty (remove while the pool holds an item — and, since PR B, CANCEL while an external
+// contribution's pool holds one, MD-085), RNoSuchPool, RWrongItem.
 // The PD subject's reasons (§8.1.2/§8.1.4; cut 3). RWrongItem is REUSED from the pool module
 // (same semantic — item disagreement; the order module's reuse precedent).
 one sig RDeliveryStarted,      // create-delivery: this PD already has committed history (genesis-once)
@@ -381,6 +403,30 @@ fun attachedLiveAt[d: DemandItem, t: Tick]: set CardCycle {
     surface — non-empty drives the UI indication; never a violation. */
 fun retiredMembersAt[d: DemandItem, t: Tick]: set CardCycle {
   attachedAt[d, t] - attachedLiveAt[d, t]
+}
+// ── the released pools and the placements (TN-004 rows 11 to 14; dafny-domain MD-082, MD-084) ───
+/** releasedPoolIds — the pool ids a Complete of a demand in state `s` releases (dafny-domain `ReleasedPoolsAt`): the
+    holding, if any, and every external contribution's pool. */
+fun releasedPoolIds[s: DemandState]: set EntityId { s.sHolding + (s.sContributions & ExternalContribution).cPool }
+/** heldByReleased — the (pool id, item) pairs the released pools hold as a Complete reads them (dafny-domain
+    `HeldByReleasedAt`). */
+fun heldByReleased[o: CompleteOcc]: EntityId -> InventoryItem {
+  { e: releasedPoolIds[dPre[o]], x: InventoryItem | some p: resolve[e] & InventoryPool | x in heldAt[p, o.tick] }
+}
+/** placedLocators — every locator the placements give an item held by pool `e`: `PlaceAll`'s one, `PlacePerPool`'s for the
+    pool, `PlacePerItem`'s locators whose set names the item's id. */
+fun placedLocators[pl: Placement, e: EntityId, x: InventoryItem]: set PhysicalLocator {
+  (pl & PlaceAll).allAt + e.((pl & PlacePerPool).byPool) + ((pl & PlacePerItem).byLocator).(x.eId)
+}
+/** placedLocator — THE locator the placements give the item, when there is exactly one (dafny-domain `PlacedLocator`: none
+    when nothing names the item, and none when two locators' sets do — that case is the guard's RBadPlacement). */
+fun placedLocator[pl: Placement, e: EntityId, x: InventoryItem]: lone PhysicalLocator {
+  (one placedLocators[pl, e, x]) => placedLocators[pl, e, x] else none
+}
+/** contributionHolds — a LIVE demand's external contribution `c` names the pool id `e` at `t` (dafny-domain
+    `ContributionHolds`): the pool lattice's fourth holder kind. */
+pred contributionHolds[d: DemandItem, c: ExternalContribution, e: EntityId, t: Tick] {
+  liveDemandAt[d, t] and c in contributionsAt[d, t] and c.cPool = e
 }
 /** demandOf — the derived INVERSE of membership (R2: the cycle carries no back-pointer). */
 fun demandOf[c: CardCycle, t: Tick]: set DemandItem {

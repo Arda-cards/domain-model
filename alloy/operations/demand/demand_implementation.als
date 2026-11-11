@@ -97,16 +97,19 @@ fun contributionIdentityViol[o: AttachOcc]: set Reason {
   + ((some referenceOf[o.contribution] and some c: dPre[o].sContributions | referenceOf[c] = referenceOf[o.contribution])
      => RDuplicateReference else none)
 }
-/** poolUsedBefore — the pool was already USED before `o` (dafny-domain KC.PoolUsed or PoolUsedByContribution): the resolved
+/** poolUsedBefore — the pool was already USED before `o` (dafny-domain `KC.PoolUsed` or `PoolUsedByDemands`): the resolved
     pool has committed MEMBERSHIP history (its genesis row is its minting, not a use), or a committed StartProcessing named
-    the id, or a committed external attach — of ANY demand — named it. (StartProduction's holding joins this reading with
-    dafny-domain #35, MD-083.) */
+    the id, or a committed external attach — of ANY demand — named it (`PoolUsedByContribution`), or a committed
+    StartProduction — of ANY demand — named it as its holding (`PoolUsedByHolding`, MD-083). ONE notion of a used pool,
+    read by the external attach and by StartProduction alike; a Complete or a Cancel does not erase it (released at rest
+    is not fresh). */
 pred poolUsedBefore[id: EntityId, o: Occurrence] {
   (some p: resolve[id] & InventoryPool, b: PoolOcc - CreatePoolOcc - RetirePoolOcc |
      committed[b] and b.subject = p and precedes[b.tick, o.tick])
   or (some sp: StartProcessingOcc | committed[sp] and sp.pool = id and precedes[sp.tick, o.tick])
   or (some a: AttachOcc - o | committed[a] and precedes[a.tick, o.tick]
         and a.contribution in ExternalContribution and a.contribution.cPool = id)
+  or (some sp: StartProductionOcc - o | committed[sp] and precedes[sp.tick, o.tick] and sp.holding = id)
 }
 /** externalPoolViol — the external contribution's pool arms (dafny-domain ExternalPoolViol): the pool exists and is live,
     is in the demand's tenant, carries the demand's item, and is FRESH. */
@@ -200,6 +203,7 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
   + ((some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject)
      => RWrongItem else none)   // QA704 Q4 (a), DT-009 Q27: M3.2 as the arm it is in dafny-domain StartProductionViol (was the fact StartProductionHoldingPoolPin)
   + ((some o.holding and not namedPoolLive[o.holding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b), MD-074: the holding must exist and be live
+  + ((some o.holding and poolUsedBefore[o.holding, o]) => RPoolNotFresh else none)          // TN-004 row 17, MD-083: the holding must be FRESH
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_RELEASED
       and some c: preMemberCycles[o] | statusAt[c, o.tick] != IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every live member's StartProcessing (saga's first legs) already committed
@@ -277,20 +281,41 @@ fun distributeViol[o: DistributeOcc]: set Reason {
         and some k: cyclesOf[c] | statusAt[k, o.tick] != READY)
      => RCycleIneligible else none)   // C/OP gate: each CARD fill's CompleteProcessing already committed; an external fill has no cycle to gate
 }
+/** badPlacement — the placements name a pool the demand does not release (`PlacePerPool`), an item no released pool holds,
+    or an item in two locators' sets (`PlacePerItem`). `PlaceAll` never does. (dafny-domain `BadPlacement`.) */
+pred badPlacement[o: CompleteOcc] {
+  let pp = (o.placements & PlacePerPool).byPool, pi = (o.placements & PlacePerItem).byLocator | {
+    (some e: pp.PhysicalLocator | e not in releasedPoolIds[dPre[o]])
+    or (some i: PhysicalLocator.pi | i not in (EntityId.(heldByReleased[o])).eId)
+    or (some i: EntityId, disj l1, l2: PhysicalLocator | i in l1.pi and i in l2.pi)
+  }
+}
+/** completeViol — arm for arm from dafny-domain `CompleteViol` (DT-016 PR B): the retired-holding arm and its reason
+    RUndistributed LEFT (TN-004 row 11, MD-084); the three placement arms read the pairs (released pool, item it holds) as
+    this Complete reads them — call-first, the items were moved before. */
 fun completeViol[o: CompleteOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_IN_PROCESS) => RBadState else none)
-  + ((liveAtOccD[o] and some p: resolve[dPre[o].sHolding] & InventoryPool | not poolRetiredAt[p, o.tick])
-     => RUndistributed else none)   // COORDINATOR-Q527 B: the holding RETIRED first (the caller's leg, admitted only EMPTY) — C5 follows
   + ((liveAtOccD[o] and some p: resolve[dPre[o].sHolding] & InventoryPool, w: lastPoolWrite[p, o.tick] | not atOrBefore[w.at, o.at])
      => RBackdatedHolding else none)   // COORDINATOR-Q527 A5: the holding's newest write dated after this commit's own stamp
   + ((liveAtOccD[o] and some c: preMemberCycles[o] | statusAt[c, o.tick] = IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every member SETTLED first (READY or back to REQUESTING)
+  + ((liveAtOccD[o] and badPlacement[o]) => RBadPlacement else none)                       // TN-004 row 13
+  + ((liveAtOccD[o] and some e: EntityId, x: InventoryItem |
+        e -> x in heldByReleased[o] and no placedLocator[o.placements, e, x])
+     => RPlacementIncomplete else none)                                                    // row 13: every held item has a locator
+  + ((liveAtOccD[o] and some e: EntityId, x: InventoryItem |
+        e -> x in heldByReleased[o] and some placedLocator[o.placements, e, x]
+        and stateAt[x, o.tick].sLocator != placedLocator[o.placements, e, x])
+     => RUnplaced else none)                                                               // row 14: … and already sits there (the inventory-item log's read)
 }
 fun cancelViol[o: CancelOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_OPEN) => RBadState else none)
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_OPEN and some dPre[o].sContributions & CardContribution) => RHasCards else none)
+  + ((liveAtOccD[o] and dPre[o].sStatus = DS_OPEN
+      and some e: dPre[o].sContributions & ExternalContribution, p: resolve[e.cPool] & InventoryPool | some heldAt[p, o.tick])
+     => RPoolNotEmpty else none)   // QA739 (a), MD-085: no external pool's content goes to rest without a placement
 }
 fun deleteViol[o: DeleteDemandOcc]: set Reason {
   lc/retireViol[o, RDemandClosed]                                                      // not started, or already retired

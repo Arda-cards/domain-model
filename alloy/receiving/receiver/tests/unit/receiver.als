@@ -129,6 +129,17 @@ check unit_rcv_contract_lineDemandPoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note expect 0
 
+// The FOURTH facet (TN-004; dafny-domain `LineContributionPoolDisjoint`, MD-087): a line-held pool against a live demand's
+// EXTERNAL CONTRIBUTION, under the genesis premise's Receive-against-attach clause. Its OWN published law — not a conjunct
+// of `linePoolExclusiveWhileLive`, whose three-facet statement the E7 inductive root (advanced/receiver_pool_inductive.als)
+// proves slice-faithful. Checked in a universe that excludes the cycle kind, as the facets above.
+assert unit_rcv_contract_lineContributionPoolDisjoint { lineContributionPoolDisjoint }
+check unit_rcv_contract_lineContributionPoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+
 // The lattice SAT companion (anti-vacuity, mock peers): the premise + one holder of each
 // kind on three distinct pools — the cycle/demand bindings ride their committed attach
 // occurrences (provenance in the mocks).
