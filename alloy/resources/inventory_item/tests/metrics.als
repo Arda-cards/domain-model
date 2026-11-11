@@ -1,9 +1,9 @@
 module resources/inventory_item/tests/metrics
 // Reflects dafny-domain src/resources/inventory-item/tests/metrics-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
-open resources/inventory_item/metrics
-open meta/keyed_value_algebra/keyed_sum[TLine] as ts   // same params ⇒ metrics.als' fold instances (S-05: amountsInPlay reads their cum)
-open meta/keyed_value_algebra/keyed_sum[DLine] as ds
+open resources/inventory_item/metrics as mx          // aliased so the fold parameters below are QUALIFIED (model-gate rule 10, tools/open-params-gate.py)
+open meta/keyed_value_algebra/keyed_sum[mx/TLine] as ts   // same params ⇒ metrics.als' fold instances (S-05: amountsInPlay reads their cum)
+open meta/keyed_value_algebra/keyed_sum[mx/DLine] as ds
 open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
 
 /*
