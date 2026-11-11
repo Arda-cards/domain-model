@@ -857,7 +857,7 @@ run unit_dem_fieldWrites {
     some c: demandStateAt[d, t].sContributions | c.cid = n.target and c.cUserNotes = n.notes
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 1 WorkOrder,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
       12 Tick, 10 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
 
 // A write carrying nothing CLEARS the field.
@@ -903,7 +903,7 @@ run unit_dem_workOrderReleasedRefused {
     refusedAtAdmission[w] and w.admission.because = RBadState
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 WorkOrder,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
       10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // The fulfillment notes close at StartProduction: on an IN_PROCESS demand the write is refused with exactly RBadState.

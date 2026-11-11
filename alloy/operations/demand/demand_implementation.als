@@ -86,11 +86,11 @@ fun createViol[o: CreateDemandOcc]: set Reason {
   createGenesisViol[o]
   + ((not itemLiveAt[o.subject.itemPin.subject, o.tick]) => RRetiredRef else none)
 }
-/** identityViol — the attach's identity arms (dafny-domain IdentityViol). The id is used ONCE per demand: a committed attach
+/** contributionIdentityViol — the attach's identity arms (dafny-domain IdentityViol). The id is used ONCE per demand: a committed attach
     of this demand already carried it (a removed id included — the arm reads the log, not the state). And the reference, AS
     READ (`referenceOf`: a card's default is its card's serial), is carried by no contribution the demand holds — a withdrawn
     card's entry included, until its DetachWithdrawn. */
-fun identityViol[o: AttachOcc]: set Reason {
+fun contributionIdentityViol[o: AttachOcc]: set Reason {
   ((some a: AttachOcc - o | committed[a] and a.subject = o.subject and precedes[a.tick, o.tick]
        and a.contribution.cid = o.contribution.cid)
      => RContributionStarted else none)
@@ -127,12 +127,12 @@ fun contributionViol[o: AttachOcc]: set Reason {
 fun createWithViol[o: CreateWithContributionOcc]: set Reason {
   createGenesisViol[o]
   + ((o.contribution in ExternalContribution and not itemLiveAt[o.subject.itemPin.subject, o.tick]) => RRetiredRef else none)
-  + identityViol[o] + contributionViol[o]
+  + contributionIdentityViol[o] + contributionViol[o]
 }
 fun addViol[o: AddContributionOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_OPEN) => RFrozen else none)
-  + identityViol[o] + contributionViol[o]
+  + contributionIdentityViol[o] + contributionViol[o]
 }
 /** notContributionViol — the id names no contribution the demand holds (as the operation reads it). */
 fun notContributionViol[o: TargetOcc]: set Reason {
