@@ -1137,3 +1137,10 @@ assert unit_dem_contract_contributionPoolExclusiveWhileLive { contributionPoolEx
 check unit_dem_contract_contributionPoolExclusiveWhileLive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
       9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 0
+
+// The fourth holder's PROVENANCE (dafny-domain `ContributionFrom`): what the receiving row reads to tell a held pool from an
+// attach row. An attach, an edit of it and the demand's item pin are 6 occurrences.
+assert unit_dem_contract_contributionFrom { contributionFrom }
+check unit_dem_contract_contributionFrom for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      8 Occurrence, 9 Tick, 10 EntityId, 10 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 0
