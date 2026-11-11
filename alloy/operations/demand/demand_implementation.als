@@ -75,7 +75,7 @@ fun attachCycleViol[o: dlog/SubjectOcc, m: EntityId]: set Reason {
        => RCycleIneligible else none)
     + ((some c and some d2: DemandItem - o.subject | liveDemandAt[d2, o.tick] and c in attachedAt[d2, o.tick])
        => RCycleHeld else none)
-    + ((some c: dPre[o].sContributions & CardContribution | c.cycle = m) => RCycleHeld else none))
+    + ((some c: dPre[o].sContributions & CardContribution | c.cycleRef = m) => RCycleHeld else none))
 }
 // DT-023 cut 8 (gate at INCEPTION, never at PROPAGATION — MP ruling 2026-08-11): the
 // retirement gate binds ONLY on the DIRECT create (the caller chooses the item — F6
@@ -118,7 +118,7 @@ fun externalPoolViol[o: AttachOcc, e: ExternalContribution]: set Reason {
 }
 /** contributionViol — the arms of the contribution's KIND: a card's saga gate, an external one's pool arms. */
 fun contributionViol[o: AttachOcc]: set Reason {
-  ((o.contribution in CardContribution) => attachCycleViol[o, o.contribution.cycle] else none)
+  ((o.contribution in CardContribution) => attachCycleViol[o, o.contribution.cycleRef] else none)
   + ((o.contribution in ExternalContribution) => externalPoolViol[o, o.contribution] else none)
 }
 // The retirement gate binds at INCEPTION (DT-023 cut 8): on the direct create, and on a genesis with an EXTERNAL
@@ -343,7 +343,7 @@ pred sameDemandButContributions[b, a: DemandState] {
 /** sameContributionButNotes — two contributions agree on everything a note write leaves alone. */
 pred sameContributionButNotes[b, a: Contribution] {
   a.cid = b.cid
-  (b in CardContribution) implies (a in CardContribution and a.cycle = b.cycle and a.referenceOverride = b.referenceOverride)
+  (b in CardContribution) implies (a in CardContribution and a.cycleRef = b.cycleRef and a.referenceOverride = b.referenceOverride)
   (b in ExternalContribution) implies (a in ExternalContribution and a.cPool = b.cPool and a.quantity = b.quantity
                                         and a.externalReference = b.externalReference)
 }
@@ -352,7 +352,7 @@ pred sameContributionButNotes[b, a: Contribution] {
 pred editedFrom[b, a: Contribution, o: EditContributionOcc] {
   a.cid = b.cid and a.cUserNotes = b.cUserNotes
   (b in CardContribution) implies {
-    a in CardContribution and a.cycle = b.cycle
+    a in CardContribution and a.cycleRef = b.cycleRef
     a.referenceOverride = ((some o.newReference) => o.newReference else b.referenceOverride)
   }
   (b in ExternalContribution) implies {

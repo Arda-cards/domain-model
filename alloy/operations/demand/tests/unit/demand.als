@@ -69,7 +69,7 @@ run unit_dem_collateAndRelease {
     o1.subject = d and o2.subject = d and r.subject = d
     precedes[o1.tick, o2.tick] and precedes[o2.tick, r.tick]
     committed[o1] and committed[o2] and committed[r]
-    (o1.contribution + o2.contribution) in CardContribution and o1.contribution.cycle != o2.contribution.cycle
+    (o1.contribution + o2.contribution) in CardContribution and o1.contribution.cycleRef != o2.contribution.cycleRef
     demandStatusAt[d, r.tick] = DS_RELEASED
     #attachedAt[d, r.tick] = 2
   }
@@ -676,7 +676,7 @@ run unit_dem_cardSerialDefault {
   some a: AddContributionOcc, cc: CardContribution | {
     committed[a] and a.contribution = cc and no cc.referenceOverride
     cc in dPost[a].sContributions
-    referenceOf[cc] = (cycles.(resolve[cc.cycle] & CardCycle)).serialNumber
+    referenceOf[cc] = (cycles.(resolve[cc.cycleRef] & CardCycle)).serialNumber
     some referenceOf[cc]
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -687,8 +687,8 @@ run unit_dem_cardSerialDefault {
 run unit_dem_rolloverBeforeDetachRefused {
   some w: WithdrawOcc, a2: AddContributionOcc, disj c1, c2: CardContribution | {
     committed[w] and precedes[w.tick, a2.tick]
-    c1 in dPre[a2].sContributions and (resolve[c1.cycle] & CardCycle) = w.subject
-    a2.contribution = c2 and c1.cycle != c2.cycle
+    c1 in dPre[a2].sContributions and (resolve[c1.cycleRef] & CardCycle) = w.subject
+    a2.contribution = c2 and c1.cycleRef != c2.cycleRef
     no c1.referenceOverride and no c2.referenceOverride
     referenceOf[c1] = referenceOf[c2]
     refusedAtAdmission[a2] and a2.admission.because = RDuplicateReference
@@ -788,7 +788,7 @@ run unit_dem_editCardReference {
     c0 in dPre[ed].sContributions and c0.cid = ed.target and no c0.referenceOverride
     c1 in dPost[ed].sContributions and c1.cid = ed.target
     referenceOf[c1] = ed.newReference and referenceOf[c1] != referenceOf[c0]
-    c1.cycle = c0.cycle
+    c1.cycleRef = c0.cycleRef
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,

@@ -71,9 +71,9 @@ fact DemandItemRefIntegrity {
   all d: DemandItem | let st = resolve[d.stationRef] | some st implies st in Station
 }
 
-/** RefText — a reference as a contribution carries or reads it: a free `Reference`, or the text of some card's serial (a
-    `CardSerial`). ONE space, so a card's default reference (its serial) and an external reference can be compared. */
-fun RefText: set univ { CardSerial + Reference }
+// A REFERENCE as a contribution carries or reads it is `CardSerial + Reference`: a free `Reference`, or the text of some
+// card's serial (a `CardSerial`). ONE space, so a card's default reference (its serial) and an external reference can be
+// compared. Written out at each use: a field's bound comes from its declared type.
 
 /** Contribution — one source of a demand's quantity (TN-004): a VALUE that carries its own id (`cid`, caller-minted at the
     attach and used once per demand) and an optional note. A state holds a set of them, at most one per id — the Alloy
@@ -85,20 +85,20 @@ abstract sig Contribution {
 /** CardContribution — the contribution of a kanban card cycle: its quantity is the cycle's effective quantity, its reference
     the override given here or, by default, the card's serial (a READ — `referenceOf`; MD-077). */
 sig CardContribution extends Contribution {
-  cycle:             one  EntityId,   // → CardCycle (soft ref)
-  referenceOverride: lone RefText     // the caller's reference; absent ⇒ the card's serial is read
+  cycleRef:          one  EntityId,   // → CardCycle (soft ref; `cycle` is the kanban log's alias fun in this cone)
+  referenceOverride: lone (CardSerial + Reference)    // the caller's reference; absent ⇒ the card's serial is read
 }
 /** ExternalContribution — a contribution with no card: its own reference, its own quantity, and its own pool, which it
     holds exclusively while the demand is live. */
 sig ExternalContribution extends Contribution {
-  externalReference: one RefText,     // the caller's reference: unique among the demand's contributions
+  externalReference: one (CardSerial + Reference),    // the caller's reference: unique among the demand's contributions
   quantity:          one Quantity,    // the contributed quantity
   cPool:             one EntityId     // → InventoryPool: the contribution's own pool (fresh at the attach)
 }
 // Value semantics: a contribution IS its fields.
 fact ContributionExtensional {
   all disj a, b: CardContribution |
-    a.cid != b.cid or a.cUserNotes != b.cUserNotes or a.cycle != b.cycle or a.referenceOverride != b.referenceOverride
+    a.cid != b.cid or a.cUserNotes != b.cUserNotes or a.cycleRef != b.cycleRef or a.referenceOverride != b.referenceOverride
   all disj a, b: ExternalContribution |
     a.cid != b.cid or a.cUserNotes != b.cUserNotes or a.externalReference != b.externalReference
     or a.quantity != b.quantity or a.cPool != b.cPool
@@ -130,7 +130,7 @@ fact NoOrphanContribution { all c: Contribution | c in DemandState.sContribution
 // Record-carried refs are TYPED (soft — dangling/cross-Universe allowed; tenancy is guard-side).
 fact DemandRefIntegrity {
   all s: DemandState | (let h = resolve[s.sHolding] | some h implies h in InventoryPool)
-  all c: CardContribution     | let k = resolve[c.cycle] | some k implies k in CardCycle
+  all c: CardContribution     | let k = resolve[c.cycleRef] | some k implies k in CardCycle
   all c: ExternalContribution | let p = resolve[c.cPool] | some p implies p in InventoryPool
 }
 
@@ -199,7 +199,7 @@ sig AddContributionOcc extends lc/MutateOcc {}
 sig RemoveContributionOcc extends lc/MutateOcc {}
 /** EditContribution — set a contribution's fields, under the freeze: the quantity (an external contribution only) and the
     reference (an external one's own, a card one's override). A field not given is left as it is. */
-sig EditContributionOcc extends lc/MutateOcc { newQuantity: lone Quantity, newReference: lone RefText }
+sig EditContributionOcc extends lc/MutateOcc { newQuantity: lone Quantity, newReference: lone (CardSerial + Reference) }
 /** SetContributionNotes — write a contribution's note; NOT under the freeze, admitted until the demand's tombstone. */
 sig SetContributionNotesOcc extends lc/MutateOcc {}
 /** SetUserNotes — write the demand's user notes; admitted in every status, until the tombstone. */
@@ -339,11 +339,11 @@ fun dPre [o: dlog/SubjectOcc]: lone DemandState { o.pre  & DemandState }
 fun dPost[o: dlog/SubjectOcc]: lone DemandState { o.post & DemandState }
 /** cyclesOf — the card cycles a set of contributions names, RESOLVED (soft refs may dangle out of scope). */
 fun cyclesOf[cs: set Contribution]: set CardCycle {
-  { k: CardCycle | some c: cs & CardContribution | resolve[c.cycle] = k }
+  { k: CardCycle | some c: cs & CardContribution | resolve[c.cycleRef] = k }
 }
 /** liveContributionsOf — the contributions that COUNT at `t`: every external one, and a card one while its cycle is live. */
 fun liveContributionsOf[cs: set Contribution, t: Tick]: set Contribution {
-  (cs & ExternalContribution) + { c: cs & CardContribution | some k: CardCycle | resolve[c.cycle] = k and liveCycleAt[k, t] }
+  (cs & ExternalContribution) + { c: cs & CardContribution | some k: CardCycle | resolve[c.cycleRef] = k and liveCycleAt[k, t] }
 }
 /** preMemberCycles — the LIVE resolved cycles of the card contributions as an operation reads them (pre-record). */
 fun preMemberCycles[o: dlog/SubjectOcc]: set CardCycle {
@@ -414,7 +414,7 @@ fun contributionQtyMap[c: Contribution]: Unit -> lone Scalar {
 /** referenceOf — a contribution's EFFECTIVE reference: an external one's own; a card one's override, or by default its
     card's serial (dafny-domain MD-077: the default is a read over the card, never stored). Empty when a card
     contribution has no override and its cycle does not resolve. */
-fun referenceOf[c: Contribution]: lone RefText {
+fun referenceOf[c: Contribution]: lone (CardSerial + Reference) {
   (c in ExternalContribution) => c.externalReference
   else ((some c.referenceOverride) => c.referenceOverride else (cycles.(cyclesOf[c])).serialNumber)
 }

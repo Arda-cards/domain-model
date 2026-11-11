@@ -22,8 +22,8 @@ open resources/kanban_card/kanban_card_mock
 run unit_demq_twoKindSum {
   some d: DemandItem, t: Tick, cc: CardContribution, e: ExternalContribution | {
     liveContributionsAt[d, t] = cc + e
-    some genesisOf[resolve[cc.cycle] & CardCycle].qtyOverride
-    demandQuantityAt[d, t] = add[effectiveQtyMap[resolve[cc.cycle] & CardCycle], qtyMap[e.quantity]]
+    some genesisOf[resolve[cc.cycleRef] & CardCycle].qtyOverride
+    demandQuantityAt[d, t] = add[effectiveQtyMap[resolve[cc.cycleRef] & CardCycle], qtyMap[e.quantity]]
     some demandQuantityAt[d, t]
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -34,7 +34,7 @@ run unit_demq_twoKindSum {
 // quantity is the external contribution's alone.
 run unit_demq_withdrawnCardLeavesSum {
   some d: DemandItem, w: WithdrawOcc, t: Tick, cc: CardContribution, e: ExternalContribution | {
-    committed[w] and notAfter[w.tick, t] and (resolve[cc.cycle] & CardCycle) = w.subject
+    committed[w] and notAfter[w.tick, t] and (resolve[cc.cycleRef] & CardCycle) = w.subject
     demandStateAt[d, t].sContributions = cc + e
     liveContributionsAt[d, t] = e
     demandQuantityAt[d, t] = qtyMap[e.quantity]
