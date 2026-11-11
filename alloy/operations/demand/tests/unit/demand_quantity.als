@@ -28,7 +28,7 @@ run unit_demq_twoKindSum {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      11 Tick, 12 EntityId, 6 Quantity, 13 Snapshot, 2 Note expect 1
+      11 Tick, 12 EntityId, 6 Quantity, 13 Snapshot, 2 Note, 2 Reference expect 1
 
 // The same witness, after the card's cycle is WITHDRAWN: the card's entry is still in the state, it no longer counts, and the
 // quantity is the external contribution's alone.
@@ -42,7 +42,7 @@ run unit_demq_withdrawnCardLeavesSum {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      12 Tick, 12 EntityId, 6 Quantity, 14 Snapshot, 11 Occurrence, 2 Note expect 1
+      12 Tick, 12 EntityId, 6 Quantity, 14 Snapshot, 11 Occurrence, 2 Note, 2 Reference expect 1
 
 // A demand with no live contribution reads the keyed zero.
 run unit_demq_emptyIsZero {
@@ -51,4 +51,4 @@ run unit_demq_emptyIsZero {
     no demandQuantityAt[d, t]
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 6 EntityId, 4 Quantity, 2 Note expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 6 EntityId, 4 Quantity, 2 Note, 2 Reference expect 1
