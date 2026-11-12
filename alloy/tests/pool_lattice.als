@@ -2,28 +2,27 @@ module tests/pool_lattice
 // Reflects dafny-domain src/system/tests/pool-lattice-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
- * THE GLOBAL EXCLUSIVITY-LATTICE ROW (§8.5.3) — the whole-system pairwise-disjointness
- * check, CHECK-ONLY (no owning module, so it never joins any `guarantees`/mock). It
- * composes the three holder modules' CONTRACTS (their mocks): each module's own lattice
- * row is assumed (kanban `poolExclusiveWhileLive`; demand `holdingExclusiveWhileLive`;
- * receiving `linePoolExclusiveWhileLive` — the latter two premise-conditional), and this
- * root verifies the rows COMPOSE into global exclusivity under the one genesis premise —
- * a contract-composition validation, not an implementation discharge (those live in each
- * module's own tier).
+ * THE GLOBAL EXCLUSIVITY-LATTICE ROW (§8.5.3) — FINDERS ONLY since MP's ruling on QA761, Q1 (a) (2026-11-12).
  *
- * DEDICATED ROOT (solver-budget confinement — the demand_reset/order_received precedent):
- * `tests/system.als` composes the live-entity implementations and would inflate every
- * existing command with the receiving + demand + order cones; the global row rides its own
- * system-tier root over MOCKS instead.
+ * The law itself — no pool has two holders across all kinds at any moment, under the one genesis premise — is
+ * dafny-domain's `PoolLattice.PoolLatticeGlobal` (src/system/pool-lattice.dfy), proven there for every log. Its bounded
+ * check here, `sys_poolLatticeGlobal`, is RETIRED under alloy/EXTENSIONS.md's rule (a `check` of a law Dafny proves
+ * unboundedly is evidence Dafny supersedes); the retirement is MP's word, QA761. What stays is what Dafny's tools cannot
+ * do: the FINDERS, over the three holder modules' CONTRACTS (their mocks), with all FOUR holder kinds — the solver
+ * exhibits worlds in which the rows have real content (a holder of each kind on its own pool; a pool at rest; the
+ * fourth holder alone on its pool; a pool released by a Cancel).
  *
- * `receivingPoolGenesis` (the widest premise — its clauses cover every attach kind all
- * three rows mention) structurally implies `demandPoolGenesis`, so one antecedent serves.
+ * DEDICATED ROOT (solver-budget confinement — the demand_quantity/order_received precedent): `tests/system.als`
+ * composes the live-entity implementations and would inflate every existing command with the receiving + demand + order
+ * cones; these finders ride their own system-tier root over MOCKS instead.
+ *
+ * `receivingPoolGenesis` (the widest premise — its clauses cover every attach kind all four rows mention) structurally
+ * implies `demandPoolGenesis`, so one antecedent serves the finders that assume the premise.
  *
  * THE FOURTH HOLDER (TN-004; dafny-domain MD-086, DT-016 PR B): a live demand's EXTERNAL CONTRIBUTION holds its pool.
- * A contribution is a VALUE here, so two demands holding equal contributions hold ONE atom and a `lone` over
- * contribution atoms would not see two holders: the fourth kind is counted by its OWNERS (`contributionHoldsPool`) and
- * its rows are stated as pairwise exclusions, as dafny-domain's `PairExclusive` states them. The demand's row for it is
- * `contributionPoolExclusiveWhileLive`, the receiving one `lineContributionPoolDisjoint`.
+ * A contribution is a VALUE here, so two demands holding equal contributions hold ONE atom: the fourth kind is counted
+ * by its OWNERS (`contributionHoldsPool`). The demand's row for it is `contributionPoolExclusiveWhileLive`, the
+ * receiving one `lineContributionPoolDisjoint`.
  */
 
 open receiving/receiver/receiver_mock
@@ -47,26 +46,8 @@ pred contributionHoldsPool[d: DemandItem, p: InventoryPool, t: Tick] {
   some c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p
 }
 
-// Under the genesis premise, NO pool has two holders ACROSS ALL KINDS at any moment: the
-// union of a pool's line holders, live cycle holders, and live demand holders is `lone`; and the
-// fourth kind is exclusive pairwise — against itself (two demands; two contributions of one demand)
-// and against the three entity kinds.
-assert sys_poolLatticeGlobal {
-  receivingPoolGenesis implies
-    all t: Tick, p: InventoryPool | {
-      lone ({ l: ReceivingLine | resolve[rlStateAt[l, t].sPool] = p }
-            + { c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p }
-            + { d: DemandItem | liveDemandAt[d, t] and resolve[demandStateAt[d, t].sHolding] = p })
-      lone { d: DemandItem | contributionHoldsPool[d, p, t] }
-      all d: DemandItem | lone { c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p }
-      (some d: DemandItem | contributionHoldsPool[d, p, t]) implies no entityHolders[p, t]
-    }
-}
-check sys_poolLatticeGlobal for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 2 DemandItem, 0 ProductionDelivery,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
+// (`sys_poolLatticeGlobal`, the bounded check of the global row, was here until MP's ruling on QA761, Q1 (a): RETIRED,
+// see the header. In its last run with three holder kinds it was UNSAT, as expected, in 8,475 s.)
 
 // M2c (DT-020 §8.5.3/§8.2.1, SPEARHEAD-D1 A′-2): "AT REST" — a pool with NO live holder among
 // the FOUR kinds this root composes (the fourth since TN-004: a live demand's external contribution). DERIVED here (never a stored pool-side state — a pool
@@ -91,21 +72,22 @@ run sys_poolAtRestWitness {
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       12 EntityId, 9 Tick, 10 Snapshot, 4 Quantity, 9 Occurrence, 2 Note, 2 Reference expect 1
 
-// The SAT companion (anti-vacuity): the premise + one holder of EACH kind, three distinct
-// pools — the global reading has real content.
+// The SAT companion: the premise + one holder of EACH of the FOUR kinds, on four distinct pools — the global reading
+// has real content (dafny-domain PoolLatticeTests.LatticeCompanion and ContributionHolder on one world). One demand may
+// be both the holder of its holding and, through an external contribution, of a second pool: never the same pool.
 run sys_poolLatticeCompanion {
   receivingPoolGenesis
-  some t: Tick, l: ReceivingLine, c: CardCycle, d: DemandItem, p1, p2, p3: InventoryPool | {
-    p1 != p2 and p2 != p3 and p1 != p3
+  some t: Tick, l: ReceivingLine, c: CardCycle, d, e: DemandItem, disj p1, p2, p3, p4: InventoryPool | {
     resolve[rlStateAt[l, t].sPool] = p1
     liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p2
     liveDemandAt[d, t] and resolve[demandStateAt[d, t].sHolding] = p3
+    contributionHoldsPool[e, p4, t]
   }
-} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 11 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
-      1 CardCycle, 1 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      16 EntityId, 10 Tick, 14 Snapshot, 4 Quantity, 10 Occurrence, 2 Note, 2 Reference expect 1
+      1 CardCycle, 1 KanbanCard, 0 InventoryItem, 4 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
+      18 EntityId, 11 Tick, 15 Snapshot, 4 Quantity, 11 Occurrence, 2 Note, 2 Reference expect 1
 
 // ── the fourth holder's witnesses (TN-004; dafny-domain PoolLatticeTests, DT-016 PR B) ──────────────────────────────────────
 // PoolLatticeTests.ContributionHolder: a live demand's external contribution holds a pool, ALONE on it (no holder of the

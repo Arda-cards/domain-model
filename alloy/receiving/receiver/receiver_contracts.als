@@ -192,8 +192,9 @@ pred linePoolProvenance {
     from the Receive guard's availability clause + the frozen frames; and (ii) under the
     genesis premise, never simultaneously a live cycle's pool or a live demand's holding —
     CROSS-KIND, the layers receiving can see (kanban's own row is `poolExclusiveWhileLive`;
-    demand's is `holdingExclusiveWhileLive`; the global row is check-only in the system
-    tier). UNIT-tier dischargeable since cut 5: the peers publish their pool-provenance
+    demand's is `holdingExclusiveWhileLive`; the global row is dafny-domain's
+    `PoolLattice.PoolLatticeGlobal`, and the system tier keeps its finders, QA761).
+    UNIT-tier dischargeable since cut 5: the peers publish their pool-provenance
     laws (`poolProvenance`/`holdingProvenance`), tying mock record bindings to attach
     payloads. Joined `guarantees` in the same change set as its first discharge (the
     §8.5.3 mock rule). */

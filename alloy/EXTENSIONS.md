@@ -107,7 +107,7 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `soak/sliced/receiver_captured_facts_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/receiver_pool_inductive.als` | 2 | 5 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
 | `soak/sliced/zlattice_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
+| `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1). Since the TN-004 projection: 4 runs, 0 checks — the check `sys_poolLatticeGlobal` is RETIRED (the project owner's ruling QA761, Q1 (a), 2026-11-12: Dafny proves `PoolLattice.PoolLatticeGlobal` for every log), and the finders cover the four holder kinds |
 | `tests/system.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 
 ## Retired with the cut, by design item of DT-015
@@ -118,6 +118,11 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 - D1 to D3 (step B): `ArcheUnique`, `archeUniquePerSubject`, `archeDuplicate`, the pool's `RDuplicateOrigin` atom and arms; the activation module arrives (`meta/activation/activation.als`, NOT parametric on the service — see its header) and the nine log-owning modules adopt it.
 - TN-003 row 9 (step C, MP's ruling Journal 193772): the second gate — `commit`, `CommitOnlyIfAdmitted`, `refusedAtCommit`, the commit half of `refusalReasons`, `commitAlwaysAccepts` and every adoption, `unit_action_commitRejected`.
 - QA704 Q4 (a) (step D): the fourteen content facts are guard arms with the model's codes (`RStaffNameTaken`, `RRoleNotOwned`, `RSupplyNotOwned`, `RSupplierPinUnsound`, `RSupplierPinStale`, `RLicensePlateTaken`, `RSerialTaken`, `RItemPinStale`, `RReversalUnlawful`, `RWrongItem` at StartProduction, `RVendorPinUnsound`, `RVendorPinStale`, `RAssigneePinStale`, `RCarrierPinUnsound`, `RCarrierPinStale`); the laws are theorems over committed history, checked in the roots. QA704 Q3 (a): `demand_reset.als` KEPT as a class-2 extension of `ResetSnapsToSum` (confined for the solver budget). S-05: the in-range premise and the bounded theorem `unit_invmet_usableNonNegativeInRange` (class 2) beside the boundary witness.
+
+## Retired with the TN-004 projection
+
+- QA761, Q1 (a) (the project owner, 2026-11-12): `tests/pool_lattice.als`'s `sys_poolLatticeGlobal`, the bounded check of the whole-system pool-lattice row, under this file's rule: Dafny proves the law for every log (`PoolLattice.PoolLatticeGlobal`). Its last verdict, with three holder kinds, was UNSAT in 8,475 s. The root keeps four finders with the four holder kinds (`sys_poolLatticeCompanion`, `sys_poolAtRestWitness`, `sys_poolContributionHolder`, `sys_poolContributionReleasedAtRest`). The soak-tier copy, `soak/sliced/zlattice_soak.als`'s `soak_sys_poolLatticeGlobal`, is NOT covered by that ruling: it still states three kinds and its fate is open.
+- With the reference model (dafny-domain MD-084): the demand's `completeRequiresDistributed` and `completeRequiresRetiredHolding` with their two checks, and the finder `unit_dem_undistributedRefused` with the reason `RUndistributed`.
 
 ## Open
 

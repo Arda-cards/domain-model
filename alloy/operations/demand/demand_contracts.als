@@ -218,7 +218,8 @@ pred holdingProvenance {
     time-indexed over live holders, a holding pool is held by at most one LIVE demand and is
     never simultaneously a LIVE cycle's pool (the kinds demand can see; kanban's own row is
     `poolExclusiveWhileLive`, receiving's is `linePoolExclusiveWhileLive`, and the global
-    pairwise row is check-only in the system tier). Guard-and-genesis-derived THEOREM —
+    pairwise row is dafny-domain's `PoolLattice.PoolLatticeGlobal`; the system tier keeps its
+    finders, QA761). Guard-and-genesis-derived THEOREM —
     discharged at the UNIT tier since kanban published `poolProvenance` (cut 5; the cross-kind
     clause reasons from the attach payload to the record binding through it — before that
     publication the discharge needed kanban's real effects, the cut-4 integration-tier
