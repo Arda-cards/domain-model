@@ -493,9 +493,9 @@ run unit_dem_completeUnretiredEmptyHoldingCommits {
     committed[o]
     resolve[dPre[o].sHolding] = p and no heldAt[p, o.tick] and not poolRetiredAt[p, o.tick]
   }
-} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      13 Tick, 12 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
+      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
 
 // W5 (control): the ruled path commits — the holding pool retired EMPTY, dated before the COMPLETE, then COMPLETE.
 run unit_dem_completeRetiredHoldingCommits {
@@ -962,8 +962,9 @@ run unit_dem_startProductionUsedHoldingRefused {
     refusedAtAdmission[s2] and s2.admission.because = RPoolNotFresh
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      14 Occurrence, 15 Tick, 14 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      0 ProductionDelivery, 0 Station, 2 Quantity,
+      13 Occurrence, 13 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
 // Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
@@ -973,8 +974,9 @@ run unit_dem_twoFreshHoldings {
     some s1.holding and some s2.holding and s1.holding != s2.holding
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      14 Occurrence, 15 Tick, 14 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
+      0 ProductionDelivery, 0 Station, 2 Quantity,
+      13 Occurrence, 13 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
@@ -1106,8 +1108,9 @@ run unit_dem_releasedHoldingStaysUsed {
     refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
-      15 Occurrence, 16 Tick, 14 EntityId, 17 Snapshot, 2 Note, 2 Reference expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
+      0 ProductionDelivery, 0 Station, 2 Quantity,
+      14 Occurrence, 14 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
 
 // ── DemandTests.CancelPoolNotEmpty ─────────────────────────────────────────────────────────────────────────────────────────
 // An OPEN demand whose external contribution's pool holds an item: its Cancel is refused with exactly RPoolNotEmpty
