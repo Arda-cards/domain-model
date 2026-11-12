@@ -27,7 +27,7 @@ check soak_sys_poolLatticeGlobal for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Stat
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 Occurrence, 15 EntityId, 8 Tick, 12 Snapshot, 2 Note expect 0
+      10 Occurrence, 15 EntityId, 8 Tick, 12 Snapshot, 2 Note, 2 Reference expect 0
 
 // CREATED-ONLY SLICE (DT-023 Q-D / DT-024, closing pass 7c): reference-data version
 // dynamics are proven WIDE in soak/tests/reference_data_dynamics — this root reads

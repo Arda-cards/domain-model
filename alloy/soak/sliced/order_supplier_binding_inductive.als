@@ -99,7 +99,7 @@ run e7_seeded_frozen_read {
     and committed[o] and o.subject = h.subject and some oPre[o] and oPre[o].sStatus != OS_DRAFT
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
 
 /** A seeded DRAFT order state followed by a committed UpdateSupplier on it — the SETTER
     commits legally from a seeded pre (the guard/frame boundary is exercised, not starved). */
@@ -108,23 +108,23 @@ run e7_seeded_setter {
     committed[h] and oPost[h].sStatus = OS_DRAFT and committed[o] and o.subject = h.subject
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
 
 check e7_slice_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
 
 check e7_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
 
 check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
 
 check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      2 StaffMember, 5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
 
 // ── W-scope escalation (the adoption gate: the unit-root trace window) ─────────────────
 e7_step_w: check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,

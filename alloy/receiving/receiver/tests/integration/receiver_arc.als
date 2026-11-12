@@ -45,4 +45,4 @@ run int_rcv_deliveryArc {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem,
       1 ProductionDelivery, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      14 Tick, 18 EntityId, 14 Snapshot, 5 Quantity, 13 Occurrence, 2 Note expect 1
+      14 Tick, 18 EntityId, 14 Snapshot, 5 Quantity, 13 Occurrence, 2 Note, 2 Reference expect 1
