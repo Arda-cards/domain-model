@@ -25,14 +25,20 @@ Count the scenario's rows, then add what the kernel and the activation law make 
 | an item pin (a demand's, a pool's, a line's) | 1 (`itemPin` is an `ItemOcc`, and `ItemOcc` is an `Occurrence`) |
 | a peer under a MOCK whose status the scenario reads at k different values | k rows of that peer (a status changes only by a row; a mock's rows need no activation of their own) |
 
-Examples, each confirmed by a run:
+Examples, each bracketed by runs (TN-004 projection, 2026-11-11):
 
-- A demand born with no contribution, then a refused Release: the pin, 2 rows, the committed rows' activation, the
-  refusal's activation: 5.
-- A demand born with an external contribution, released, in production, completed: the pin, 4 rows, 1 activation, the
-  pool's genesis and the pool service's activation: 8. With one item added to the pool before the Complete: 9.
-- A committed Complete of a demand whose one member is a card (kanban mock): the pin, 4 rows, 1 activation, and 3 rows
-  of the cycle (accepted, in process, settled): 9.
+- A demand born with no contribution, then a refused Release: the pin, 2 rows, the committed row's activation, the
+  refusal's activation: 5. An instance at exactly 5.
+- A demand created, an external contribution added, released: the pin, 3 rows, 1 activation, the pool's genesis and
+  the pool service's activation: 7. No instance at 6; an instance at 8.
+- The same demand with the external contribution's pool carrying another item, the attach refused: a second item pin
+  and the refusal's activation, less the Release: 8. No instance at 6; an instance at 9.
+- Two external attaches under one id, the second refused for that alone (so its own pool must be live and fresh): the
+  pin, 3 rows, 2 activations, 2 pool geneses, the pool service's activation: 9. No instance at 7; an instance at 10.
+
+By the same count, not bracketed by a run: a committed Complete of a demand born with an external contribution is 8
+(9 with one item added to its pool), and of a demand whose one member is a card under the kanban mock, 9 (the pin, 4
+rows, 1 activation, and 3 rows of the cycle: accepted, in process, settled).
 
 `Tick` is at least `Occurrence` (one occurrence per tick). `Snapshot` is the number of distinct state values, usually a
 few above the row count.
