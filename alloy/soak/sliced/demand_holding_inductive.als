@@ -112,6 +112,11 @@ assert e7_step {
 assert e7_law { all t: Tick | e7Inv[t] implies lawSliceAt[t] }
 
 // ── vacuity guards (the §8 soundness-ledger discipline) ────────────────────────────────
+// BASE SCOPE 6 Occurrence (2026-11-12; was 5). Since the activation every row cites the call
+// that wrote it and a holding attached must exist and be live, so a seeded demand state with
+// a later committed StartProduction needs six occurrences: at 5 `e7_seeded_production` had
+// NO instance and the step and law checks examined no pool attachment (measured). The
+// widened scopes (_w, _s) carry their own witness below.
 /** A seeded holding-carrying demand state coexisting with a later committed
     StartProduction — the step check's interesting configuration is realizable. */
 run e7_seeded_production {
@@ -119,7 +124,7 @@ run e7_seeded_production {
   some o: StartProductionOcc | committed[o] and some o.holding
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
 
 /** A live pool-holding cycle coexisting with a seeded demand holding — e7_law's
     cross-kind antecedent is realizable. */
@@ -128,27 +133,27 @@ run e7_cross_kind_live {
   some h: HavocDemandOcc | committed[h] and some dPost[h].sHolding
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
 
 check e7_slice_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_prov_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 // ── W-scope escalation (THIS window's adoption gate — MP 2026-08-26) ───────────────────
 e7_step_w: check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -186,11 +191,11 @@ assert e7_prov_step {
 
 check e7_prov_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
-      5 Occurrence, 14 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 e7_prov_step_w: check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
@@ -199,3 +204,20 @@ e7_prov_step_w: check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 St
 e7_prov_step_s: check e7_prov_step for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
       6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+
+// ── vacuity guards at the widened scopes: a witness at each scope a step is checked at ──
+/** `e7_seeded_production` at the _w scope (8 Occurrence). */
+run e7_seeded_production_w {
+  some h: HavocDemandOcc | committed[h] and some dPost[h].sHolding
+  some o: StartProductionOcc | committed[o] and some o.holding
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      8 Occurrence, 14 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 1
+
+/** `e7_seeded_production` at the _s scope (6 Occurrence). */
+run e7_seeded_production_s {
+  some h: HavocDemandOcc | committed[h] and some dPost[h].sHolding
+  some o: StartProductionOcc | committed[o] and some o.holding
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
