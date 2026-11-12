@@ -157,23 +157,23 @@ e7_step_w: check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Sig
       1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
 
 e7_law_w: check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
 
 // ── supersession gate (b): SOAK-MATCHED ENTITY scopes, trace window collapsed ──────────
 e7_step_s: check e7_step for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 2 DemandItem, 0 ProductionDelivery,
       2 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      6 Occurrence, 16 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+      6 Occurrence, 16 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
 
 e7_law_s: check e7_law for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 2 DemandItem, 0 ProductionDelivery,
       2 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      6 Occurrence, 16 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+      6 Occurrence, 16 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
