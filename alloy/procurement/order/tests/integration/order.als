@@ -56,7 +56,10 @@ run int_ord_submitArc {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
-      1 Contribution, 0 Placement, 17 Tick, 16 EntityId, 17 Snapshot, 15 Occurrence, 2 Note, 2 Reference expect 1
+      1 Contribution, 0 Placement, 19 Tick, 17 EntityId, 19 Snapshot, 17 Occurrence, 2 Note, 2 Reference expect 1
+      // 17 occurrences: the arc COUNTS 15 on the real stacks (the item's version, the vendor's version and the pool's
+      // Create with one call each; the demand's Create, attach, Release, StartProduction and call; the order's Create,
+      // AddLine, Submit and call), and at exactly 15 it had no verdict in 900 s (2026-11-13). Two are spare.
       // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads: +1 pool, +1 contribution, +3 occurrences
       // (the pool's Create, its call, the contribution's attach)
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8 (mirrors unit_ord_buildAndSubmit):
