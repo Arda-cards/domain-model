@@ -22,6 +22,8 @@
 #                       <key> = the root's path under alloy/soak with `/` as `_`, a dot, the command
 #                       (sliced_cycle_pool_inductive.e7_base): two roots may state commands of one
 #                       name (every rung has e7_base), and each is its own command.
+#                       A batch made before the key keeps its artifacts under the bare command name; they
+#                       are read for the root their meta records (art_of), so it can be resumed.
 #   ledger.tsv          materialized by `status` from plan + artifacts
 #
 # Estimates: alloy/soak/estimates.tsv (committed) — command<TAB>scope_hash<TAB>seconds.
@@ -89,6 +91,18 @@ commands_of() { # $1 = root .als path
 # ── the artifact key of a (root, command) pair: unique across roots that share a command name ──
 key_of() { # $1 = root .als path  $2 = command
   printf '%s.%s\n' "$(printf '%s' "$1" | sed -E 's|^alloy/soak/||; s|\.als$||; s|/|_|g')" "$2"
+}
+# ── where a (root, command) pair's artifacts are in a GIVEN batch: under its key, or, in a batch made before the key
+# existed, under the bare command name when that name's meta records this root (a same-named command of another root
+# then reads as pending, which it was: the old runner skipped it) ──
+art_of() { # $1 = batch dir  $2 = root .als path  $3 = command
+  local k; k=$(key_of "$2" "$3")
+  if [ ! -e "$1/cmd/$k.meta" ] && [ -f "$1/cmd/$3.meta" ] \
+     && [ "$(awk -F'\t' '$1=="root"{print $2}' "$1/cmd/$3.meta" 2>/dev/null)" = "$2" ]; then
+    printf '%s\n' "$3"
+  else
+    printf '%s\n' "$k"
+  fi
 }
 # the same key, computed by awk from plan.tsv's columns 2 (root) and 3 (command)
 AWK_KEY='function key(r, c) { sub(/^alloy\/soak\//, "", r); sub(/\.als$/, "", r); gsub(/\//, "_", r); return r "." c }'
@@ -174,7 +188,7 @@ cmd_chunk() {
       wpid=$(cat "$wp"); kill -0 "$wpid" 2>/dev/null || continue
       ws0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null); [ -n "$ws0" ] || continue
       wel=$((now - ws0))
-      we=$(awk -F'\t' -v k="$wc" "$AWK_KEY"' key($2, $3)==k {print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
+      we=$(awk -F'\t' -v k="$wc" "$AWK_KEY"' key($2, $3)==k || $3==k {print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
       if [ "$we" -ge 0 ]; then wcap=$((we * CAP_NUM)); else wcap=$UNKNOWN_CAP; fi
       [ "$wcap" -gt 0 ] || continue
       if [ "$wel" -gt "$wcap" ]; then
@@ -191,7 +205,7 @@ cmd_chunk() {
       local dispatched=0
       local k
       while IFS=$(printf '\t') read -r tier root c h e; do
-        k=$(key_of "$root" "$c")
+        k=$(art_of "$batch" "$root" "$c")
         [ -f "$batch/cmd/$k.rc" ] && continue           # done (this batch)
         [ -f "$batch/cmd/$k.pid" ] && kill -0 "$(cat "$batch/cmd/$k.pid")" 2>/dev/null && continue  # running
         if [ "$e" -ge 0 ]; then
@@ -204,7 +218,7 @@ cmd_chunk() {
       done < "$batch/plan.tsv"
       # nothing dispatchable and nothing running and window still open -> all done or all deferred
       if [ "$dispatched" -eq 0 ] && [ "$active" -eq 0 ]; then
-        local pending; pending=$(awk -F'\t' "$AWK_KEY"' {print key($2, $3)}' "$batch/plan.tsv" | while read -r k; do [ -f "$batch/cmd/$k.rc" ] || echo "$k"; done | wc -l | tr -d ' ')
+        local pending; pending=$(while IFS=$(printf '\t') read -r tier root c h e; do [ -f "$batch/cmd/$(art_of "$batch" "$root" "$c").rc" ] || echo "$c"; done < "$batch/plan.tsv" | wc -l | tr -d ' ')
         echo "$(date '+%H:%M:%S') CHUNK idle: 0 running, $pending pending (deferred for window)" | tee -a "$batch/dispatch.log"
         break
       fi
@@ -275,7 +289,7 @@ cmd_status() {
   local k
   while IFS=$(printf '\t') read -r tier root c h e; do
     local st="pending" el=""
-    k=$(key_of "$root" "$c")
+    k=$(art_of "$batch" "$root" "$c")
     if [ -f "$batch/cmd/$k.rc" ]; then
       local rc; rc=$(cat "$batch/cmd/$k.rc")
       local s0 s1; s0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null)
