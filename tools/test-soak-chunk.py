@@ -128,6 +128,29 @@ class SoakChunkTest(unittest.TestCase):
         elapsed = {(row[1], row[2]): row[6] for row in ledger}
         self.assertEqual(elapsed[('alloy/soak/sliced/a.als', 'e7_base')], '60')
 
+    def test_watchdog_caps_a_running_job_of_an_old_batch_by_its_own_root(self):
+        # Review of the pull request. A job still running from before the key has its pid under the bare command name.
+        # Its cap is its OWN root's estimate times CAP_NUM, not that of a same-named command of another root.
+        hash_a = self.runner('conehash', 'alloy/soak/sliced/a.als').stdout.strip()
+        hash_b = self.runner('conehash', 'alloy/soak/sliced/b.als').stdout.strip()
+        (self.work / 'alloy/soak/estimates.tsv').write_text(f'e7_base\t{hash_a}\t1\ne7_base\t{hash_b}\t1000\n')
+        self.assertEqual(self.runner('plan', 'batch').returncode, 0)
+        cmd = self.work / 'batch/cmd'
+        job = subprocess.Popen(['sh', '-c', 'sleep 60; true'])
+        try:
+            (cmd / 'e7_base.pid').write_text(f'{job.pid}\n')
+            (cmd / 'e7_base.meta').write_text(f'start\t{int(__import__("time").time()) - 10}\nscope_hash\t{hash_a}\n'
+                                              'root\talloy/soak/sliced/a.als\n')
+            env = dict(self.env, CAP_NUM='3')
+            subprocess.run(['bash', 'tools/soak-chunk.sh', 'chunk', 'batch', '4', '1', '1'], cwd=self.work, env=env,
+                           capture_output=True, text=True, timeout=120)
+            over = cmd / 'e7_base.overbudget'
+            self.assertTrue(over.exists(), 'ten seconds into a job capped at 3 s (1 s x 3), the watchdog must record it over budget')
+            self.assertIn('cap_s\t3\n', over.read_text())
+        finally:
+            job.kill()
+            job.wait()
+
     def test_plan_of_the_repository_lists_every_stated_soak_command(self):
         # The real tree: what the runner plans is what the soak roots state, each once.
         with tempfile.TemporaryDirectory() as directory:
