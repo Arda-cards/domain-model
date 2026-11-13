@@ -1,4 +1,8 @@
 module soak/lemmas/reference_data_dynamics
+// Refines Dafny: BusinessAffiliatesContract.BaLifecycleShape
+// Refines Dafny: ItemsContract.ItemLifecycleShape
+// Refines Dafny: the witnesses ItemTests.SoakDynamicsCompanion and ItemTests.SoakPinnedFloatingDiverge
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * SOAK tier — the VERSION-DYNAMICS LEMMA root (DT-023 Q-D / DT-024, closing pass 7c):

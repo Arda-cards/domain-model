@@ -1,4 +1,7 @@
 module soak/sliced/demand_holding_inductive
+// Refines Dafny: DemandsContract.HoldingExclusiveWhileLive
+// Refines Dafny: DemandsContract.HoldingNotACyclePool
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * E7 generalization ladder, rung 1b (DT-024 plan-of-record, MP 2026-08-26) —
