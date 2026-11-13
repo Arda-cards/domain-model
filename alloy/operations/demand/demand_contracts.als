@@ -44,7 +44,7 @@ open operations/demand/demand_types
 pred cycleIndivisible { all t: Tick, c: CardCycle | lone demandOf[c, t] }
 
 // ── C2 · the freeze family (R5) — single-log law ────────────────────────────────────────────────
-/** Composition/intent mutators commit only in OPEN (Release is the freeze instant). */
+/** Composition mutators (attach, remove, edit, detach) commit only in OPEN (Release is the freeze instant). */
 pred frozenOutsideOpen {
   all o: demandMutators | committed[o] implies dPre[o].sStatus = DS_OPEN
 }
@@ -53,13 +53,13 @@ pred frozenOutsideOpen {
 /** A committed attach saw its member ACCEPTED (cycle at REQUESTED — the prior cycle-side Accept
     is the saga's first leg; refusal flows back on ITS response). */
 pred attachRequiresAccepted {
-  all o: CreateWithCycleOcc + AddCycleOcc | committed[o] implies
-    statusAt[resolve[o.member] & CardCycle, o.tick] = REQUESTED
+  all o: AttachOcc | (committed[o] and o.contribution in CardContribution) implies
+    statusAt[cyclesOf[o.contribution], o.tick] = REQUESTED
 }
 /** A committed remove saw its member SHELVED back to the queue (cycle at REQUESTING). */
 pred removeRequiresShelved {
-  all o: RemoveCycleOcc | committed[o] implies
-    statusAt[resolve[o.member] & CardCycle, o.tick] = REQUESTING
+  all o: RemoveContributionOcc, c: dPre[o].sContributions & CardContribution |
+    (committed[o] and c.cid = o.target) implies statusAt[cyclesOf[c], o.tick] = REQUESTING
 }
 /** A committed StartProduction saw EVERY live member already IN_PROCESS (the caller's
     cycle-side StartProcessing calls preceded the commit). */
@@ -72,7 +72,7 @@ pred startProductionRequiresStarted {
     the keyed partial order may be indeterminate, R8). */
 pred distributeRequiresReady {
   all o: DistributeOcc | committed[o] implies
-    (all m: o.fills | statusAt[resolve[m] & CardCycle, o.tick] = READY)
+    (all c: dPre[o].sContributions & CardContribution | c.cid in o.fills implies statusAt[cyclesOf[c], o.tick] = READY)
 }
 /** A committed Complete saw every live member SETTLED — none still IN_PROCESS (each settled by
     the caller: inventory → CompleteProcessing/READY, none → ProductionFailure/REQUESTING). The
@@ -97,20 +97,25 @@ pred demandCyclesAlignedAt[t: Tick] {
     (all c: attachedLiveAt[d, t] | statusAt[c, t] = REQUESTED)
 }
 
-// ── C5 · closure guards (R8) — single-log law ───────────────────────────────────────────────────
-/** Complete requires everything produced to be gone from the holding pool — distributed to
-    members or placed at a locator ("never had any" satisfies vacuously). Since COORDINATOR-Q527 B
-    (2026-10-15) a THEOREM of `completeRequiresRetiredHolding` and the pool's retire-EMPTY rule. */
-pred completeRequiresDistributed {
-  all o: CompleteOcc | committed[o] implies
-    no heldAt[resolve[dPre[o].sHolding] & InventoryPool, o.tick]
+// ── C5 · closure (R8; TN-004 rows 11 to 14, dafny-domain MD-082 and MD-084) — single-log laws ───
+// `completeRequiresDistributed` and `completeRequiresRetiredHolding` LEFT with COORDINATOR-Q527 Option B's retired-holding
+// gate (DT-016 PR B): a Complete no longer requires its holding retired or empty. The released pools are released AT REST
+// by the status alone, and what they still hold is checked against the Complete's placements.
+/** holdersReleasedAtComplete — after a committed Complete or Cancel the demand is not live, so neither it nor any of its
+    contributions holds a pool: the release is DERIVED from the status (dafny-domain `HoldersReleasedAtComplete`). */
+pred holdersReleasedAtComplete {
+  all o: CompleteOcc + CancelOcc | committed[o] implies {
+    not liveDemandAt[o.subject, o.tick]
+    no c: ExternalContribution, e: EntityId | contributionHolds[o.subject, c, e, o.tick]
+  }
 }
-/** completeRequiresRetiredHolding — COORDINATOR-Q527 Option B (MP, 2026-10-15), C5's sibling: a committed Complete saw
-    its holding pool RETIRED (the caller's retire leg, admitted only EMPTY, preceded the commit — call-first). A theorem
-    of the `RUndistributed` arm. */
-pred completeRequiresRetiredHolding {
+/** completedItemsPlaced — the call-first law of the placements: every item a released pool held when a Complete committed
+    has a locator under its placements and sits there as of the tick (dafny-domain `CompletedItemsPlaced`; a theorem of
+    the RPlacementIncomplete and RUnplaced arms). The locator is the inventory-item module's read (`stateAt`). */
+pred completedItemsPlaced {
   all o: CompleteOcc | committed[o] implies
-    (all p: resolve[dPre[o].sHolding] & InventoryPool | poolRetiredAt[p, o.tick])
+    (all e: EntityId, x: InventoryItem | e -> x in heldByReleased[o] implies
+       (some placedLocator[o.placements, e, x] and stateAt[x, o.tick].sLocator = placedLocator[o.placements, e, x]))
 }
 /** completeStampedAfterHolding — COORDINATOR-Q527 A5 in causal terms: every committed write of the holding pool causally
     before a committed Complete is dated at or before the Complete's own stamp. A theorem of the `RBackdatedHolding` arm
@@ -121,16 +126,15 @@ pred completeStampedAfterHolding {
 }
 
 // ── C6 · the withdrawal reaction (R7) — CONVERGENT/NOTIFICATION ─────────────────────────────────
-/** The reaction kind reconciles: a committed DetachWithdrawn removes the member and decrements
-    the intent by the member's genesis-fixed quantity. The quiescence reading ("no withdrawn
+/** The reaction kind reconciles: a committed DetachWithdrawn removes the withdrawn card's contribution and nothing
+    else (TN-004: there is no stored intent to decrement — the quantity is read from the live contributions, and the
+    withdrawn card had already left them). The quiescence reading ("no withdrawn
     member in an OPEN demand at quiescence") is the runtime law probe's job — in-flight
     intermediates are LEGAL (suite boundary witness), the emitter cannot fix a miss, the
     listener (this kind) restores. */
 pred withdrawnDetachReconciles {
   all o: DetachWithdrawnOcc | committed[o] implies {
-    dPost[o].sMembership = dPre[o].sMembership - o.member
-    qtyMap[dPost[o].sDemandQty] =
-      add[qtyMap[dPre[o].sDemandQty], negate[effectiveQtyMap[resolve[o.member] & CardCycle]]]
+    dPost[o].sContributions = { c: dPre[o].sContributions | c.cid != o.target }
   }
 }
 
@@ -189,12 +193,17 @@ pred deliveryTerminalRevoke {
     discipline, monitored by the §8.5.3 integrity monitoring / PDEV-1424): no pool is named
     by two committed pool-attaching acts among the kinds demand can see (cycle
     StartProcessing, demand StartProduction). A NAMED PREMISE — never a fact: a discipline
-    breach stays representable, and a weakened guard stays refusable (the R1 distinction). */
+    breach stays representable, and a weakened guard stays refusable (the R1 distinction).
+    FOUR clauses since TN-004 (dafny-domain `DemandPoolGenesis`, DT-016 PR B): the fourth says a cycle's StartProcessing
+    and an external attach never name one pool — the order "attach, then StartProcessing" is what no demand guard can
+    refuse; the other order is RPoolNotFresh. */
 pred demandPoolGenesis {
   all disj a, b: StartProcessingOcc | (committed[a] and committed[b]) implies no (a.pool & b.pool)
   all disj a, b: StartProductionOcc | (committed[a] and committed[b]) implies no (a.holding & b.holding)
   all a: StartProcessingOcc, b: StartProductionOcc |
     (committed[a] and committed[b]) implies no (a.pool & b.holding)
+  all a: StartProcessingOcc, b: AttachOcc |
+    (committed[a] and committed[b] and b.contribution in ExternalContribution) implies no (a.pool & b.contribution.cPool)
 }
 /** holdingProvenance — a demand item's holding pool is EXACTLY the pool its committed
     StartProduction named (DT-020 cut 5, the kanban poolProvenance twin — same L9 publication
@@ -209,7 +218,8 @@ pred holdingProvenance {
     time-indexed over live holders, a holding pool is held by at most one LIVE demand and is
     never simultaneously a LIVE cycle's pool (the kinds demand can see; kanban's own row is
     `poolExclusiveWhileLive`, receiving's is `linePoolExclusiveWhileLive`, and the global
-    pairwise row is check-only in the system tier). Guard-and-genesis-derived THEOREM —
+    pairwise row is dafny-domain's `PoolLattice.PoolLatticeGlobal`; the system tier keeps its
+    finders, QA761). Guard-and-genesis-derived THEOREM —
     discharged at the UNIT tier since kanban published `poolProvenance` (cut 5; the cross-kind
     clause reasons from the attach payload to the record binding through it — before that
     publication the discharge needed kanban's real effects, the cut-4 integration-tier
@@ -222,6 +232,79 @@ pred holdingExclusiveWhileLive {
         implies (no c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p)
     }
   }
+}
+/** holdingAttachedOnce — two committed StartProductions naming a holding name different pools, on any demands
+    (dafny-domain `HoldingAttachedOnce`, MD-083: the freshness arm's theorem, so the premise's own clause for holdings is
+    derivable). Stated for consumers and finders; NOT in `guarantees`: it was left out while a law joined the mock's promise
+    only after a bounded check, and its scenario was too large for one in the unit root. Witness: unit_dem_twoFreshHoldings. */
+pred holdingAttachedOnce {
+  all disj a, b: StartProductionOcc | (committed[a] and committed[b]) implies no (a.holding & b.holding)
+}
+/** contributionFrom — the fourth holder's PROVENANCE (dafny-domain `ContributionFrom`; the `holdingProvenance` twin, the
+    same L9 publication rationale): a live demand's external contribution naming a pool was attached by a committed attach
+    of THAT demand, under that id, naming that pool (an edit keeps the id and the pool). What an upper layer reads to go
+    from a held pool to the attach row — the receiving row `lineContributionPoolDisjoint` does. */
+pred contributionFrom {
+  all d: DemandItem, t: Tick, c: ExternalContribution, e: EntityId | contributionHolds[d, c, e, t] implies
+    (some a: AttachOcc | committed[a] and a.subject = d and notAfter[a.tick, t]
+       and a.contribution in ExternalContribution and a.contribution.cid = c.cid and a.contribution.cPool = e)
+}
+/** contributionPoolExclusiveWhileLive — the demand lattice row's FOURTH holder (TN-004; dafny-domain MD-086:
+    `ContributionPoolExclusiveWhileLive`, `ContributionPoolNotAHolding`, `ContributionPoolNotACyclePool`): at every moment
+    a pool is named by at most one external contribution of at most one LIVE demand, it is no live demand's holding, and
+    — under the genesis premise (its fourth clause) — no live cycle's pool. Counted by OWNERS: a contribution is a value,
+    so two demands holding equal contributions hold one atom. */
+pred contributionPoolExclusiveWhileLive {
+  all t: Tick, p: InventoryPool {
+    lone { d: DemandItem | some c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p }
+    all d: DemandItem | lone { c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p }
+    (some d: DemandItem, c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p) implies {
+      no d2: DemandItem | liveDemandAt[d2, t] and resolve[demandStateAt[d2, t].sHolding] = p
+      demandPoolGenesis implies (no k: CardCycle | liveCycleAt[k, t] and resolve[stateOfCycleAt[k, t].sPool] = p)
+    }
+  }
+}
+
+// ── C10 · the contributions (TN-004; reflects dafny-domain MD-076 to MD-080) — single-log laws ──
+// Each is a LEMMA of the reference model (dafny-domain src/operations/demand/demand-contract.dfy), proven there for every
+// log. They are stated here so consumers and finders can name them. They are NOT in `guarantees`. TN-005 D4 let a predicate
+// join the mock's promise only after one bounded check against the guards as written here; the project owner's ruling
+// QA779 (a), 2026-11-12, retired such checks, so which of these laws the mock promises is the classification's question.
+/** releasedHasContribution — a committed Release saw at least one LIVE contribution (Dafny `ReleasedHasContribution`). */
+pred releasedHasContribution {
+  all o: ReleaseOcc | committed[o] implies some liveContributionsOf[dPre[o].sContributions, o.tick]
+}
+/** contributionIdOnce — a contribution id is attached at most ONCE on a demand's log, a removed id included (Dafny
+    `ContributionIdOnce`). */
+pred contributionIdOnce {
+  all disj a, b: AttachOcc |
+    (committed[a] and committed[b] and a.subject = b.subject) implies a.contribution.cid != b.contribution.cid
+}
+/** referenceUniquePerDemand — at every moment two contributions of one demand read different references (Dafny
+    `ReferenceUniquePerDemand`; "read": a card's default is its card's serial). */
+pred referenceUniquePerDemand {
+  all d: DemandItem, t: Tick | all disj a, b: contributionsAt[d, t] |
+    (some referenceOf[a] and some referenceOf[b]) implies referenceOf[a] != referenceOf[b]
+}
+/** contributionPoolMatchesItem — a committed external attach's pool is live, in the demand's tenant and carries the demand's
+    item (Dafny `ContributionPoolMatchesItem` with its tenancy sibling). */
+pred contributionPoolMatchesItem {
+  all o: AttachOcc, e: ExternalContribution | (committed[o] and o.contribution = e) implies
+    (some p: resolve[e.cPool] & InventoryPool |
+       poolLiveAt[p, o.tick] and p.tenantId = o.subject.tenantId and p.itemPin.subject = o.subject.itemPin.subject)
+}
+/** contributionPoolAttachedOnce — no pool is named by two committed external attaches, of any demands (Dafny
+    `ContributionPoolAttachedOnce`: the freshness arm's theorem). */
+pred contributionPoolAttachedOnce {
+  all disj a, b: AttachOcc |
+    (committed[a] and committed[b] and (a.contribution + b.contribution) in ExternalContribution)
+      implies a.contribution.cPool != b.contribution.cPool
+}
+/** notesWritableUntilRetire — a committed notes write (the demand's, or a contribution's) precedes the demand's tombstone
+    (Dafny `NotesWritableUntilRetire`). */
+pred notesWritableUntilRetire {
+  all o: SetUserNotesOcc + SetContributionNotesOcc, dl: DeleteDemandOcc |
+    (committed[o] and committed[dl] and dl.subject = o.subject) implies precedes[o.tick, dl.tick]
 }
 
 // ── C7 · terminal closure (SL-4 instance, R5/R7) — single-log law ───────────────────────────────
@@ -246,8 +329,8 @@ pred guarantees {
   and startProductionRequiresStarted
   and distributeRequiresReady
   and completeRequiresSettled
-  and completeRequiresDistributed
-  and completeRequiresRetiredHolding   // COORDINATOR-Q527 B (2026-10-15): the retired gate; C5 above is now its theorem
+  and holdersReleasedAtComplete        // TN-004 row 11 (MD-084): the release at Complete and Cancel, derived; Dafny HoldersReleasedAtComplete
+  and completedItemsPlaced             // TN-004 row 14 (MD-082): the placements' call-first law; Dafny CompletedItemsPlaced
   and completeStampedAfterHolding      // COORDINATOR-Q527 A5: the stamp condition in causal terms
   and withdrawnDetachReconciles
   and terminalClosure
@@ -255,5 +338,7 @@ pred guarantees {
   and deliveryTerminalRevoke    // §8.1.1 (likewise vacuous without PDs)
   and holdingProvenance         // cut 5 (the kanban poolProvenance twin; L9 publication)
   and holdingExclusiveWhileLive // §8.5.3 lattice row (premise-conditional; unit-tier discharge since cut 5)
+  and contributionFrom          // the fourth holder's provenance (TN-004, dafny-domain ContributionFrom)
+  and contributionPoolExclusiveWhileLive // the row's fourth holder (TN-004, MD-086; its cycle clause premise-conditional); Dafny ContributionPoolExclusiveWhileLive
   // createRecordsAtomically / revokeExtractsAtomically: deliberately NOT here — see C8.
 }

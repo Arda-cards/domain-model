@@ -104,7 +104,7 @@ run e7_seeded_frozen_read {
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 /** A seeded RECEIVING line state followed by a committed capture edit on it — the SETTER
     commits legally from a seeded pre (the guard/frame boundary is exercised, not starved). */
@@ -115,54 +115,54 @@ run e7_seeded_capture_edit {
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 check e7_slice_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 check e7_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── W-scope escalation (the adoption gate: the unit-root trace window) ─────────────────
 e7_step_w: check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 e7_law_w: check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 0
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── supersession gate (b): SOAK-MATCHED entity scopes (soak_rcv_capturedFactsFrozen), trace window collapsed ──
 e7_step_s: check e7_step for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 Receiver, 4 ReceivingLine, 3 OrderAttribution, 0 Order, 3 OrderLine, 0 DemandItem, 2 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 e7_law_s: check e7_law for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 Receiver, 4 ReceivingLine, 3 OrderAttribution, 0 Order, 3 OrderLine, 0 DemandItem, 2 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0

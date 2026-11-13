@@ -149,9 +149,12 @@ pred receiverTerminalComplete {
 /** receivingPoolGenesis — THE GENESIS PREMISE (assume when: pools are minted inside their
     holder's own attach act — the §8.5.3 ownership-by-genesis runtime discipline; PDEV-1424
     monitors it). Model rendering: no pool is named by two committed pool-attaching acts
-    across the kinds visible to this module (cycle StartProcessing, demand StartProduction,
-    the line's Receive). A NAMED PREMISE, never a fact — a discipline breach stays
-    representable, and a weakened guard stays refusable (the R1 distinction). */
+    across the kinds visible to this module (cycle StartProcessing, demand StartProduction
+    and — since TN-004 — the demand's EXTERNAL ATTACHES, the line's Receive). A NAMED PREMISE,
+    never a fact — a discipline breach stays representable, and a weakened guard stays
+    refusable (the R1 distinction). TEN clauses since DT-016 PR B (dafny-domain
+    `ReceivingPoolGenesis` with `ExternalAttachGenesis`, MD-087): the last four are the external
+    attach against itself and against each of the three other kinds. */
 pred receivingPoolGenesis {
   all disj a, b: StartProcessingOcc | (committed[a] and committed[b]) implies no (a.pool & b.pool)
   all disj a, b: StartProductionOcc | (committed[a] and committed[b]) implies no (a.holding & b.holding)
@@ -162,6 +165,16 @@ pred receivingPoolGenesis {
     (committed[a] and committed[b]) implies no (a.pool & b.pool)
   all a: ReceiveLineOcc, b: StartProductionOcc |
     (committed[a] and committed[b]) implies no (a.pool & b.holding)
+  // the external attach's four (dafny-domain `ExternalAttachGenesis`)
+  all disj a, b: AttachOcc |
+    (committed[a] and committed[b] and (a.contribution + b.contribution) in ExternalContribution)
+      implies no (a.contribution.cPool & b.contribution.cPool)
+  all a: StartProcessingOcc, b: AttachOcc |
+    (committed[a] and committed[b] and b.contribution in ExternalContribution) implies no (a.pool & b.contribution.cPool)
+  all a: StartProductionOcc, b: AttachOcc |
+    (committed[a] and committed[b] and b.contribution in ExternalContribution) implies no (a.holding & b.contribution.cPool)
+  all a: ReceiveLineOcc, b: AttachOcc |
+    (committed[a] and committed[b] and b.contribution in ExternalContribution) implies no (a.pool & b.contribution.cPool)
 }
 /** linePoolProvenance — a line-held pool is EXACTLY the pool its committed Receive named
     (the receiver-side mirror of kanban's `poolProvenance` and demand's `holdingProvenance`
@@ -179,8 +192,9 @@ pred linePoolProvenance {
     from the Receive guard's availability clause + the frozen frames; and (ii) under the
     genesis premise, never simultaneously a live cycle's pool or a live demand's holding —
     CROSS-KIND, the layers receiving can see (kanban's own row is `poolExclusiveWhileLive`;
-    demand's is `holdingExclusiveWhileLive`; the global row is check-only in the system
-    tier). UNIT-tier dischargeable since cut 5: the peers publish their pool-provenance
+    demand's is `holdingExclusiveWhileLive`; the global row is dafny-domain's
+    `PoolLattice.PoolLatticeGlobal`, and the system tier keeps its finders, QA761).
+    UNIT-tier dischargeable since cut 5: the peers publish their pool-provenance
     laws (`poolProvenance`/`holdingProvenance`), tying mock record bindings to attach
     payloads. Joined `guarantees` in the same change set as its first discharge (the
     §8.5.3 mock rule). */
@@ -215,6 +229,18 @@ pred lineDemandPoolDisjoint {
 pred linePoolExclusiveWhileLive {
   linesPoolLoneHolder and lineCyclePoolDisjoint and lineDemandPoolDisjoint
 }
+/** lineContributionPoolDisjoint — the row against the FOURTH holder kind (TN-004; dafny-domain
+    `LineContributionPoolDisjoint`, MD-087), under the genesis premise (its Receive-against-attach clause): a line-held
+    pool is never simultaneously the pool of a live demand's external contribution. Its OWN published law, beside the
+    row and not a conjunct of it: `linePoolExclusiveWhileLive` keeps the three-facet statement the E7 inductive root
+    (advanced/receiver_pool_inductive.als) proves slice-faithful. Reads `linePoolProvenance` and the demand's
+    `contributionFrom`. */
+pred lineContributionPoolDisjoint {
+  receivingPoolGenesis implies
+    all t: Tick, p: InventoryPool |
+      (some l: ReceivingLine | resolve[rlStateAt[l, t].sPool] = p) implies
+        (no d: DemandItem, c: ExternalContribution | contributionHolds[d, c, c.cPool, t] and resolve[c.cPool] = p)
+}
 
 // ── the promise ─────────────────────────────────────────────────────────────────────────────────
 /** guarantees — the module's full promise: the conjunction of the published laws. (The
@@ -232,4 +258,5 @@ pred guarantees {
   and receiverTerminalComplete
   and linePoolProvenance
   and linePoolExclusiveWhileLive
+  and lineContributionPoolDisjoint   // the row against the fourth holder (TN-004, MD-087); Dafny LineContributionPoolDisjoint
 }
