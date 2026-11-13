@@ -34,6 +34,17 @@ with `heavy-cone` to avoid the timeouts"):**
     10 of 35 commands after 4.9 hours. Roots that run for hours belong in the night window's slots; the cloud
     session can carry the rung base commands and the roots that finish in minutes.
 
+**Measured again on the activation cut (2026-11-05, DAFNY's container, same 4-core / 16 GB shape, head `bb7570a`):**
+
+- **The receiver INTEGRATION root is a long root too.** `int_rcv_latticeCompanion` reaches 3.7M variables and
+  11.8M clauses at `-Xmx7g`; the run was killed by the cgroup's OOM killer after 3 h 19 min with no verdict when a
+  third lane started beside it. The demand integration root (`operations/demand/tests/integration/demand.als`) was
+  still on command 2 of 5 after 2 h 55 min. The heavy set that belongs in a night window is therefore five roots:
+  the receiver unit root, the receiver integration root, the demand integration root, `tests/pool_lattice.als`
+  and `tests/system.als`.
+- **Two lanes, never three.** The 7 GB lane plus a 3 GB lane fill the cgroup; any third JVM gets the biggest lane
+  killed, not itself. Guard the lane count in the runner, not by eye.
+
 **Why not let CI decide:** the check's budget (`knowledge-base/nested-timeout-inside-a-job-deadline.md`)
 guarantees the explicit failure, never a verdict. An unlabeled heavy PR spends 15 minutes of runner
 time to learn what the cone script already says.

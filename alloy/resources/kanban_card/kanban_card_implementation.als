@@ -19,10 +19,12 @@ open meta/subject_log/subject_log[kt/CardCycle, kt/CycleState] as clog
 open meta/subject_log/lifecycle[kt/CardCycle, kt/CycleState] as lc      // same params ⇒ the SAME shapes instance (cut 2)
 open resources/inventory_item/inventory_pool as ip                       // DIRECT (rule 10): the pool's shapes below are alias-qualified
 open meta/subject_log/lifecycle[ip/InventoryPool, ip/PoolState] as plc   // the POOL's shapes (same params ⇒ inventory_pool's instance) — Q42
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── the spine adoption: chaining (unconditional — refusals read the real state) + v1 commit ────
 fact CycleChain         { clog/chained }
-fact CycleCommitAccepts { clog/commitAlwaysAccepts }
+one sig KanbanService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact CycleActivated        { activated[KanbanService, clog/SubjectOcc] }
 
 /** liveAtOcc — the cycle is STARTED and OPEN when `o` executes (what its guards read). */
 pred liveAtOcc[o: CycleOcc] { some o.pre and not closedStrictlyBefore[o.subject, o.tick] }
@@ -81,6 +83,7 @@ fun forwardViol[o: CycleOcc]: set Reason {
     used pool. */
 fun startViol[o: StartProcessingOcc]: set Reason {
   forwardViol[o]
+  + ((not namedPoolLive[o.pool, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b): the pool must exist and be live at the act (no dangling id attaches)
   + ((some p: resolve[o.pool] & InventoryPool | p.tenantId != o.subject.tenantId) => RForeignPool else none)
   + ((some p: resolve[o.pool] & InventoryPool | some c2: CardCycle - o.subject |
         liveCycleAt[c2, o.tick] and resolve[stateOfCycleAt[c2, o.tick].sPool] = p)

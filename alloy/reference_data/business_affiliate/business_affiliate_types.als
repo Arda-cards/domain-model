@@ -104,7 +104,9 @@ sig UpdateBaOcc extends lc/MutateOcc {}
 sig RetireBaOcc extends lc/RetireOcc {} { bindings = subject }
 
 // ── the Reason taxonomy (module-sovereign atoms; RRetiredRef is shared via lifecycle) ───────────
-one sig RBaExists, RBaNotCreated, RBaRetired, RRoleKindFixed extends Reason {}
+one sig RBaExists, RBaNotCreated, RBaRetired, RRoleKindFixed,
+        RRoleNotOwned   // QA704 Q4 (a), DT-009 Q27: a write stating a role another affiliate's committed history holds, or a foreign-tenant role
+        extends Reason {}
 
 // ── the read API ────────────────────────────────────────────────────────────────────────────────
 /** baStateAt — the affiliate's versioned content as of `t` (LOCF; none before Create). */

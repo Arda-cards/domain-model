@@ -30,16 +30,12 @@ module operations/demand/demand_contracts
 
 open operations/demand/demand_types
 
-// POOL MOVEMENTS (chain B-mov, DT-029 E6 / SAMWISE-S1 / MINESWEEPER-Q7 = A): the demand's movement legs — merge,
-// extract, transfer — ride a MOVEMENT-semantics intent chain keyed by the pool, governed by the CONFINED module
-// `demand_movement.als` and verified in its own root `tests/unit/demand_movement.als` (C-2 cone confinement, the
-// demand_reset.als precedent). An edit to THIS module's laws propagates into that root's cone (it opens the real
-// implementation) — re-run it with any change here. No law below reads the chain; none may without opening it.
+// POOL MOVEMENTS (chain B-mov) and THE CYCLE CLAIM (chain A): the confined chain modules `demand_movement.als` and
+// `demand_claim.als` and their roots LEFT THE TREE on 2026-11-05 (removed 2026-11-05: the intent chains and the saga are postponed, TN-003 row 2 / DT-015 D4; the Dafny tree is the reference model). The citation discipline they carried is the causal
+// tree's (every row cites the activation that wrote it, DT-015 D1); membership stays the denormalisation below.
 
-// THE CYCLE CLAIM (chain A, DT-029 E6 / DT-027 §6.1 the additive arm): the demand's claim on a cycle rides a
-// HOLD-semantics intent chain keyed by the cycle, governed by the CONFINED module `demand_claim.als` and verified in
-// its own root `tests/unit/demand_claim.als` (the same confinement, for the same reason). `cycleIndivisible` below is a
-// THEOREM of that chain wherever membership mirrors the heads (`cycleIndivisibleFromChain`); `demandOf` stays the
+// `cycleIndivisible` below was a THEOREM of the retired claim chain wherever membership mirrored the heads; it stands on
+// its own as the membership law. `demandOf` stays the
 // membership read here — the head read `claimHolderOf` lives there. Re-run that root with any change here.
 
 // ── C1 · cycle indivisibility (R1/R3) — single-log law ──────────────────────────────────────────

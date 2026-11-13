@@ -87,14 +87,21 @@ assert e7_step {
 assert e7_law { all t: Tick | e7Inv[t] implies lawSliceAt[t] }
 
 // ── vacuity guards (the §8 soundness-ledger discipline) ────────────────────────────────
+// BASE SCOPE 6 Occurrence (2026-11-12; was 5). Since the activation every row cites the call
+// that wrote it and a pool attached must exist and be live, so a seeded cycle state with a
+// later committed StartProcessing needs six occurrences: at 5 `e7_seeded_start` had NO
+// instance and the step and law checks examined no pool attachment (Copilot, on the Alloy
+// cut; measured). The widened scopes (_w, _s) carry their own witness below.
 /** A seeded pool-holding cycle state coexisting with a later committed StartProcessing —
-    the step check's interesting configuration is realizable. */
+    the step check's interesting configuration is realizable. (A configuration of the
+    HISTORY: the seeded pool has no provenance, so the invariant is false at the seed. The
+    step checks' own antecedent is witnessed by `e7_step_live` / `e7_prov_step_live` below.) */
 run e7_seeded_start {
   some h: HavocCycleOcc | committed[h] and some (h.post & CycleState).sPool
   some o: StartProcessingOcc | committed[o] and some o.pool
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
 
 /** Two simultaneously live cycles — the lone-holder facet's interesting configuration
     is realizable (the check is not vacuously UNSAT-by-starvation). */
@@ -102,27 +109,27 @@ run e7_two_live {
   some t: Tick, disj c1, c2: CardCycle | liveCycleAt[c1, t] and liveCycleAt[c2, t]
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 1
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
 
 check e7_slice_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_prov_faithful for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_law for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 // ── W-scope escalation (THIS window's adoption gate — MP 2026-08-26) ───────────────────
 e7_step_w: check e7_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -160,11 +167,11 @@ assert e7_prov_step {
 
 check e7_prov_base for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
-      5 Occurrence, 12 EntityId, 5 Tick, 8 Snapshot, 2 Note expect 0
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
 
 e7_prov_step_w: check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
@@ -173,3 +180,84 @@ e7_prov_step_w: check e7_prov_step for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Qu
 e7_prov_step_s: check e7_prov_step for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
       6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 0
+
+// ── vacuity guards at the widened scopes: a witness at each scope a step is checked at ──
+/** `e7_seeded_start` at the _w scope (8 Occurrence). */
+run e7_seeded_start_w {
+  some h: HavocCycleOcc | committed[h] and some (h.post & CycleState).sPool
+  some o: StartProcessingOcc | committed[o] and some o.pool
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 1
+
+/** `e7_seeded_start` at the _s scope (6 Occurrence, the soak-matched entities). */
+run e7_seeded_start_s {
+  some h: HavocCycleOcc | committed[h] and some (h.post & CycleState).sPool
+  some o: StartProcessingOcc | committed[o] and some o.pool
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
+
+// ── vacuity guards for the step checks: the antecedent itself, with a committed start next ──
+// The invariant (for e7_prov_step, its provenance half) holds at a tick, the next tick is no
+// seed, and a StartProcessing naming a pool commits there: the case the step checks are about.
+// One per scope a step is checked at (Copilot, on the Alloy cut, 2026-11-12).
+/** `e7_step`'s antecedent with a committed start next, at the base scope. */
+run e7_step_live {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the base scope. */
+run e7_prov_step_live {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    poolProvenanceAt[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
+      6 Occurrence, 12 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
+
+/** `e7_step`'s antecedent with a committed start next, at the _w scope. */
+run e7_step_live_w {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the _w scope. */
+run e7_prov_step_live_w {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    poolProvenanceAt[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 3 InventoryPool,
+      8 Occurrence, 12 EntityId, 7 Tick, 10 Snapshot, 2 Note expect 1
+
+/** `e7_step`'s antecedent with a committed start next, at the _s scope. */
+run e7_step_live_s {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the _s scope. */
+run e7_prov_step_live_s {
+  some HavocCycleOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    poolProvenanceAt[t] and (no h: HavocCycleOcc | h.tick = t2)
+      and (some o: StartProcessingOcc | committed[o] and some o.pool and o.tick = t2)
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      4 CardCycle, 3 KanbanCard, 3 InventoryItem, 3 InventoryPool,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note expect 1

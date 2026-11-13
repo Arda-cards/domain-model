@@ -69,7 +69,7 @@ note bottom #white : every entity is scoped to a Hotel (tenant)
 | 17 | Snapshot-carrying occurrences (`meta/action/stateful`): chaining, value-parameterized cores, invariant-as-THEOREM, LOCF ≡ deltas | **ready** | event store + memento; scan-carrying-state |
 | 18 | The stack on the COMPLETED Action machinery (end of the 16→18 ladder): refusals recorded, `seq`-in-snapshot recovers the structural free ride | **ready** | validated event stream; refusals as retained Lefts |
 | 19 | The SUBJECT-LOG SPINE (`meta/subject_log`, DT-015 Q5): a folio ledger in ~40 domain lines — kinds + guards + effects on the parameterized spine (chaining law + LOCF supplied) | **ready** | event-sourced aggregate on a reusable base; typeclass-style reuse |
-| 20 | The INTENT LOG (`meta/intent_log`, DT-027): "two logs, one fact" without a cross-module transaction — a bellhop reserves a luggage cart on a claim chain it owns, the desk checks it out once, confirm/release; holdings read from the chain head; the race loser refused before the peer is called; the lost-ack crash recovered by the two-head `redrive` | **ready** | saga with a reservation step; two-phase effect + idempotent recovery function |
+| 20 | The INTENT LOG: "two logs, one fact" | **removed** (removed 2026-11-05: the intent chains and the saga are postponed, TN-003 row 2 / DT-015 D4; the Dafny tree is the reference model) | |
 | 21 | LIFECYCLE SHAPES + THE RECORDING LAW (`meta/subject_log/lifecycle`, MPBOT-11 M2 / COORDINATOR-Q199 R7): ex19's folio with OPEN / CHARGE / CLOSE on the Create / Mutate / Retire shapes; what a runtime persists of a refusal — `lc/recorded` (a host row: live or closed), never a refused genesis; the theorem `noRecordedRefusalWithoutGenesis` | **ready** | validated event stream with REFUSED rows; create/retire as lifecycle boundaries |
 
 "Ready" = a runnable file exists. "Planned" = a catalog slot to fill as the pattern is
@@ -97,7 +97,7 @@ The catalog above indexes by *pattern* (what you want to model); this table inde
 | **Snapshot-carrying occurrences** (as-of-read): `pre`/`post` records, UNCONDITIONAL chaining, LOCF-of-records | 17, 18 |
 | **Invariant as theorem** (derived from witnessed guards, not stated as a fact) | 17 (balance ≥ 0), 18 (LIFO) |
 | Value-parameterized transition cores (one spec, any carrier) | 17, 18 |
-| **Parametric module over a parametric spine** (`intent_log[Key, Sem]` riding `subject_log`; aliased vocabulary + QUALIFIED open-parameters) | 20 |
+| **Parametric module over a parametric spine** (aliased vocabulary + QUALIFIED open-parameters; `knowledge-base/parametric-module-open-parameters.md`) | no surviving example (ex20 removed 2026-11-05, DT-015 D4) |
 | **Lifecycle shapes + recorded-vs-refused** (`lifecycle[Subject, Rec]` beside `subject_log`; `recorded[o]`; the genesis boundary) | 21 |
 
 See also: [rosetta-uml.md](rosetta-uml.md) (the full UML/FP ↔ Alloy translation table)

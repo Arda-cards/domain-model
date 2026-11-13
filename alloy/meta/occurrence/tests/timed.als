@@ -1,4 +1,5 @@
 module meta/occurrence/tests/timed
+// Reflects dafny-domain src/meta/tests/occurrence-timed-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/occurrence/timed
 

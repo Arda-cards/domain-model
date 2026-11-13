@@ -1,4 +1,5 @@
 module meta/action/tests/action
+// Reflects dafny-domain src/meta/tests/trace-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/action/action
 open meta/model_time/model_time   // precedes, notAfter (over Tick) — for the projection
@@ -21,8 +22,9 @@ sig Op extends Action {} { no bindings }
 // A committed action exists.
 run unit_action_committed { some a: Op | committed[a] } for 4 expect 1
 
-// A commit rejection: admitted, but the commit gate refuses.
-run unit_action_commitRejected { some a: Op | a.admission = Accepted and a.commit in Rejected } for 4 expect 1
+// ONE gate (MP, Journal 193772; TN-003 row 9; the Dafny spine has no post-commit check): an admitted action IS committed.
+// RED on the tree before this cut: the second gate could refuse an admitted action (SAT against expectation).
+run unit_action_admittedNotCommitted { some a: Op | a.admission = Accepted and not committed[a] } for 4 expect 0
 
 // Every refusal carries at least one reason.
 assert unit_action_refusalHasReason { all a: Action | not committed[a] implies some refusalReasons[a] }
@@ -32,13 +34,9 @@ check unit_action_refusalHasReason for 5 expect 0
 assert unit_action_successNoReason { all a: Action | committed[a] implies no refusalReasons[a] }
 check unit_action_successNoReason for 5 expect 0
 
-// The three named outcomes PARTITION Action: every action satisfies exactly one.
+// The two named outcomes PARTITION Action: every action satisfies exactly one.
 assert unit_action_outcomesPartition {
-  all a: Action |
-    (committed[a] or refusedAtAdmission[a] or refusedAtCommit[a])
-    and not (committed[a] and refusedAtAdmission[a])
-    and not (committed[a] and refusedAtCommit[a])
-    and not (refusedAtAdmission[a] and refusedAtCommit[a])
+  all a: Action | (committed[a] or refusedAtAdmission[a]) and not (committed[a] and refusedAtAdmission[a])
 }
 check unit_action_outcomesPartition for 5 expect 0
 

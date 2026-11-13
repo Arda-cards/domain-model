@@ -1,4 +1,5 @@
 module shared/certainty/tests/certainty
+// Reflects dafny-domain src/shared/certainty/tests/certainty-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open shared/certainty/certainty
 

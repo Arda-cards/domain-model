@@ -1,4 +1,5 @@
 module tests/pool_lattice
+// Reflects dafny-domain src/system/tests/pool-lattice-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
  * THE GLOBAL EXCLUSIVITY-LATTICE ROW (§8.5.3) — the whole-system pairwise-disjointness

@@ -1,4 +1,5 @@
 module resources/kanban_card/tests/cycle_retire
+// Reflects dafny-domain src/resources/kanban-card/tests/kanban-card-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/kanban_card/kanban_card_implementation
 open resources/kanban_card/kanban_card_contracts
@@ -47,7 +48,7 @@ run unit_cyr_retireAfterWithdrawRefused {
   some w: WithdrawOcc, o: RetireCycleOcc | committed[w] and o.subject = w.subject and precedes[w.tick, o.tick]
     and refusedAtAdmission[o] and RClosed in o.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── refused on a cycle that never started — RNotStarted, the cycle's RPoolNotCreated (Q199 M3; was RClosed) ─
 run unit_cyr_retireNeverStartedRefused {
@@ -60,7 +61,7 @@ run unit_cyr_withdrawAfterRetireRefused {
   some o: RetireCycleOcc, w: WithdrawOcc | committed[o] and w.subject = o.subject and precedes[o.tick, w.tick]
     and refusedAtAdmission[w] and RClosed in w.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── the forward kinds are Mutate shapes: none commits after either retire ─────────────────────
 assert unit_cyr_nothingAfterRetire { lc/nothingAfterRetire }
@@ -128,7 +129,7 @@ run unit_cyr_forwardOnWithdrawnIsClosed {
   some w: WithdrawOcc, o: AcceptOcc | committed[w] and o.subject = w.subject and precedes[w.tick, o.tick]
     and refusedAtAdmission[o] and RClosed in o.admission.because and RNotStarted not in o.admission.because
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── attached-once (V019): a pool a committed StartProcessing named is USED — re-attaching it after ProductionFailure refuses ──
 run unit_cyr_reattachAfterFailureRefused {
@@ -143,7 +144,7 @@ run unit_cyr_reattachAfterFailureRefused {
                                                                                 //   the refusal conjuncts below and the command was SAT on both models (08:19Z)
     and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 10 Tick, 10 Occurrence, 9 Snapshot, 2 Note expect 1
 
 // ── attached-once admission control: a REFUSED attach commits nothing, so a retry naming the same pool is admitted ──
 run unit_cyr_retryAfterRefusedAttachAdmitted {
@@ -163,20 +164,20 @@ check unit_cyr_poolAttachedOnce for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quant
 // naming the same UNRESOLVED pool id satisfied them vacuously (probe at a7417a0: SAT, SAT; resolved control UNSAT). RED-FIRST:
 // at the tests commit the three commands below are AGAINST expectation (the old arm admits the second attach; the old law has a
 // counterexample); the model commit (law over `EntityId`, the attached-once disjunct outside the resolution nesting) turns them.
-// ── a second committed attach naming the same UNRESOLVED id is refused RPoolNotFresh (RED at tests-4: admitted) ──
-run unit_cyr_secondAttachSameDanglingIdRefused {
-  some disj s1, s2: StartProcessingOcc | committed[s1] and s1.pool = s2.pool and no resolve[s1.pool] and precedes[s1.tick, s2.tick]
-    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
+// (The two dangling-id finders of 2026-10-02, `unit_cyr_secondAttachSameDanglingIdRefused` and
+// `unit_cyr_reattachSameDanglingIdAfterFailureRefused`, RETIRED with QA704 Q2 (b), 2026-11-05: a committed attach of an
+// unresolved id is no longer representable — the first attach is refused RNoSuchPool, below. The attached-once law over the id
+// stays, with its resolved controls.)
+// ── QA704 Q2 (b) (dafny-domain PR 33, MD-074): an attach naming a pool that does not exist, or a pool retired before the act, is
+//    refused RNoSuchPool. RED before the arm: the atom does not exist; the old guard admitted the dangling id (TN-001 S-08) ──
+run unit_cyr_startProcessingNoSuchPoolRefused {
+  some o: StartProcessingOcc | not namedPoolLive[o.pool, o.tick] and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
-// ── re-attach with the same UNRESOLVED id after a committed ProductionFailure is refused (RED at tests-4: it committed) ──
-run unit_cyr_reattachSameDanglingIdAfterFailureRefused {
-  some s1, s2: StartProcessingOcc, f: ProductionFailureOcc |
-    committed[s1] and committed[f] and f.subject = s1.subject and precedes[s1.tick, f.tick] and precedes[f.tick, s2.tick]
-    and s2.pool = s1.pool and no resolve[s1.pool]
-    and refusedAtAdmission[s2] and RPoolNotFresh in s2.admission.because
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
+// The law is a THEOREM of the arm (Dafny StartedPoolLive): a committed attach's pool is live as of the act.
+assert unit_cyr_startedPoolLive { all o: StartProcessingOcc | committed[o] implies namedPoolLive[o.pool, o.tick] }
+check unit_cyr_startedPoolLive for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0
 // ── the law over the PAYLOAD, stated inline so it does not depend on the model's own `poolAttachedOnce` text: at most one
 //    committed StartProcessing per pool id, resolved or not (RED at tests-4: a counterexample with a dangling id) ──
 assert unit_cyr_attachedOnceById { all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e } }
@@ -204,3 +205,23 @@ run unit_cyr_refusedOnLiveRecorded {
   some o: ShelveOcc | refusedAtAdmission[o] and liveAtOcc[o] and lc/recorded[o]
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 1
+
+// ── DT-015 D2/R4 (dafny-domain#31 review, 2026-11-05): the rollover under activations is TWO calls ──────────────────
+// The completion retire is one call (its activation committed); the successor's genesis is the CASCADE call that activation
+// makes — its own activation, citing the retire's, with its own verdict. Here the request is refused while the retire commits:
+// the service stays activated, each row agreeing with its own activation (`effectsAgree`); the two rows under ONE activation
+// could not (reflects kanban-card-tests.dfy `RolloverRefusedSuccessor`; the Alloy pair `rolloverPair` was always two rows admitted
+// on their own).
+run unit_cyr_rolloverRefusedSuccessorTwoActivations {
+  some disj a, b: Call, disj c1, c2: CardCycle, r: RetireCycleOcc, g: RequestOcc |
+    committed[a] and r.arche = a and committed[r] and r.subject = c1
+    and b.arche = a and refusedAtAdmission[b] and g.arche = b and refusedAtAdmission[g]
+    and g.subject = c2 and c2.precededBy = c1 and precedes[r.tick, g.tick]
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 1
+// The same two rows under one activation are unrepresentable: no verdict agrees with a committed retire and a refused request.
+run unit_cyr_rolloverOneActivationCannotSplitVerdict {
+  some a: Call, r: RetireCycleOcc, g: RequestOcc |
+    r.arche = a and committed[r] and g.arche = a and refusedAtAdmission[g] and g.subject.precededBy = r.subject
+} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0

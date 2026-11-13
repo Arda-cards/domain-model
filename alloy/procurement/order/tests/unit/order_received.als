@@ -1,4 +1,5 @@
 module procurement/order/tests/unit/order_received
+// Reflects dafny-domain src/procurement/order/tests/order-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open procurement/order/order_received
 

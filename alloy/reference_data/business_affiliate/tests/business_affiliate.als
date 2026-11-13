@@ -1,4 +1,5 @@
 module reference_data/business_affiliate/tests/business_affiliate
+// Reflects dafny-domain src/reference-data/business-affiliate/tests/business-affiliate-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/business_affiliate/business_affiliate_implementation
@@ -24,10 +25,26 @@ run unit_ba_multiRole {
     committed[o] and r1 in o.roles and r2 in o.roles and r1.role != r2.role
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-// Role ownership is exclusive across HISTORIES (C1 axiom regression) — UNSAT = holds.
+// Role ownership is exclusive across COMMITTED histories (C1, a THEOREM of the RRoleNotOwned arm since QA704 Q4 (a)) — UNSAT = holds.
 check unit_ba_roleOwnership {
   no r: BusinessRole | some disj b1, b2: BusinessAffiliate | r in baRolesOf[b1] and r in baRolesOf[b2]
 } for 6 but 2 RoleDetail, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
+
+// ── QA704 Q4 (a), DT-009 Q27: role ownership is a guard arm (reflects dafny-domain src/reference-data/business-affiliate/business-affiliate.dfy) ──
+// A write stating a version of a role another affiliate's committed history already holds is refused with exactly
+// RRoleNotOwned. RED on the tree before the arm: `roleOwnership` was a FACT, so the second affiliate's write was unrepresentable.
+run unit_ba_roleNotOwnedRefused {
+  some disj b1, b2: BusinessAffiliate, c1, c2: CreateBaOcc, r: BusinessRole {
+    c1.subject = b1 and committed[c1] and r in c1.roles
+    c2.subject = b2 and precedes[c1.tick, c2.tick] and r in c2.roles
+    c2.admission in Rejected and c2.admission.because = RRoleNotOwned
+  }
+} for 6 but 2 RoleDetail, 6 Tick, 3 Snapshot, 5 Occurrence expect 1
+// A write stating a role of ANOTHER tenant is refused with exactly RRoleNotOwned (the law's second clause).
+run unit_ba_foreignRoleRefused {
+  some c: CreateBaOcc, r: BusinessRole | r in c.roles and r.tenantId != c.subject.tenantId
+    and c.admission in Rejected and c.admission.because = RRoleNotOwned
+} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
 // ── DT-023 cut 7b: the lifecycle (R1) ──────────────────────────────────────────────────────────
 
@@ -41,7 +58,7 @@ run unit_ba_lifecycleArc {
     baLiveAt[b, u.tick] and not baLiveAt[b, d.tick]
     u.post.sRoles != c.post.sRoles
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
 check unit_ba_lifecycleShape { baLifecycleShape } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
@@ -52,7 +69,7 @@ run unit_ba_retiredMutateRefused {
     committed[d] and u.subject = d.subject and precedes[d.tick, u.tick]
     u.admission in Rejected and u.admission.because = RBaRetired
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // ── DT-023 cut 7b: version pins (R3) ───────────────────────────────────────────────────────────
 
@@ -100,7 +117,7 @@ run unit_ba_roleKindChangeRefused {
     v.vKind != v.of.role
     u.admission in Rejected and u.admission.because = RRoleKindFixed
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // RED-first: the law is a THEOREM — over write payloads of the Update guard and the Create fact; over committed post states also of the write effect, the retire's carry-forward and the chaining of the log (UNSAT = holds).
 check unit_ba_roleKindFixedAtBirth { roleKindFixedAtBirth } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0

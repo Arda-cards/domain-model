@@ -13,7 +13,7 @@ open meta/subject_log/subject_log[Folio, FolioState] as flog
  * RECIPE (what you copy for a real module):
  *   1. open meta/subject_log/subject_log[YourEntity, YourStateRecord] as log
  *   2. sig <Operation>Occ extends log/SubjectOcc { params } { bindings = subject + params }
- *   3. fact { log/chained and log/commitAlwaysAccepts }
+ *   3. fact { log/chained }
  *   4. per-kind violation funs + the two-line witness fact (reason-precise refusals)
  *   5. per-kind effect frames on committed occurrences
  *   6. read with log/recordAt[s, t]; define YOUR closure/liveness on log/lastTouch.
@@ -28,7 +28,7 @@ one sig RNonPositiveCharge, RWrongAmount extends Reason {}
 sig ChargeOcc extends flog/SubjectOcc { amount: one Int } { bindings = subject + amount }
 sig SettleOcc extends flog/SubjectOcc { paid: one Int }   { bindings = subject + paid }
 
-fact SpineAdopted { flog/chained and flog/commitAlwaysAccepts }
+fact SpineAdopted { flog/chained }
 
 fun chargeViol[o: ChargeOcc]: set Reason { (o.amount <= 0) => RNonPositiveCharge else none }
 fun settleViol[o: SettleOcc]: set Reason { (o.paid != o.pre.balance) => RWrongAmount else none }

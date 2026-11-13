@@ -49,7 +49,7 @@ fact AdmissionWitness {
   all o: SetOcc          | (o.admission = Accepted iff no setViol[o])     and (o.admission in Rejected implies o.admission.because = setViol[o])
 }
 
-fact MeterChain { mlog2/chained }   fact MeterCommits { mlog2/commitAlwaysAccepts }
+fact MeterChain { mlog2/chained }
 fun mPre2 [o: mlog2/SubjectOcc]: lone MeterRec { o.pre  & MeterRec }
 fun mPost2[o: mlog2/SubjectOcc]: lone MeterRec { o.post & MeterRec }
 fact EffectWitness {

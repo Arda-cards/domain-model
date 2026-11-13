@@ -1,4 +1,5 @@
 module reference_data/shared/tests/shared
+// Reflects dafny-domain src/reference-data/shared/tests/shared-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/item/item_implementation
@@ -21,10 +22,11 @@ pred coherent {
 }
 run unit_shared_coherent { coherent } for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 1
 
-// A present role selector is always a VENDOR role OF THE PINNED VERSION — UNSAT = holds
-// (supplierPinsSound regression, the dissolved form of supplierIsVendor).
+// A present role selector is always a VENDOR role OF THE PINNED VERSION — UNSAT = holds (supplierPinsSound regression, the
+// dissolved form of supplierIsVendor). Since QA704 Q4 (a) the soundness is the RSupplierPinUnsound ARM of the item writes, not a
+// fact over every supply-row value: a refused write may carry an unsound row; no COMMITTED write does.
 check unit_shared_supplierIsVendor {
-  all s: ItemSupply | some s.supplierRole implies
+  all o: ItemWriteOcc, s: o.supplies | (committed[o] and some s.supplierRole) implies
     (s.supplierRole in s.supplierPin.post.sRoles and s.supplierRole.role = VENDOR)
 } for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
@@ -39,8 +41,9 @@ check unit_shared_tenantIsolation {
 // Negative: no ItemSupply's vendor pin reaches an affiliate in a different tenant — UNSAT
 // (the pin-tenancy clause of supplierPinsSound).
 run unit_shared_noCrossTenantSupplier {
-  some s: ItemSupply |
-    some s.supplierPin and s.supplierPin.subject.tenantId != s.tenantId
+  // Since QA704 Q4 (a) the in-tenant pin is the RSupplierPinUnsound ARM of the item writes, not a fact over every row value:
+  // a cross-tenant row may exist in a REFUSED write (or outside any write); no COMMITTED write carries one.
+  some o: ItemWriteOcc, s: o.supplies | committed[o] and some s.supplierPin and s.supplierPin.subject.tenantId != s.tenantId
 } for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // ── the named happy-path witnesses (unwitnessed-scenarios follow-up, 2026-07-08) ────────────────

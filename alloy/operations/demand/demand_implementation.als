@@ -23,12 +23,14 @@ open meta/subject_log/subject_log[dt/DemandItem, dt/DemandState] as dlog   // sa
 open meta/subject_log/lifecycle[dt/DemandItem, dt/DemandState] as lc       // same params ⇒ the SAME shapes instance
 open meta/subject_log/subject_log[dt/ProductionDelivery, dt/PDState] as pdlog  // the second subject's spine (§8.1.2)
 open meta/subject_log/lifecycle[dt/ProductionDelivery, dt/PDState] as pdlc     // same params ⇒ the SAME shapes instance (cut 2)
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption (DT-015 Q5; the PD spine §8.1.2) ─────────────────────────────────────────────
 fact DemandChaining      { dlog/chained }
-fact DemandCommitAccepts { dlog/commitAlwaysAccepts }   // v1 result policy (no commit-gate refusals)
 fact PDChaining          { pdlog/chained }
-fact PDCommitAccepts     { pdlog/commitAlwaysAccepts }
+one sig DemandService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact DemandActivated      { activated[DemandService, dlog/SubjectOcc] }
+fact PDActivated          { activated[DemandService, pdlog/SubjectOcc] }
 
 // ── the §8.1.2 ATOMIC compositions (enforcement facts — the model's rendering of the ONE
 // demand tx; see the C8 contracts note for why these are facts here and not in `guarantees`) ──
@@ -127,6 +129,9 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_RELEASED) => RBadState else none)
   + ((some p: resolve[o.holding] & InventoryPool | p.tenantId != o.subject.tenantId)
      => RForeignRef else none)
+  + ((some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject)
+     => RWrongItem else none)   // QA704 Q4 (a), DT-009 Q27: M3.2 as the arm it is in dafny-domain StartProductionViol (was the fact StartProductionHoldingPoolPin)
+  + ((some o.holding and not namedPoolLive[o.holding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b), MD-074: the holding must exist and be live
   + ((liveAtOccD[o] and dPre[o].sStatus = DS_RELEASED
       and some c: preMemberCycles[o] | statusAt[c, o.tick] != IN_PROCESS)
      => RCycleIneligible else none)   // C/OP gate: every live member's StartProcessing (saga's first legs) already committed
@@ -134,6 +139,7 @@ fun startProductionViol[o: StartProductionOcc]: set Reason {
 fun recordProductionViol[o: RecordProductionOcc]: set Reason {
   ((not liveAtOccD[o]) => RDemandClosed else none)
   + ((liveAtOccD[o] and dPre[o].sStatus != DS_IN_PROCESS) => RBadState else none)
+  + ((liveAtOccD[o] and some dPre[o].sHolding and not namedPoolLive[dPre[o].sHolding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b): the holding may retire between two deliveries; the genesis refuses the same (one verdict)
   + ((some pd: resolve[o.delivery] & ProductionDelivery | pd.tenantId != o.subject.tenantId)
      => RForeignRef else none)   // §8.1.2: delivery now = the PD entity, not the transient pool
   // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): pool-vs-demand item agreement — the act binds the
@@ -168,6 +174,8 @@ fun extractProductionViol[o: ExtractProductionOcc]: set Reason {
     the status read. Both clauses may fire together (reason-precise = the SET). */
 fun createDeliveryViol[o: CreateDeliveryOcc]: set Reason {
   pdlc/createViol[o, RDeliveryStarted]                       // genesis-once — the family's arm (cut 2)
+  + ((some d: resolve[o.subject.demandRef] & DemandItem | some demandStateAt[d, o.tick].sHolding
+        and not namedPoolLive[demandStateAt[d, o.tick].sHolding, o.tick]) => RNoSuchPool else none)   // QA704 Q2 (b), reading A: the pair keeps one verdict
   + ((demandStatusAt[resolve[o.subject.demandRef] & DemandItem, o.tick] != DS_IN_PROCESS)
      => RTargetNotInProcess else none)
   // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): re-based from a caller-asserted item to the
@@ -316,15 +324,8 @@ fact DemandEffectWitness {
   // (DeleteDemandOcc's tombstone: the lifecycle module's `RetireEffect`, since 2026-09-09)
 }
 
-/** StartProductionHoldingPoolPin — M3.2 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2): the MINTED
-    holding pool carries the demand's item pin (already how PDEV-1528 built it at runtime).
-    Genesis is runtime-side (no create kind for pools), so this is stated wherever the model
-    CAN name the minted pool (`resolve[o.holding] & InventoryPool`) — an annotation on the
-    resolved pool, not a create-kind effect; vacuously true when `o.holding` doesn't resolve. */
-fact StartProductionHoldingPoolPin {
-  all o: StartProductionOcc | committed[o] implies
-    (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
-}
+// (M3.2, the minted holding pool carries the demand's item pin — DT-020 §8.5.3 / SPEARHEAD-D1 A′-2 — is the RWrongItem arm of
+// startProductionViol since QA704 Q4 (a); its law is the theorem tests/unit/demand.als unit_dem_holdingPoolPinHolds.)
 
 // (NO cross-log enforcement facts — C/OP, 2026-07-06: the guards above ARE the saga commit
 // gates; the commit-gate contract laws are THEOREMS of them, and the quiescence law

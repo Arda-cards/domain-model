@@ -22,13 +22,15 @@ open meta/subject_log/subject_log[it/Item, it/ItemState] as ilog   // same param
     default supply, when it resolves, is one of THAT STATE's own supplies. Consumers may
     navigate a version's sSupplies as a strict in-tenant set and trust default resolution. */
 pred supplyOwnership {
-  all c: ItemSupply | one i: Item | c in itemSuppliesOf[i]
+  // Since QA704 Q4 (a) a THEOREM of the implementation's RSupplyNotOwned arm (dafny-domain `SupplyOwnershipHolds`), stated over
+  // COMMITTED history: a row stated only by a refused write belongs to no history (`lone`, not `one`).
+  all c: ItemSupply | lone i: Item | c in itemSuppliesOf[i]
   all i: Item, c: itemSuppliesOf[i] | c.tenantId = i.tenantId
-  all s: ItemState | let d = resolve[s.sDefaultSupply] | some d implies d in s.sSupplies
+  all o: ItemOcc | committed[o] implies let d = resolve[o.post.sDefaultSupply] | some d implies d in o.post.sSupplies
 }
-/** itemSuppliesOf — every supply row appearing anywhere in `i`'s history (payloads + records). */
+/** itemSuppliesOf — every supply row in `i`'s COMMITTED history (the records; a committed write's payload is its record). */
 fun itemSuppliesOf[i: Item]: set ItemSupply {
-  let os = { o: ItemOcc | o.subject = i } | os.post.sSupplies + (os & ItemWriteOcc).supplies
+  { o: ItemOcc | o.subject = i and committed[o] }.post.sSupplies
 }
 
 // ── C2: UoM schemes are owned (DT-009) ──────────────────────────────────────────────────────────
@@ -42,7 +44,9 @@ pred uomSchemesSound { all s: UomScheme | one i: Item | i.uom = s }
     selector is present it is a VENDOR role of the PINNED version. Typed pins cannot dangle —
     the former soft-ref soundness clauses are unrepresentable. */
 pred supplierPinsSound {
-  all s: ItemSupply {
+  // Since QA704 Q4 (a) a THEOREM of the implementation's RSupplierPinUnsound arm (dafny-domain `SupplierPinsSoundHolds`), over
+  // the supply rows of COMMITTED writes.
+  all o: ItemWriteOcc | committed[o] implies all s: o.supplies {
     some s.supplierPin iff some s.supplierRole   // together or not at all (DT-023 cut 8,
                                                  //   the PDEV-241 re-base: a vendor link
                                                  //   always names its VENDOR role)

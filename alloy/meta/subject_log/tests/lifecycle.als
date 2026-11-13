@@ -1,4 +1,5 @@
 module meta/subject_log/tests/lifecycle
+// Reflects dafny-domain src/meta/tests/trace-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/action/stateful
 open meta/subject_log/subject_log[Widget, WidgetState] as wl
@@ -21,7 +22,7 @@ sig CreateWidgetOcc extends lc/CreateOcc {} { bindings = subject }
 sig SetLevelOcc extends lc/MutateOcc { to: one Int } { bindings = subject + to }
 sig RetireWidgetOcc extends lc/RetireOcc {} { bindings = subject }
 
-fact SpineAdopted { wl/chained and wl/commitAlwaysAccepts }
+fact SpineAdopted { wl/chained }
 
 // ── the witness, ONCE PER SHAPE (the idiom the adopters restate to) ─────────────────────────────
 fun domainViol[o: lc/MutateOcc]: set Reason { ((o & SetLevelOcc).to < 0) => RNegative else none }

@@ -1,7 +1,9 @@
 module meta/subject_log/tests/subject_log
+// Reflects dafny-domain src/meta/tests/trace-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/action/stateful
 open meta/subject_log/subject_log[Widget, WidgetState] as wl
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 /*
  * Suite for the subject-log SPINE (DT-015 Q5 extraction), exercised on a minimal local
@@ -16,14 +18,14 @@ sig WidgetState extends Snapshot { level: one Int }
 fact WidgetStateExtensional { all disj a, b: WidgetState | a.level != b.level }
 
 one sig RNegative extends Reason {}
-one sig RDuplicateArche extends Reason {}   // this root's own typed refusal for a re-sent origin (the pattern's atom lives in meta/intent_log/semantics)
 
 sig SetLevelOcc extends wl/SubjectOcc { to: one Int } { bindings = subject + to }
 
-fact SpineAdopted { wl/chained and wl/commitAlwaysAccepts }
+one sig WidgetService extends Service {}
+fact SpineAdopted { wl/chained }
+fact WidgetActivated { activated[WidgetService, wl/SubjectOcc] }   // DT-015 R2: beside the spine adoption
 fun setViol[o: SetLevelOcc]: set Reason {
   ((o.to < 0) => RNegative else none)
-  + (wl/archeDuplicate[o] => RDuplicateArche else none)   // DT-029 E1: the idempotent callee's refusal
 }
 fact SetLevelWitness {
   all o: SetLevelOcc | (o.admission = Accepted iff no setViol[o])
@@ -91,39 +93,23 @@ assert unit_slog_threadIsCommitted {
 }
 check unit_slog_threadIsCommitted for 5 but 4 Int expect 0
 
-// ── origin identity (DT-029 E1): per (arche, subject), adopted by this log through its guard ───────
-// A second operation re-sending an origin already committed on the widget is refused RDuplicateArche;
-// the first stands (the lost-reply retry lands exactly once).
-run unit_slog_archeDuplicateRefused {
-  some w: Widget, o: SetLevelOcc, disj a, b: SetLevelOcc |
-    committed[o] and o.subject != w and committed[a] and refusedAtAdmission[b] and b.admission.because = RDuplicateArche
-    and a.subject = w and b.subject = w and a.arche = o and b.arche = o
-    and precedes[o.tick, a.tick] and precedes[a.tick, b.tick]
+
+// ── the activation (DT-015 D1 to D3): the rows cite the act that wrote them; no per-row origin law ──────────────────
+// THE SIBLING WITNESS (MP, Journal 192741): one activation writes TWO committed operations on ONE widget. RED on the
+// tree before DT-015: `ArcheUnique` (DT-029 Q8) forbade two committed rows on one subject citing one origin (UNSAT).
+run unit_slog_siblingEffectsOneActivation {
+  some a: Call, w: Widget, disj x, y: SetLevelOcc |
+    committed[a] and committed[x] and committed[y] and x.subject = w and y.subject = w and x.arche = a and y.arche = a
 } for 5 but 4 Int expect 1
 
-// One origin may span TWO subjects (a transfer's paired rows, SAMWISE-S1): uniqueness is per (arche, subject).
-run unit_slog_archeTwoSubjectsOneArche {
-  some o: SetLevelOcc, disj a, b: SetLevelOcc |
-    committed[o] and committed[a] and committed[b] and a.subject != b.subject
-    and a.arche = o and b.arche = o and o.subject != a.subject and o.subject != b.subject
+// One activation may span TWO subjects (a transfer's paired rows, SAMWISE-S1) — unchanged by the cut.
+run unit_slog_oneActivationTwoSubjects {
+  some a: Call, disj x, y: SetLevelOcc | committed[a] and committed[x] and committed[y] and x.subject != y.subject
+    and x.arche = a and y.arche = a
 } for 5 but 4 Int expect 1
 
-// A same-subject reaction may cite a SELF-MINTED row (E1 as amended on MINESWEEPER's review, 2026-09-03): the
-// row's own identity never occupies a uniqueness slot — the law is over CITATIONS, one-for-one with the
-// runtime's partial index. (The first E1 cut forbade this; the negative witness it carried was retired.)
-run unit_slog_archeSelfMintedReactionAllowed {
-  some w: Widget, o, a: SetLevelOcc | committed[o] and o.arche = o and committed[a] and o.subject = w and a.subject = w and a.arche = o
+// A refused operation cites a refused activation and still reads the real record (chaining is unconditional).
+run unit_slog_refusedRowCitesRefusedActivation {
+  some a: Call, s: Widget, o, r: SetLevelOcc | committed[o] and o.subject = s and r.subject = s and precedes[o.tick, r.tick]
+    and refusedAtAdmission[a] and r.arche = a and refusedAtAdmission[r] and r.pre = o.post
 } for 5 but 4 Int expect 1
-
-// But citing an already-CITED row on the same subject is a DISTINCT origin (immediate cause, not a root — MP 3.2),
-// so it is legal: the first run of this pair was written as "never along a chain" and the solver refuted it
-// (2026-09-03) with exactly this instance. Recorded as a witness so the semantics stay visible.
-run unit_slog_archeCitedTriggerDistinct {
-  some w: Widget, x, o, a: SetLevelOcc | committed[x] and committed[o] and committed[a]
-    and o.subject = w and a.subject = w and o.arche = x and a.arche = o
-} for 5 but 4 Int expect 1
-
-// The uniqueness predicate is a THEOREM of the refusal sitting in the guard (D-3: adopt it as a fact only where
-// a log models the index without modelling the refusal).
-assert unit_slog_archeUniqueTheorem { wl/archeUniquePerSubject }
-check unit_slog_archeUniqueTheorem for 5 but 4 Int expect 0

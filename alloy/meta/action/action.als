@@ -11,8 +11,8 @@ module meta/action/action
  *    `committedUpTo[t]`; a refused action contributes nothing (rollback is free).
  *  - `bindings: set univ` — the BINDING ENVIRONMENT: the quantifier prefix of the guarded formula
  *    ("∃ x such that guard(x) then effect(x)"); DERIVED per kind from named, TYPED binding fields.
- *  - Two guards bracket the Effect: `admission` reads the pre-projection (`committedBefore`),
- *    `commit` reads the post-projection (`committedUpTo`).
+ *  - ONE guard, `admission`, reads the pre-projection (`committedBefore`); an admitted action IS committed
+ *    (MP, Journal 193772; TN-003 row 9: the post-commit check left with the Dafny spine, which has none).
  *  - WITNESSING PATTERN: guards are made evaluable per kind by a fact tying the stored verdict to
  *    a predicate — `all a: K | a.admission = Accepted iff kAdmissible[a]`.
  *  - The core is MINIMAL (DT-011): OPT-IN subset extensions add state snapshots
@@ -30,26 +30,19 @@ open meta/action/outcome          // Decision, Accepted, Rejected, Reason
 /** Action — an executed activity, reified as an Occurrence (an entry in the log). */
 abstract sig Action extends Occurrence {
   bindings:  set univ,           // the binding environment (quantifier prefix) — DERIVED from per-kind typed fields
-  admission: one Decision,       // guard verdict on the pre-projection
-  commit:    lone Decision       // guard verdict on the post-projection — present iff admitted
+  admission: one Decision        // the guard's verdict on the pre-projection: the action's outcome
 }
 
-/** The commit guard is evaluated exactly when the action was admitted. */
-fact CommitOnlyIfAdmitted { all a: Action | some a.commit iff a.admission = Accepted }
+// ── the two outcomes (they partition Action) ─────────────────────────────────────────────────────
 
-// ── the three outcomes (they partition Action) ───────────────────────────────────────────────────
-
-/** committed — both gates accepted (only committed actions contribute to the state projection). */
-pred committed[a: Action] { a.admission = Accepted and a.commit = Accepted }
+/** committed — admitted (only committed actions contribute to the state projection). */
+pred committed[a: Action] { a.admission = Accepted }
 
 /** refusedAtAdmission — the first gate refused; the action was never attempted against a result. */
 pred refusedAtAdmission[a: Action] { a.admission in Rejected }
 
-/** refusedAtCommit — admitted, but the result was refused by the second gate. */
-pred refusedAtCommit[a: Action] { a.admission = Accepted and a.commit in Rejected }
-
-/** refusalReasons — why a refused action did not take effect (from whichever guard rejected). */
-fun refusalReasons[a: Action]: set Reason { a.admission.because + a.commit.because }
+/** refusalReasons — why a refused action did not take effect. */
+fun refusalReasons[a: Action]: set Reason { a.admission.because }
 
 // ── projection domains — the log prefixes state is folded over ───────────────────────────────────
 
