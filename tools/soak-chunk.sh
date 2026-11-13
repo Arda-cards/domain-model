@@ -104,8 +104,6 @@ art_of() { # $1 = batch dir  $2 = root .als path  $3 = command
     printf '%s\n' "$k"
   fi
 }
-# the same key, computed by awk from plan.tsv's columns 2 (root) and 3 (command)
-AWK_KEY='function key(r, c) { sub(/^alloy\/soak\//, "", r); sub(/\.als$/, "", r); gsub(/\//, "_", r); return r "." c }'
 
 # ── foreign solvers (quiet window): Alloy JVMs on this host NOT belonging to $1 ──────
 foreign_solvers() { # $1 = batch dir (our own jobs carry "-o <batch>/" in their args)
@@ -179,7 +177,7 @@ cmd_chunk() {
     now=$(date +%s); remaining=$((end - now))
     # ── budget-cap watchdog (PDEV-1610 / DT-025 R2): a kill here is a bracket data ──
     # point ("too hard at this scope"), never a lost run — the ledger keeps it.
-    local wp wc wpid ws0 wel we wcap
+    local wp wc wpid ws0 wel we wcap wroot wcmd
     for wp in "$batch"/cmd/*.pid; do
       [ -f "$wp" ] || continue
       wc=$(basename "$wp" .pid)
@@ -188,7 +186,11 @@ cmd_chunk() {
       wpid=$(cat "$wp"); kill -0 "$wpid" 2>/dev/null || continue
       ws0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null); [ -n "$ws0" ] || continue
       wel=$((now - ws0))
-      we=$(awk -F'\t' -v k="$wc" "$AWK_KEY"' key($2, $3)==k || $3==k {print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
+      # the job's own plan row: by the root and the command its meta records (a job from before the key has no
+      # `command` line: its key is the command), never by the first same-named row of the plan
+      wroot=$(awk -F'\t' '$1=="root"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null)
+      wcmd=$(awk -F'\t' '$1=="command"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null); wcmd=${wcmd:-$wc}
+      we=$(awk -F'\t' -v r="$wroot" -v c="$wcmd" '$2==r && $3==c {print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
       if [ "$we" -ge 0 ]; then wcap=$((we * CAP_NUM)); else wcap=$UNKNOWN_CAP; fi
       [ "$wcap" -gt 0 ] || continue
       if [ "$wel" -gt "$wcap" ]; then
