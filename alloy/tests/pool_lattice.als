@@ -110,6 +110,9 @@ run sys_poolContributionReleasedAtRest {
   some cn: CancelOcc, p: InventoryPool, t: Tick | {
     committed[cn] and precedes[t, cn.tick]
     contributionHoldsPool[cn.subject, p, t]
+    // held UNTIL the Cancel: with only `precedes`, an attach, a RemoveContribution and then the Cancel also satisfied this,
+    // and there the remove, not the Cancel, let the pool go (Copilot's review of domain-model PR #12)
+    all u: Tick | (precedes[t, u] and precedes[u, cn.tick]) implies contributionHoldsPool[cn.subject, p, u]
     atRestAt[p, cn.tick]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
