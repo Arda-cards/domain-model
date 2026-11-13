@@ -794,6 +794,17 @@ run unit_dem_affirmedOnlyPoolNotFreshRefused {
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
       9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 0
 
+// A contribution's KEY is its own: it need not be the identity or a reference of any entity. (While the key was an
+// `EntityId`, the kernel's `NoOrphanEntityId` made every key an id some entity already used — Copilot's review of
+// domain-model PR #12.) `idsInUse` is typed over `univ` so the comparison stands whatever the key's type.
+fun idsInUse: set univ { Entity.eId + Entity.refs }
+run unit_dem_contributionKeyIsItsOwn {
+  some a: AddContributionOcc | committed[a] and a.contribution in ExternalContribution
+    and a.contribution.cid not in idsInUse
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+
 // ── DemandTests.EditAndRemove ──────────────────────────────────────────────────────────────────────────────────────────────
 // An edit of an external contribution sets the fields it carries (quantity and reference) and keeps the pool and the id.
 run unit_dem_editExternalSetsFields {
