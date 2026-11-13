@@ -30,8 +30,12 @@ run int_ord_loads {
     demandStatusAt[d, a.tick] = DS_RELEASED
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      11 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
+      1 Contribution, 0 Placement, 12 Occurrence, 13 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      // re-scoped with the TN-004 projection (2026-11-13): a demand is RELEASED only with a live contribution
+      // (RNoContribution), and with no card cycle here that is an EXTERNAL one, whose pool must exist (RNoSuchPool).
+      // At "0 InventoryPool" and 8 occurrences this finder had no instance (UNSAT in 559 s in the night window of
+      // 2026-11-13). The arc now carries the pool's Create, the contribution's attach and their calls.
 
 // ── the O2 Submit arc on the REAL demand log: demand Create → Release (real chaining/effects),
 // order AddLine attaches the RELEASED item, demand StartProduction (the saga's first leg — its
@@ -51,8 +55,10 @@ run int_ord_submitArc {
     d in servicedOf[ord, s.tick]
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      14 Tick, 14 EntityId, 14 Snapshot, 12 Occurrence, 2 Note, 2 Reference expect 1
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
+      1 Contribution, 0 Placement, 17 Tick, 16 EntityId, 17 Snapshot, 15 Occurrence, 2 Note, 2 Reference expect 1
+      // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads: +1 pool, +1 contribution, +3 occurrences
+      // (the pool's Create, its call, the contribution's attach)
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8 (mirrors unit_ord_buildAndSubmit):
       // Submit requires a LINKED vendor, so the arc carries the BA Create fixture (PDEV-241 re-base)
 
@@ -67,8 +73,9 @@ run int_ord_cancelReturnsToQueue {
     demandStatusAt[d, c.tick] = DS_RELEASED       // demand knew nothing of the order (O3)
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      12 Tick, 11 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
+      1 Contribution, 0 Placement, 12 Occurrence, 14 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads
 
 // ── law re-discharge on the composed stack ──────────────────────────────────────────────────────
 assert int_ord_contract_demandIndivisible { demandIndivisible }
