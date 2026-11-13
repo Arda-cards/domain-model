@@ -70,7 +70,7 @@ run sys_poolAtRestWitness {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 4 Quantity, 9 Occurrence, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 10 Snapshot, 4 Quantity, 9 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The SAT companion: the premise + one holder of EACH of the FOUR kinds, on four distinct pools — the global reading
 // has real content (dafny-domain PoolLatticeTests.LatticeCompanion and ContributionHolder on one world). One demand may
@@ -87,7 +87,7 @@ run sys_poolLatticeCompanion {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 0 InventoryItem, 4 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
-      18 EntityId, 11 Tick, 15 Snapshot, 4 Quantity, 11 Occurrence, 2 Note, 2 Reference expect 1
+      18 EntityId, 11 Tick, 15 Snapshot, 4 Quantity, 11 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── the fourth holder's witnesses (TN-004; dafny-domain PoolLatticeTests, DT-016 PR B) ──────────────────────────────────────
 // PoolLatticeTests.ContributionHolder: a live demand's external contribution holds a pool, ALONE on it (no holder of the
@@ -102,7 +102,7 @@ run sys_poolContributionHolder {
       0 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
-      8 EntityId, 7 Tick, 8 Snapshot, 4 Quantity, 7 Occurrence, 2 Note, 2 Reference expect 1
+      8 EntityId, 7 Tick, 8 Snapshot, 4 Quantity, 7 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // PoolLatticeTests.ContributionReleasedAtRest (QA738 (a)): a committed Cancel of the demand releases its external
 // contribution's pool — held just before, at rest from the Cancel on (the demand's promise `holdersReleasedAtComplete`).
@@ -119,4 +119,4 @@ run sys_poolContributionReleasedAtRest {
       0 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
-      8 EntityId, 8 Tick, 9 Snapshot, 4 Quantity, 8 Occurrence, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Tick, 9 Snapshot, 4 Quantity, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1

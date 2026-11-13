@@ -17,7 +17,7 @@ assert unit_ordr_receivedIsAccumulated {
 }
 check unit_ordr_receivedIsAccumulated for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 RecordReceiptOcc, 1 ReverseReceiptOcc, 8 Quantity, 2 Note, 2 Reference expect 0
+      2 RecordReceiptOcc, 1 ReverseReceiptOcc, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // Witness, empty end: a started line with no postings reads the keyed zero.
 run unit_ordr_zeroBeforeAnyPosting {
@@ -28,7 +28,7 @@ run unit_ordr_zeroBeforeAnyPosting {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      8 EntityId, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Witness, accumulating end: two committed postings; the stored value is their pairwise sum.
 run unit_ordr_twoPostingsAccumulate {
@@ -40,7 +40,7 @@ run unit_ordr_twoPostingsAccumulate {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference expect 1
+      9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Witness, the compensated middle (cut 9): one receipt then one equal reversal — the stored
 // value reads the keyed zero again (receipts − reversals nets out).
@@ -55,4 +55,4 @@ run unit_ordr_reversalNetsToZero {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference expect 1
+      9 Tick, 9 EntityId, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1

@@ -36,7 +36,7 @@ run int_rcv_loads {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 8 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 8 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The composed three-holder arc (the S5 scenario as a REAL-machinery witness): the genesis
 // premise HOLDS with a line holding its pool, a LIVE cycle holding a second, and a LIVE
@@ -53,7 +53,7 @@ run int_rcv_latticeCompanion {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 3 InventoryPool, 1 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
-      22 EntityId, 22 Tick, 24 Snapshot, 4 Quantity, 22 Occurrence, 2 Note, 2 Reference expect 1
+      22 EntityId, 22 Tick, 24 Snapshot, 4 Quantity, 22 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
       // RE-SIZED with the TN-004 projection (2026-11-13). It stated "17 Occurrence, 16 Tick": one occurrence per tick
       // made that 16, and the arc COUNTS 16 to 20 on these stacks: the item version the demand pins; three pools'
       // Creates and the pool service's call; the cycle's Request, Accept, StartProcessing and the kanban's call; the

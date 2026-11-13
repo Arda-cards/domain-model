@@ -31,7 +31,7 @@ run int_ord_loads {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
-      1 Contribution, 0 Placement, 12 Occurrence, 13 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      1 Contribution, 0 Placement, 12 Occurrence, 13 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
       // re-scoped with the TN-004 projection (2026-11-13): a demand is RELEASED only with a live contribution
       // (RNoContribution), and with no card cycle here that is an EXTERNAL one, whose pool must exist (RNoSuchPool).
       // At "0 InventoryPool" and 8 occurrences this finder had no instance (UNSAT in 559 s in the night window of
@@ -56,7 +56,7 @@ run int_ord_submitArc {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
-      1 Contribution, 0 Placement, 19 Tick, 17 EntityId, 19 Snapshot, 17 Occurrence, 2 Note, 2 Reference expect 1
+      1 Contribution, 0 Placement, 19 Tick, 17 EntityId, 19 Snapshot, 17 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
       // 17 occurrences: the arc COUNTS 15 on the real stacks (the item's version, the vendor's version and the pool's
       // Create with one call each; the demand's Create, attach, Release, StartProduction and call; the order's Create,
       // AddLine, Submit and call), and at exactly 15 it had no verdict in 900 s (2026-11-13). Two are spare.
@@ -77,14 +77,14 @@ run int_ord_cancelReturnsToQueue {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
-      1 Contribution, 0 Placement, 12 Occurrence, 14 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      1 Contribution, 0 Placement, 12 Occurrence, 14 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
       // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads
 
 // ── law re-discharge on the composed stack ──────────────────────────────────────────────────────
 assert int_ord_contract_demandIndivisible { demandIndivisible }
 check int_ord_contract_demandIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference expect 0
+      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert int_ord_contract_frozenOutsideDraft { frozenOutsideDraft }
 check int_ord_contract_frozenOutsideDraft for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference expect 0
+      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0

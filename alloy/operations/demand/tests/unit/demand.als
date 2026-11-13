@@ -23,43 +23,43 @@ open resources/kanban_card/kanban_card_mock                   // kanban as CONTR
 // ── CONTRACT DISCHARGE (check; UNSAT = the law holds of the implementation) ─────────────────────
 assert unit_dem_contract_cycleIndivisible { cycleIndivisible }
 check unit_dem_contract_cycleIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_frozenOutsideOpen { frozenOutsideOpen }
 check unit_dem_contract_frozenOutsideOpen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The C/OP saga commit gates — theorems of the reason-precise guards:
 assert unit_dem_contract_attachRequiresAccepted { attachRequiresAccepted }
 check unit_dem_contract_attachRequiresAccepted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_removeRequiresShelved { removeRequiresShelved }
 check unit_dem_contract_removeRequiresShelved for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_startProductionRequiresStarted { startProductionRequiresStarted }
 check unit_dem_contract_startProductionRequiresStarted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_distributeRequiresReady { distributeRequiresReady }
 check unit_dem_contract_distributeRequiresReady for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_completeRequiresSettled { completeRequiresSettled }
 check unit_dem_contract_completeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // (`completeRequiresDistributed` left the contract with TN-004 row 11, dafny-domain MD-084: the release at Complete is derived
 // from the status, and what the released pools hold is the placements' law, `completedItemsPlaced`.)
 
 assert unit_dem_contract_withdrawnDetachReconciles { withdrawnDetachReconciles }
 check unit_dem_contract_withdrawnDetachReconciles for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Quantity, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_terminalClosure { terminalClosure }
 check unit_dem_contract_terminalClosure for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── SAT witnesses — the §2 scenarios (C/OP call-first: cycle op, then demand commit) ────────────
 // Scenario 1 (collate and release): Accept c1 → CreateWithContribution → Accept c2 → AddContribution → Release.
@@ -73,7 +73,7 @@ run unit_dem_collateAndRelease {
     #attachedAt[d, r.tick] = 2
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A committed attach reads back: the member's Accept PRECEDED it (call-first), the member is
 // attached and REQUESTED at the commit.
@@ -85,7 +85,7 @@ run unit_dem_attachReadsBack {
     statusAt[k.cycle, o.tick] = REQUESTED
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The saga SETTLES: a tick where the demand ↔ cycle logs are ALIGNED with real content (the
 // quiescence law's witnessed side — the runtime probe watches this at scale).
@@ -95,14 +95,14 @@ run unit_dem_sagaSettles {
     liveDemandAt[d, t] and some attachedLiveAt[d, t]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Scenario 2 (characteristic refusal): AddContribution after Release → exactly RFrozen.
 run unit_dem_frozenRefused {
   some o: AddContributionOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
-      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Scenario 3a (R7, OPEN): the cycle is withdrawn on its own log; the reaction detaches it and
 // the demand SELF-CANCELS (detach → Cancel composite; RHasCards vacuous).
@@ -116,7 +116,7 @@ run unit_dem_withdrawalReactionSelfCancel {
     demandStatusAt[d, cn.tick] = DS_CANCELED
   }
 } for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 11 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 11 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Scenario 3b (R7, RELEASED) — BOUNDARY WITNESS (RECONCILED): the frozen-state dangle is LEGAL,
 // surfaced by retiredMembersAt.
@@ -126,7 +126,7 @@ run unit_dem_frozenDangleBoundary {
     some retiredMembersAt[d, t]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // R7 in-flight BOUNDARY WITNESS (C/NOTIF): an OPEN demand with a withdrawn member still
 // attached — the legal intermediate between the withdrawal and the reaction.
@@ -136,7 +136,7 @@ run unit_dem_openWithdrawnInFlight {
     some retiredMembersAt[d, t]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Scenario 5 (R8, produce — call-first): the member's StartProcessing precedes the committed
 // StartProduction; both logs read IN_PROCESS at the commit.
@@ -148,7 +148,7 @@ run unit_dem_startProductionCommits {
     statusAt[k.cycle, o.tick] = IN_PROCESS
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Scenario 5 variant (R8, production failure — call-first): the caller settles the
 // inventory-less member back to the queue (ProductionFailure → REQUESTING), then Complete.
@@ -161,13 +161,13 @@ run unit_dem_completeWithProductionFailure {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 11 Tick, 9 EntityId, 12 Snapshot,
-      10 Occurrence, 2 Note, 2 Reference expect 1
+      10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Terminal Delete/Retire (R7): the tombstoned retirement of a CANCELED task.
 run unit_dem_deleteRetiresTerminal {
   some o: DeleteDemandOcc | committed[o] and dPre[o].sStatus = DS_CANCELED
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── C/OP in-flight BOUNDARY WITNESSES (legal intermediates — the remodel's point) ───────────────
 // An ACCEPTED cycle not (yet) attached: the attach saga's crash window; convergence = retry the
@@ -179,7 +179,7 @@ run unit_dem_acceptedUnattachedInFlight {
     no o: AttachOcc + TargetOcc | committed[o]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A STARTED member under a still-RELEASED demand: the production saga's partial-call window.
 run unit_dem_startedBeforeCommitInFlight {
@@ -189,7 +189,7 @@ run unit_dem_startedBeforeCommitInFlight {
     no o: StartProductionOcc | committed[o]
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── R1-amended BOUNDARY WITNESS: no uniqueness — two OPEN demands for ONE (Item, Station) pair
 // in one tenant are LEGAL (single-OPEN, if wanted, is caller policy over `demandsFor`). ─────────
@@ -201,40 +201,40 @@ run unit_dem_twoOpenSameIdentityLegal {
     a + b in demandsFor[a.itemPin.subject, a.stationRef, t]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── reason-precise refusal witnesses (one per Reason) ───────────────────────────────────────────
 run unit_dem_demandStartedRefused {
   some o: CreateDemandOcc | refusedAtAdmission[o] and RDemandStarted in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_demandClosedRefused {
   some o: ReleaseOcc | refusedAtAdmission[o] and o.admission.because = RDemandClosed
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_badStateRefused {
   some o: StartProductionOcc | refusedAtAdmission[o] and o.admission.because = RBadState
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // RForeignRef guards the RECORD-carried refs only (holding/delivery) — the entity's
 // stationRef is kernel-covered; the itemPin rides DemandItemPinTenancy (cross-tenant = unrepresentable).
 run unit_dem_foreignRefRefused {
   some o: StartProductionOcc | refusedAtAdmission[o] and RForeignRef in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_foreignCycleRefused {
   some o: AddContributionOcc | refusedAtAdmission[o] and RForeignCycle in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_cycleHeldRefused {
   some o: AddContributionOcc | refusedAtAdmission[o] and RCycleHeld in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The gate refusal: attaching a cycle still REQUESTING (its Accept — the saga's first leg —
 // has not committed) is refused with exactly RCycleIneligible.
@@ -244,28 +244,28 @@ run unit_dem_cycleIneligibleRefused {
     statusAt[cyclesOf[o.contribution], o.tick] = REQUESTING
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_cycleLiveRefused {
   some o: DetachWithdrawnOcc | refusedAtAdmission[o] and RCycleLive in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // (The name is the Dafny witness's pointer; since TN-004 the reason is RNotContribution: RNotAttached is declared, never raised.)
 run unit_dem_notAttachedRefused {
   some o: RemoveContributionOcc | refusedAtAdmission[o] and RNotContribution in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_hasCardsRefused {
   some o: CancelOcc | refusedAtAdmission[o] and o.admission.because = RHasCards
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_badAllocationRefused {
   some o: DistributeOcc | refusedAtAdmission[o] and RBadAllocation in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // (`unit_dem_undistributedRefused` left with its reason: TN-004 row 11, dafny-domain MD-084 — a Complete is no longer refused
 // for a holding that is not retired. What the released pools still hold is the placements' matter: the PR B section below.)
@@ -273,14 +273,14 @@ run unit_dem_badAllocationRefused {
 run unit_dem_notTerminalRefused {
   some o: DeleteDemandOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An unattached REQUESTING cycle persists indefinitely (R6: attachment is NEVER automatic).
 run unit_dem_unattachedRequestingLegal {
   some c: CardCycle, t: Tick | statusAt[c, t] = REQUESTING and no demandOf[c, t]
     and no o: demandOccKinds | committed[o]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── the §8.5.3 lattice row + provenance (DT-020 cut 5) — UNIT-dischargeable since kanban
 // published poolProvenance: the cross-kind clause reasons from attach payloads to record
@@ -289,12 +289,12 @@ run unit_dem_unattachedRequestingLegal {
 assert unit_dem_contract_holdingProvenance { holdingProvenance }
 check unit_dem_contract_holdingProvenance for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
-      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_holdingExclusive { holdingExclusiveWhileLive }
 check unit_dem_contract_holdingExclusive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
-      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The SAT companion (anti-vacuity): the premise HOLDS with a live demand holding its pool and
 // a live MOCK cycle holding a distinct one (the cycle's binding now needs its committed
@@ -307,17 +307,17 @@ run unit_dem_latticeCompanion {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
-      12 EntityId, 9 Tick, 10 Snapshot, 9 Occurrence, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 10 Snapshot, 9 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── the ProductionDelivery subject (§8.1.2/§8.1.4, DT-020 build cut 3) ──────────────────────────
 // Contract discharge — the §8.1.4 gates as theorems of createDeliveryViol:
 assert unit_dem_contract_createDeliveryGated { createDeliveryGated }
 check unit_dem_contract_createDeliveryGated for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference expect 0
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_dem_contract_deliveryTerminalRevoke { deliveryTerminalRevoke }
 check unit_dem_contract_deliveryTerminalRevoke for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference expect 0
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // SCOPES of the delivery finders (TN-004): the target reaches IN_PROCESS through an external contribution and its pool, so
 // a committed pair counts 10 occurrences: the item's version and its call, the pool's create and its call, the demand's
@@ -334,7 +334,7 @@ run unit_dem_deliveryComposedArc {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The composed reversal arc: Revoke + ExtractProduction; the delivery leaves the
 // contributions fold forever (reversing-entry semantics — §8.1.1).
@@ -347,7 +347,7 @@ run unit_dem_deliveryRevokedArc {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.1.4 refusal: a CreateDelivery whose target is not IN_PROCESS (here: still OPEN) —
 // exactly RTargetNotInProcess. The OPEN→IN_PROCESS choreography is a composite's, not ours.
@@ -358,7 +358,7 @@ run unit_dem_targetNotInProcessRefused {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      8 EntityId, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.1.4 item agreement refusal: the delivery denominated in the WRONG item — exactly
 // RWrongItem (the pool module's reason reused; agreement is a Create guard, never a
@@ -370,7 +370,7 @@ run unit_dem_deliveryWrongItemRefused {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      13 Occurrence, 13 Tick, 16 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      13 Occurrence, 13 Tick, 16 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // M3 (DT-020 §8.5.3 / SPEARHEAD-D1 A′-2, MINESWEEPER model-deltas M3.1): pool-vs-demand item
 // agreement on the RECORD side too. MF-003 (MP, 2026-10-16) narrows the arm to COMMITTED creates. A
@@ -385,7 +385,7 @@ assert unit_dem_recordProductionItemArmSubsumed {
 }
 check unit_dem_recordProductionItemArmSubsumed for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool,
-      10 EntityId, 9 Snapshot, 2 Note, 2 Reference expect 0
+      10 EntityId, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // MF-003 (MP, 2026-10-16): the honest RETRY. A create naming a pool of another item is refused with
 // RWrongItem; the retry (same delivery, naming a pool — which its committed create guard makes one that
@@ -401,7 +401,7 @@ run unit_dem_deliveryRetryAfterWrongPoolRecorded {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 3 InventoryPool, 2 Contribution, 0 Placement,
-      15 Occurrence, 15 Tick, 17 EntityId, 17 Snapshot, 2 Note, 2 Reference expect 1
+      15 Occurrence, 15 Tick, 17 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // M3.2: the minted holding pool's itemPin always agrees with the demand's item — a THEOREM of
 // the StartProduction effect (`StartProductionHoldingPoolPin`). RED before the fact: nothing
@@ -412,7 +412,7 @@ assert unit_dem_holdingPoolPinMatchesItem {
 }
 check unit_dem_holdingPoolPinMatchesItem for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
-      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // Revoke on an already-REVOKED delivery — exactly RDeliveryClosed (terminal §8.1.1).
 run unit_dem_revokeRevokedRefused {
@@ -420,7 +420,7 @@ run unit_dem_revokeRevokedRefused {
     and some o.pre and pdPre[o].sStatus = PD_REVOKED
 } for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      13 Tick, 13 EntityId, 14 Snapshot, 13 Occurrence, 2 Note, 2 Reference expect 1
+      13 Tick, 13 EntityId, 14 Snapshot, 13 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
       // raised at the Alloy cut (2026-11-06): no verdict in 2 h 23 min at the old bounds; SAT in 166 s at these
       // (12 Occurrence = 2 Call + 10 rows, Snapshot 14 at the bound — each row brings its activation call)
       // census +1 across the board at DT-023 cut 7a: the trace's item-log fixture (the
@@ -442,7 +442,7 @@ run unit_dem_scanDerivedRetiredAllowed {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
-      12 EntityId, 9 Tick, 9 Snapshot, 9 Occurrence, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 9 Snapshot, 9 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // INCEPTION stays gated: a DIRECT create (the caller chooses the item — F6/queue-add) of a
 // demand for a retired item refuses with exactly RRetiredRef.
@@ -454,7 +454,7 @@ run unit_dem_directCreateRetiredRefused {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem,
-      10 EntityId, 7 Tick, 7 Snapshot, 7 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 7 Tick, 7 Snapshot, 7 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DT-030 retire cut (2026-09-09): terminality ──────────────────────────────────────────────────
 // Nothing commits on a demand item after its committed delete (the tombstone is the end of history).
@@ -462,7 +462,7 @@ assert unit_dem_nothingAfterRetire {
   all r: DeleteDemandOcc, o: CreateDemandOcc + CreateWithContributionOcc + AddContributionOcc + RemoveContributionOcc + EditContributionOcc + SetContributionNotesOcc + SetUserNotesOcc + SetWorkOrderOcc + SetFulfillmentNotesOcc + DetachWithdrawnOcc + ReleaseOcc + ReopenOcc + StartProductionOcc + RecordProductionOcc + ExtractProductionOcc + DistributeOcc + CompleteOcc + CancelOcc + DeleteDemandOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
 }
 check unit_dem_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 0
+      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — a COMPLETE is refused when its holding pool's newest
 // write is dated after the COMPLETE's own stamp. RESTATED by TN-004 row 11 (dafny-domain MD-084, DT-016 PR B): Option B's
@@ -479,14 +479,14 @@ run unit_dem_completeBackdatedHoldingRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 5 Instant,
-      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // W2: every committed pool write causally before a committed COMPLETE is dated at or before it (the A5
 // condition as a published law — a theorem of the RBackdatedHolding arm and the pool's own trace law).
 assert unit_dem_contract_completeStampedAfterHolding { completeStampedAfterHolding }
 check unit_dem_contract_completeStampedAfterHolding for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
-      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // (W3, the check of `completeRequiresRetiredHolding`, left with the law: TN-004 row 11, dafny-domain MD-084.)
 
@@ -500,7 +500,7 @@ run unit_dem_completeUnretiredEmptyHoldingCommits {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // W5 (control): the ruled path commits — the holding pool retired EMPTY, dated before the COMPLETE, then COMPLETE.
 run unit_dem_completeRetiredHoldingCommits {
@@ -511,7 +511,7 @@ run unit_dem_completeRetiredHoldingCommits {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // W6 (control, the record's E7): the retire dated EXACTLY at the COMPLETE's stamp lets it commit (at-or-before).
 run unit_dem_completeHoldingDatedAtCommits {
@@ -522,7 +522,7 @@ run unit_dem_completeHoldingDatedAtCommits {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── QA704 Q4 (a), DT-009 Q27: the holding pool's item pin is a guard arm of StartProduction (reflects dafny-domain
 // src/operations/demand/demand.dfy StartProductionViol, RWrongItem) ──
@@ -532,13 +532,13 @@ run unit_dem_startProductionWrongItemRefused {
   some o: StartProductionOcc | refusedAtAdmission[o] and RWrongItem in o.admission.because
     and some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The law is a THEOREM of the arm: a committed StartProduction's resolved holding pool carries the demand's item pin (M3.2).
 check unit_dem_holdingPoolPinHolds {
   all o: StartProductionOcc | committed[o] implies
     (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference expect 0
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── QA704 Q2 (b) (MP, 2026-11-05; dafny-domain#33, MD-074): a named holding pool must EXIST and be LIVE ─────────────────────
 // A StartProduction naming a holding that resolves to no live pool (no pool, or a pool retired before the act) is refused
@@ -547,7 +547,7 @@ run unit_dem_startProductionNoSuchPoolRefused {
   some o: StartProductionOcc | some o.holding and not namedPoolLive[o.holding, o.tick]
     and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note, 2 Reference expect 1
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The holding retired between two deliveries: a RecordProduction on the IN_PROCESS demand is refused RNoSuchPool (reading A: the
 // delivery's genesis refuses the same condition, so the second Deliver refuses whole; this witness is the direct record).
 run unit_dem_recordProductionHoldingRetiredRefused {
@@ -556,7 +556,7 @@ run unit_dem_recordProductionHoldingRetiredRefused {
     and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 InventoryPool, 1 Contribution, 0 Placement,
-      12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The delivery's genesis under the same condition is refused RNoSuchPool (the pair keeps one verdict).
 run unit_dem_createDeliveryHoldingRetiredRefused {
   some c: CreateDeliveryOcc, d: resolve[c.subject.demandRef] & DemandItem, p: InventoryPool |
@@ -564,16 +564,16 @@ run unit_dem_createDeliveryHoldingRetiredRefused {
     and refusedAtAdmission[c] and RNoSuchPool in c.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 InventoryPool, 1 Contribution, 0 Placement,
-      12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The laws are THEOREMS of the arms (Dafny StartedHoldingLive, RecordedHoldingLive): a committed act's holding is live at its tick.
 check unit_dem_startedHoldingLive {
   all o: StartProductionOcc | (committed[o] and some o.holding) implies namedPoolLive[o.holding, o.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note, 2 Reference expect 0
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note, 2 Reference, 2 ContributionId expect 0
 check unit_dem_recordedHoldingLive {
   all o: RecordProductionOcc | (committed[o] and some dPre[o].sHolding) implies namedPoolLive[dPre[o].sHolding, o.tick]
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool, 10 EntityId, 9 Occurrence, 9 Tick, 2 Note, 2 Reference expect 0
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool, 10 EntityId, 9 Occurrence, 9 Tick, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ══ TN-004, the demand's contributions (dafny-domain MD-076 to MD-080; PR A, on dafny-domain main at 0040544) ════════════════
 // The FINDERS of the witnesses PR A added to dafny-domain src/operations/demand/tests/demand-tests.dfy, each named after the
@@ -601,7 +601,7 @@ run unit_dem_emptyReleaseRefused {
     refusedAtAdmission[r] and r.admission.because = RNoContribution
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 6 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 6 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // After ONE card contribution the Release commits (the card's Accept came first: call-first).
 run unit_dem_releaseAfterCardContribution {
@@ -614,7 +614,7 @@ run unit_dem_releaseAfterCardContribution {
     demandStatusAt[d, r.tick] = DS_RELEASED
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // After ONE external contribution the Release commits too: no card is needed.
 run unit_dem_releaseAfterExternalContribution {
@@ -628,7 +628,7 @@ run unit_dem_releaseAfterExternalContribution {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.ContributionIdOnceAndReferenceUnique ───────────────────────────────────────────────────────────────────────
 // A second attach under an id the demand's log already carried is refused with exactly RContributionStarted.
@@ -640,7 +640,7 @@ run unit_dem_contributionStartedRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
-      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Two external contributions under one reference: the second is refused with exactly RDuplicateReference.
 run unit_dem_duplicateReferenceRefused {
@@ -653,7 +653,7 @@ run unit_dem_duplicateReferenceRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
-      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A card contribution whose DEFAULT reference (its card's serial) equals a live external contribution's reference is refused
 // the same: the uniqueness compares the references as read, not as stored.
@@ -667,7 +667,7 @@ run unit_dem_cardSerialClashRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CardSerialDefault ──────────────────────────────────────────────────────────────────────────────────────────
 // A card contribution attached with no override keeps none in the state and READS its card's serial.
@@ -679,7 +679,7 @@ run unit_dem_cardSerialDefault {
     some referenceOf[cc]
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Across a rollover of one card: attaching the successor cycle BEFORE the withdrawn one is detached is refused with exactly
 // RDuplicateReference (both read the card's serial; the withdrawn entry is still in the state).
@@ -694,7 +694,7 @@ run unit_dem_rolloverBeforeDetachRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
-      12 Occurrence, 13 Tick, 12 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 13 Tick, 12 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // After the detach the successor attaches, and reads the same serial: the default does not collide with an entry that left.
 run unit_dem_rolloverAfterDetachCommits {
@@ -706,7 +706,7 @@ run unit_dem_rolloverAfterDetachCommits {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
-      13 Occurrence, 14 Tick, 12 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+      13 Occurrence, 14 Tick, 12 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.ExternalPoolArms ───────────────────────────────────────────────────────────────────────────────────────────
 // A committed external attach: its pool exists and is live, is in the demand's tenant and carries the demand's item.
@@ -718,7 +718,7 @@ run unit_dem_externalPoolAttached {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The pool does not exist, or is retired: exactly RNoSuchPool.
 run unit_dem_externalNoSuchPoolRefused {
@@ -728,7 +728,7 @@ run unit_dem_externalNoSuchPoolRefused {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The pool is another tenant's: RForeignRef is among the reasons.
 run unit_dem_externalForeignPoolRefused {
@@ -738,7 +738,7 @@ run unit_dem_externalForeignPoolRefused {
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The pool carries another item: exactly RWrongItem.
 run unit_dem_externalWrongItemRefused {
@@ -748,7 +748,7 @@ run unit_dem_externalWrongItemRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Occurrence, 10 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The pool was already named by another external attach: exactly RPoolNotFresh (the kanban module's atom, reused).
 run unit_dem_externalPoolNotFreshRefused {
@@ -762,7 +762,7 @@ run unit_dem_externalPoolNotFreshRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An AFFIRMED pool is still fresh. dafny-domain's `KC.PoolUsed` reads the pool's MEMBERSHIP rows only (`ShapeOf == Mutate`): an
 // affirmation writes nothing and is no use. A twin and its control at one scope (8 occurrences counted, one spare):
@@ -774,7 +774,7 @@ run unit_dem_affirmedPoolStaysFresh {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // the control — an attach refused RPoolNotFresh on a pool that only its create and an affirmation wrote, and that no committed
 // attach, StartProcessing or StartProduction named: there is none. (It found one while the freshness arm counted every pool row
@@ -792,7 +792,7 @@ run unit_dem_affirmedOnlyPoolNotFreshRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 0
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // A contribution's KEY is its own: it need not be the identity or a reference of any entity. (While the key was an
 // `EntityId`, the kernel's `NoOrphanEntityId` made every key an id some entity already used — Copilot's review of
@@ -803,7 +803,7 @@ run unit_dem_contributionKeyIsItsOwn {
     and a.contribution.cid not in idsInUse
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      8 Occurrence, 9 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.EditAndRemove ──────────────────────────────────────────────────────────────────────────────────────────────
 // An edit of an external contribution sets the fields it carries (quantity and reference) and keeps the pool and the id.
@@ -819,7 +819,7 @@ run unit_dem_editExternalSetsFields {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An edit of a card contribution's reference sets the override, and the read follows it.
 run unit_dem_editCardReference {
@@ -832,7 +832,7 @@ run unit_dem_editCardReference {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A quantity on a card contribution: exactly RNotExternal (a card's quantity is its cycle's).
 run unit_dem_editQuantityOnCardRefused {
@@ -842,7 +842,7 @@ run unit_dem_editQuantityOnCardRefused {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An edit after the Release: exactly RFrozen (the edit is a composition mutator).
 run unit_dem_editFrozenRefused {
@@ -852,7 +852,7 @@ run unit_dem_editFrozenRefused {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An edit naming no contribution of the demand: exactly RNotContribution.
 run unit_dem_editUnknownRefused {
@@ -861,7 +861,7 @@ run unit_dem_editUnknownRefused {
     refusedAtAdmission[ed] and ed.admission.because = RNotContribution
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Removing an external contribution whose pool holds an item: exactly RPoolNotEmpty (the pool module's atom, reused).
 run unit_dem_removeExternalNotEmptyRefused {
@@ -872,7 +872,7 @@ run unit_dem_removeExternalNotEmptyRefused {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution,
-      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 4 Quantity, 2 Note, 2 Reference expect 1
+      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Removing it while its pool is empty commits, and the entry is gone.
 run unit_dem_removeExternalCommits {
@@ -882,7 +882,7 @@ run unit_dem_removeExternalCommits {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.FieldWrites ────────────────────────────────────────────────────────────────────────────────────────────────
 // The three field kinds of an OPEN demand write what they carry, and each reads back from the state.
@@ -898,7 +898,7 @@ run unit_dem_fieldWrites {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
-      12 Tick, 10 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Tick, 10 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A write carrying nothing CLEARS the field.
 run unit_dem_fieldClears {
@@ -908,7 +908,7 @@ run unit_dem_fieldClears {
     some dPre[u2].sUserNotes and no dPost[u2].sUserNotes
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The fulfillment notes are written on a RELEASED demand.
 run unit_dem_fulfillmentNotesOnReleased {
@@ -918,14 +918,14 @@ run unit_dem_fulfillmentNotesOnReleased {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.NotesWindows ───────────────────────────────────────────────────────────────────────────────────────────────
 // The user notes stay writable on a CLOSED demand, until its tombstone.
 run unit_dem_userNotesOnClosedCommits {
   some u: SetUserNotesOcc | committed[u] and dPre[u].sStatus in (DS_COMPLETE + DS_CANCELED)
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 8 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // After the tombstone the same write is refused with exactly RDemandClosed.
 run unit_dem_userNotesAfterDeleteRefused {
@@ -934,7 +934,7 @@ run unit_dem_userNotesAfterDeleteRefused {
     refusedAtAdmission[u] and u.admission.because = RDemandClosed
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 10 Tick, 8 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 0 Contribution, 10 Tick, 8 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The work order is an OPEN-only field: on a RELEASED demand its write is refused with exactly RBadState.
 run unit_dem_workOrderReleasedRefused {
@@ -944,7 +944,7 @@ run unit_dem_workOrderReleasedRefused {
   }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The fulfillment notes close at StartProduction: on an IN_PROCESS demand the write is refused with exactly RBadState.
 run unit_dem_fulfillmentNotesInProcessRefused {
@@ -954,7 +954,7 @@ run unit_dem_fulfillmentNotesInProcessRefused {
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution,
-      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 2 Note, 2 Reference expect 1
+      12 Tick, 12 EntityId, 14 Snapshot, 11 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.DistributeExternalFill ─────────────────────────────────────────────────────────────────────────────────────
 // A Distribute may name an external contribution among its fills: nothing is gated on it (it has no cycle to be READY).
@@ -964,7 +964,7 @@ run unit_dem_distributeExternalFill {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution,
-      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 12 EntityId, 13 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CancelWithExternalOnly ─────────────────────────────────────────────────────────────────────────────────────
 // A Cancel commits on an OPEN demand whose contributions are all external: RHasCards reads the card contributions only.
@@ -976,7 +976,7 @@ run unit_dem_cancelWithExternalOnly {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
-      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ══ TN-004, PR B's surface (dafny-domain MD-081 to MD-087; DT-016 PR B, on dafny-domain main at 606c392) ═════════════════════
 // The FINDERS of the eight witnesses PR B added to dafny-domain src/operations/demand/tests/demand-tests.dfy, each named after
@@ -998,7 +998,7 @@ run unit_dem_startProductionExternalPoolRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A holding another demand's committed StartProduction already named: exactly RPoolNotFresh (the demand log's own memory).
 run unit_dem_startProductionUsedHoldingRefused {
@@ -1010,7 +1010,7 @@ run unit_dem_startProductionUsedHoldingRefused {
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
       0 ProductionDelivery, 0 Station, 2 Quantity,
-      14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference expect 1
+      14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
 // Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
@@ -1022,7 +1022,7 @@ run unit_dem_twoFreshHoldings {
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
       0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 16 EntityId, 17 Snapshot, 2 Note, 2 Reference expect 1
+      15 Occurrence, 16 Tick, 16 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
@@ -1037,7 +1037,7 @@ run unit_dem_completePlacedForAll {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CompletePlacementForms ─────────────────────────────────────────────────────────────────────────────────────
 // The per-pool form: the item sits at the locator given for its pool.
@@ -1049,7 +1049,7 @@ run unit_dem_completePlacedPerPool {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The per-item form: the item's id is in the set of the locator it sits at.
 run unit_dem_completePlacedPerItem {
@@ -1060,7 +1060,7 @@ run unit_dem_completePlacedPerItem {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CompleteBadPlacements ──────────────────────────────────────────────────────────────────────────────────────
 // A pool the demand does not release: exactly RBadPlacement (nothing is held, so no other placement arm speaks).
@@ -1072,7 +1072,7 @@ run unit_dem_completeForeignPoolPlacementRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // An item no released pool holds: exactly RBadPlacement.
 run unit_dem_completeItemNotHeldRefused {
@@ -1083,7 +1083,7 @@ run unit_dem_completeItemNotHeldRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A HELD item under two locators: RBadPlacement is among the reasons (the item then has no one locator, so
 // RPlacementIncomplete speaks too — dafny-domain `PlacedLocator` gives none unless exactly one set names the item).
@@ -1096,7 +1096,7 @@ run unit_dem_completeItemTwiceRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CompleteUnplaced ───────────────────────────────────────────────────────────────────────────────────────────
 // A held item whose pool the per-pool placements do not name: exactly RPlacementIncomplete.
@@ -1107,7 +1107,7 @@ run unit_dem_completePoolMissingRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A held item no locator's set names: exactly RPlacementIncomplete.
 run unit_dem_completeItemMissingRefused {
@@ -1118,7 +1118,7 @@ run unit_dem_completeItemMissingRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // A held item that does not sit where the placements say, as of the tick: exactly RUnplaced.
 run unit_dem_completeUnplacedRefused {
@@ -1129,7 +1129,7 @@ run unit_dem_completeUnplacedRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 10 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.ReleasedPoolsStayUsed ──────────────────────────────────────────────────────────────────────────────────────
 // Released at rest is not fresh: after the Complete released an external contribution's pool (EMPTY throughout: no
@@ -1144,7 +1144,7 @@ run unit_dem_releasedExternalPoolStaysUsed {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
-      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference expect 1
+      11 Occurrence, 12 Tick, 12 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // The same for the released HOLDING: a new demand's StartProduction on it is refused with exactly RPoolNotFresh.
 run unit_dem_releasedHoldingStaysUsed {
@@ -1156,7 +1156,7 @@ run unit_dem_releasedHoldingStaysUsed {
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
       0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 15 EntityId, 17 Snapshot, 2 Note, 2 Reference expect 1
+      15 Occurrence, 16 Tick, 15 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DemandTests.CancelPoolNotEmpty ─────────────────────────────────────────────────────────────────────────────────────────
 // An OPEN demand whose external contribution's pool holds an item: its Cancel is refused with exactly RPoolNotEmpty
@@ -1168,7 +1168,7 @@ run unit_dem_cancelPoolNotEmptyRefused {
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
-      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── PR B's contract laws: no check in this root (the project owner's ruling QA779, option (a), 2026-11-12) ────────────────
 // `holdersReleasedAtComplete`, `completedItemsPlaced`, `contributionPoolExclusiveWhileLive` and `contributionFrom` are lemmas

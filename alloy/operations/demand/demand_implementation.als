@@ -388,7 +388,7 @@ pred editedFrom[b, a: Contribution, o: EditContributionOcc] {
   }
 }
 /** othersKept — every contribution but the one under `id` is carried over. */
-pred othersKept[b, a: DemandState, id: EntityId] {
+pred othersKept[b, a: DemandState, id: ContributionId] {
   { c: a.sContributions | c.cid != id } = { c: b.sContributions | c.cid != id }
 }
 /** sameHolding — the holding ref is carried over (item/station live on the ENTITY now). */

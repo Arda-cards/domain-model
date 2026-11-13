@@ -61,7 +61,7 @@ check soak_sys_poolLatticeGlobal for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 Stat
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 0
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 0
 
 // ── the companion finders: a held pool and a second attach naming it, one per ordered pair of kinds ──────────────
 // The second attach is an occurrence naming the pool, committed or refused; in a world where the premise holds it is
@@ -79,7 +79,7 @@ run soak_lat_line_then_line {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_line_then_cycle {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProcessingOcc | startProcessingOn[o, p] and some lineHolders[p, o.tick]
@@ -87,7 +87,7 @@ run soak_lat_line_then_cycle {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_line_then_holding {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProductionOcc | startProductionOn[o, p] and some lineHolders[p, o.tick]
@@ -95,7 +95,7 @@ run soak_lat_line_then_holding {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_line_then_contribution {
   receivingPoolGenesis
   some p: InventoryPool, o: AttachOcc | attachOn[o, p] and some lineHolders[p, o.tick]
@@ -103,7 +103,7 @@ run soak_lat_line_then_contribution {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_cycle_then_line {
   receivingPoolGenesis
   some p: InventoryPool, o: ReceiveLineOcc | receiveOn[o, p] and some cycleHolders[p, o.tick]
@@ -111,7 +111,7 @@ run soak_lat_cycle_then_line {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_cycle_then_cycle {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProcessingOcc | startProcessingOn[o, p] and some (cycleHolders[p, o.tick] - o.subject)
@@ -119,7 +119,7 @@ run soak_lat_cycle_then_cycle {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_cycle_then_holding {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProductionOcc | startProductionOn[o, p] and some cycleHolders[p, o.tick]
@@ -127,7 +127,7 @@ run soak_lat_cycle_then_holding {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_cycle_then_contribution {
   receivingPoolGenesis
   some p: InventoryPool, o: AttachOcc | attachOn[o, p] and some cycleHolders[p, o.tick]
@@ -135,7 +135,7 @@ run soak_lat_cycle_then_contribution {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_holding_then_line {
   receivingPoolGenesis
   some p: InventoryPool, o: ReceiveLineOcc | receiveOn[o, p] and some holdingHolders[p, o.tick]
@@ -143,7 +143,7 @@ run soak_lat_holding_then_line {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_holding_then_cycle {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProcessingOcc | startProcessingOn[o, p] and some holdingHolders[p, o.tick]
@@ -151,7 +151,7 @@ run soak_lat_holding_then_cycle {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_holding_then_holding {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProductionOcc | startProductionOn[o, p] and some (holdingHolders[p, o.tick] - o.subject)
@@ -159,7 +159,7 @@ run soak_lat_holding_then_holding {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_holding_then_contribution {
   receivingPoolGenesis
   some p: InventoryPool, o: AttachOcc | attachOn[o, p] and some holdingHolders[p, o.tick]
@@ -167,7 +167,7 @@ run soak_lat_holding_then_contribution {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_contribution_then_line {
   receivingPoolGenesis
   some p: InventoryPool, o: ReceiveLineOcc | receiveOn[o, p] and some contributionOwners[p, o.tick]
@@ -175,7 +175,7 @@ run soak_lat_contribution_then_line {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_contribution_then_cycle {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProcessingOcc | startProcessingOn[o, p] and some contributionOwners[p, o.tick]
@@ -183,7 +183,7 @@ run soak_lat_contribution_then_cycle {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_contribution_then_holding {
   receivingPoolGenesis
   some p: InventoryPool, o: StartProductionOcc | startProductionOn[o, p] and some contributionOwners[p, o.tick]
@@ -191,7 +191,7 @@ run soak_lat_contribution_then_holding {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 run soak_lat_contribution_then_contribution {
   receivingPoolGenesis
   some p: InventoryPool, o: AttachOcc | attachOn[o, p] and some (contributionOwners[p, o.tick] - o.subject)
@@ -199,7 +199,7 @@ run soak_lat_contribution_then_contribution {
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 3 DemandItem, 0 ProductionDelivery,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 3 Contribution, 1 Placement,
-      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      10 Occurrence, 15 EntityId, 10 Tick, 14 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
 
 // CREATED-ONLY SLICE (DT-023 Q-D / DT-024, closing pass 7c): reference-data version
 // dynamics are proven WIDE in soak/tests/reference_data_dynamics — this root reads

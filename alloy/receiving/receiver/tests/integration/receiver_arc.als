@@ -45,7 +45,7 @@ run int_rcv_deliveryArc {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem,
       1 ProductionDelivery, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
-      21 Tick, 22 EntityId, 22 Snapshot, 5 Quantity, 20 Occurrence, 2 Note, 2 Reference expect 1
+      21 Tick, 22 EntityId, 22 Snapshot, 5 Quantity, 20 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
       // RE-SIZED with the TN-004 projection (2026-11-13; Copilot's review of domain-model PR #12): the demand is released
       // only with a contribution, here an external one with its own pool. The arc COUNTS at least 16 occurrences: its ten
       // rows (the nine named and the RecordProduction paired with the delivery's create), the contribution's attach and
