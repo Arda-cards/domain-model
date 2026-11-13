@@ -52,7 +52,13 @@ run int_rcv_latticeCompanion {
 } for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 3 InventoryPool, 1 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      20 EntityId, 16 Tick, 18 Snapshot, 4 Quantity, 17 Occurrence, 2 Note, 2 Reference expect 1
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
+      22 EntityId, 22 Tick, 24 Snapshot, 4 Quantity, 22 Occurrence, 2 Note, 2 Reference expect 1
+      // RE-SIZED with the TN-004 projection (2026-11-13). It stated "17 Occurrence, 16 Tick": one occurrence per tick
+      // made that 16, and the arc COUNTS 16 to 20 on these stacks: the item version the demand pins; three pools'
+      // Creates and the pool service's call; the cycle's Request, Accept, StartProcessing and the kanban's call; the
+      // demand's Create with the card's contribution (a release needs one), Release, StartProduction and call; the
+      // receiver's Create, the line's add and the receiver's call, and what a receive with an accepted quantity
+      // brings. At 16 it had no verdict in four hours, in two night windows.
       // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — no verdict (cut at 431 s by the night window's end; 3 h 19 min without one at
       // bb7570a) at 12 Occurrence — three holders' rows and their pools', each with its activation call
