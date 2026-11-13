@@ -1,6 +1,8 @@
 # Registered on GitHub by this touch (R02-D13, MP 2026-10-02, option A): the file predates the repository's creation on GitHub and had never run.
-# Tier 1 — fast PR checks (seconds to minutes): the layering lint, shell hygiene,
-# and the pinned-tools checksum. No solver work here; that is affected-cones.yaml.
+# Tier 1 — fast PR checks (seconds to minutes): the three text gates (the layering lint,
+# the open-parameters gate, the lifecycle shape partition), shell hygiene, and the pinned-tools
+# checksum. No solver work here; that is affected-cones.yaml. The text gates run on EVERY pull
+# request, whatever its labels: tools/test-ci-text-gates.py holds that.
 name: fast-checks
 
 on:
@@ -33,6 +35,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: DT-001.12 layer law + DT-017 mock discipline
         run: make check-layering
+
+  open-params-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: model-gate rule 10 — every parameter of a parametric open is alias-qualified or declared locally
+        run: make check-open-params
+
+  lifecycle-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: DT-030 shape partition — every concrete kind of a lifecycle adopter sits under a shape
+        run: make check-lifecycle
 
   shellcheck:
     runs-on: ubuntu-latest
