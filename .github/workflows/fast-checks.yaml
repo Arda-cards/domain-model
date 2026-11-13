@@ -31,6 +31,7 @@ jobs:
           python3 tools/test-ci-advisory.py -v
           python3 tools/test-ci-solver.py -v
           python3 tools/test-ci-text-gates.py -v
+          python3 tools/test-soak-chunk.py -v
 
   layering-lint:
     runs-on: ubuntu-latest
