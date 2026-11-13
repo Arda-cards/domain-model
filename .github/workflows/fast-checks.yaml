@@ -8,6 +8,10 @@ name: fast-checks
 on:
   pull_request:
 
+# The jobs run the pull request's own Makefile, Python and shell: the token they could reach must not write.
+permissions:
+  contents: read
+
 concurrency:
   group: fast-checks-${{ github.ref }}
   cancel-in-progress: true
@@ -33,6 +37,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: DT-001.12 layer law + DT-017 mock discipline
         run: make check-layering
 
@@ -41,6 +47,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: model-gate rule 10 — every parameter of a parametric open is alias-qualified or declared locally
         run: make check-open-params
 
@@ -49,6 +57,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: DT-030 shape partition — every concrete kind of a lifecycle adopter sits under a shape
         run: make check-lifecycle
 

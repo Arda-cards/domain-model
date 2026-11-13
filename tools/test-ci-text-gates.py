@@ -48,7 +48,7 @@ def jobs_running(command):
 
 def suppressors(block):
     """The lines of a job's block that can switch the job off or hide its failure."""
-    return [line.strip() for line in block if re.match(r'\s*(- )?if:', line)]
+    return [line.strip() for line in block if re.match(r'\s*(- )?(if|needs|continue-on-error):', line)]
 
 
 def workflow_permissions():
