@@ -118,7 +118,10 @@ assert e7_law { all t: Tick | e7Inv[t] implies lawSliceAt[t] }
 // NO instance and the step and law checks examined no pool attachment (measured). The
 // widened scopes (_w, _s) carry their own witness below.
 /** A seeded holding-carrying demand state coexisting with a later committed
-    StartProduction — the step check's interesting configuration is realizable. */
+    StartProduction — the step check's interesting configuration is realizable. (A
+    configuration of the HISTORY: the seeded holding has no provenance, so the invariant is
+    false at the seed. The step checks' own antecedent is witnessed by `e7_step_live` /
+    `e7_prov_step_live` below.) */
 run e7_seeded_production {
   some h: HavocDemandOcc | committed[h] and some dPost[h].sHolding
   some o: StartProductionOcc | committed[o] and some o.holding
@@ -218,6 +221,74 @@ run e7_seeded_production_w {
 run e7_seeded_production_s {
   some h: HavocDemandOcc | committed[h] and some dPost[h].sHolding
   some o: StartProductionOcc | committed[o] and some o.holding
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 1
+
+// ── vacuity guards for the step checks: the antecedent itself, with a committed start next ──
+// The genesis premise and the invariant (for e7_prov_step, the provenance half alone) hold at
+// a tick, the next tick is no seed, and a StartProduction naming a holding commits there: the
+// case the step checks are about. One per scope a step is checked at (Copilot, on the Alloy
+// cut, 2026-11-12).
+/** `e7_step`'s antecedent (under the genesis premise) with a committed start next, at the base scope. */
+run e7_step_live {
+  some HavocDemandOcc
+  demandPoolGenesis
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the base scope. */
+run e7_prov_step_live {
+  some HavocDemandOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    holdingProvenanceAt[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 1
+
+/** `e7_step`'s antecedent (under the genesis premise) with a committed start next, at the _w scope. */
+run e7_step_live_w {
+  some HavocDemandOcc
+  demandPoolGenesis
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      8 Occurrence, 14 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the _w scope. */
+run e7_prov_step_live_w {
+  some HavocDemandOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    holdingProvenanceAt[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      8 Occurrence, 14 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 1
+
+/** `e7_step`'s antecedent (under the genesis premise) with a committed start next, at the _s scope. */
+run e7_step_live_s {
+  some HavocDemandOcc
+  demandPoolGenesis
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    e7Inv[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
+      6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 1
+
+/** `e7_prov_step`'s antecedent with a committed start next, at the _s scope. */
+run e7_prov_step_live_s {
+  some HavocDemandOcc
+  some t: Tick - tord/last | let t2 = tord/next[t] |
+    holdingProvenanceAt[t] and (no h: HavocDemandOcc | h.tick = t2)
+      and (some o: StartProductionOcc | committed[o] and some o.holding and o.tick = t2)
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 DemandItem, 2 CardCycle, 2 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 ProductionDelivery,
       6 Occurrence, 14 EntityId, 6 Tick, 9 Snapshot, 2 Note, 2 Reference expect 1
