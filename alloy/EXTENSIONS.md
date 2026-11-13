@@ -110,7 +110,7 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `soak/sliced/receiver_captured_facts_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `ReceiversContract.CapturedFactsFrozen` |
 | `soak/sliced/receiver_pool_inductive.als` | 2 | 5 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `ReceiversContract.LinePoolProvenance`, `ReceiversContract.LinesPoolLoneHolder`, `ReceiversContract.LineCyclePoolDisjoint`, `ReceiversContract.LineDemandPoolDisjoint` |
 | `soak/sliced/receiving_soak.als` | 0 | 0 | NO COMMAND: its two trace rows were RETIRED on MP's signoffs of 2026-08-26 and 2026-08-28, superseded by the two receiver rungs; the file is kept as their record |
-| `soak/sliced/zlattice_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `PoolLattice.PoolLatticeGlobal` |
+| `soak/sliced/zlattice_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT today: refines `PoolLattice.PoolLatticeGlobal`. Whether it is extended to the fourth holder kind or retired with its gate twin is MP's open question (card QA773, second question) |
 | `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 | `tests/system.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 
