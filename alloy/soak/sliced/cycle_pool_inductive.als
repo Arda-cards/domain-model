@@ -1,4 +1,6 @@
 module soak/sliced/cycle_pool_inductive
+// Refines Dafny: KanbanCardsContract.PoolExclusiveWhileLive
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * E7 generalization ladder, rung 1a (DT-024 plan-of-record, MP 2026-08-26) —

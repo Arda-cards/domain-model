@@ -20,6 +20,8 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 ## Rules of a kept root
 
 1. Its header names the Dafny module it reflects: `// Reflects dafny-domain src/<path>.dfy`.
+   A soak root, which refines lemmas and reflects no single module, names them instead:
+   `// Refines Dafny: <Module>.<Lemma>`, one line per lemma.
 2. Each kept command names what it extends: `// Extension class 1: finder for <Module>.<Witness>` or
    `// Extension class 2: counter-example search for <Module>.<Lemma> (deferred | S-07)`.
 3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
@@ -92,21 +94,23 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `shared/measurement/tests/quantity.als` | 4 | 4 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `shared/time/tests/calendar.als` | 3 | 4 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
 | `shared/x731_state/tests/state.als` | 1 | 5 | REFLECTS Dafny: runs kept as finders (class 1); checks RETIRED (Dafny proves them) |
-| `soak/lemmas/reference_data_dynamics.als` | 2 | 3 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/cycle_pool_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/demand_holding_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/demand_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
+| `soak/lemmas/reference_data_dynamics.als` | 2 | 3 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `BusinessAffiliatesContract.BaLifecycleShape`, `ItemsContract.ItemLifecycleShape`, and finds the witnesses `ItemTests.SoakDynamicsCompanion` and `ItemTests.SoakPinnedFloatingDiverge` |
+| `soak/sliced/cycle_pool_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `KanbanCardsContract.PoolExclusiveWhileLive` |
+| `soak/sliced/demand_holding_inductive.als` | 2 | 7 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `DemandsContract.HoldingExclusiveWhileLive`, `DemandsContract.HoldingNotACyclePool` |
+| `soak/sliced/demand_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `DemandsContract.HoldingProvenance` |
 | `soak/sliced/intent_log_arche_inductive.als` | 4 | 7 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `soak/sliced/intent_log_arche_movement_inductive.als` | 9 | 6 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
 | `soak/sliced/intent_log_claim_inductive.als` | 2 | 4 | REMOVED in step A (2026-11-05): the intent chains left the tree (TN-003 row 2, DT-015 D4) |
-| `soak/sliced/kanban_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/order_frozen_outside_draft_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/order_header_detail_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/order_supplier_binding_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/order_terminal_closure_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/receiver_captured_facts_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/receiver_pool_inductive.als` | 2 | 5 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
-| `soak/sliced/zlattice_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — keep only where TN-001 §12.1 names it; else RETIRED |
+| `soak/sliced/kanban_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `KanbanCardsContract.PoolProvenance` |
+| `soak/sliced/order_frozen_outside_draft_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `OrdersContract.FrozenOutsideDraftOrder`, `OrdersContract.FrozenOutsideDraftLine` |
+| `soak/sliced/order_header_detail_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `OrdersContract.HeaderDetailFrozen` |
+| `soak/sliced/order_soak.als` | 0 | 0 | NO COMMAND: its four trace rows were RETIRED on MP's signoffs of 2026-08-28 and 2026-09-02, superseded by the four order rungs; the file is kept as their record |
+| `soak/sliced/order_supplier_binding_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `OrdersContract.SupplierBindingFrozen` |
+| `soak/sliced/order_terminal_closure_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `OrdersContract.OrderTerminalClosure` |
+| `soak/sliced/receiver_captured_facts_inductive.als` | 2 | 4 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `ReceiversContract.CapturedFactsFrozen` |
+| `soak/sliced/receiver_pool_inductive.als` | 2 | 5 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT: refines `ReceiversContract.LinePoolProvenance`, `ReceiversContract.LinesPoolLoneHolder`, `ReceiversContract.LineCyclePoolDisjoint`, `ReceiversContract.LineDemandPoolDisjoint` |
+| `soak/sliced/receiving_soak.als` | 0 | 0 | NO COMMAND: its two trace rows were RETIRED on MP's signoffs of 2026-08-26 and 2026-08-28, superseded by the two receiver rungs; the file is kept as their record |
+| `soak/sliced/zlattice_soak.als` | 0 | 1 | EXTENSION class 2 (bounded induction and counter-example search) — KEPT today: refines `PoolLattice.PoolLatticeGlobal`. Whether it is extended to the fourth holder kind or retired with its gate twin is MP's open question (card QA773, second question) |
 | `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1). Since the TN-004 projection: 4 runs, 0 checks — the check `sys_poolLatticeGlobal` is RETIRED (the project owner's ruling QA761, Q1 (a), 2026-11-12: Dafny proves `PoolLattice.PoolLatticeGlobal` for every log), and the finders cover the four holder kinds |
 | `tests/system.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 

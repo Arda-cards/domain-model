@@ -1,4 +1,6 @@
 module soak/sliced/order_supplier_binding_inductive
+// Refines Dafny: OrdersContract.SupplierBindingFrozen
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * E7 generalization ladder, rung 3b (DT-024 plan-of-record, priority 3 — the FREEZE

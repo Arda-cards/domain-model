@@ -1,4 +1,6 @@
 module soak/sliced/demand_soak
+// Refines Dafny: DemandsContract.HoldingProvenance
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * SOAK tier (DT-022 TQ-5): the demand lattice/provenance laws at GENEROUS scopes — see
