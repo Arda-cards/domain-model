@@ -19,9 +19,11 @@
 #   cmd/<key>.log       solver output          cmd/<key>.rc     exit code
 #   cmd/<key>.meta      start/end epochs, root, command      cmd/<key>.d/   harvested instances (-o)
 #   cmd/<key>.overbudget    cap + elapsed when the watchdog killed the command
-#                       <key> = the root's path under alloy/soak with `/` as `_`, a dot, the command
-#                       (sliced_cycle_pool_inductive.e7_base): two roots may state commands of one
-#                       name (every rung has e7_base), and each is its own command.
+#                       <key> = the root's path under alloy/soak with `/` as `.`, a dot, the command
+#                       (sliced.cycle_pool_inductive.e7_base): two roots may state commands of one
+#                       name (every rung has e7_base), and each is its own command. A dot cannot
+#                       occur in an Alloy module path or a command name, so the key is unique
+#                       (with `_` for `/`, sliced/a_b.als and sliced/a/b.als would share one).
 #                       A batch made before the key keeps its artifacts under the bare command name; they
 #                       are read for the root their meta records (art_of), so it can be resumed.
 #   ledger.tsv          materialized by `status` from plan + artifacts
@@ -90,7 +92,7 @@ commands_of() { # $1 = root .als path
 
 # ── the artifact key of a (root, command) pair: unique across roots that share a command name ──
 key_of() { # $1 = root .als path  $2 = command
-  printf '%s.%s\n' "$(printf '%s' "$1" | sed -E 's|^alloy/soak/||; s|\.als$||; s|/|_|g')" "$2"
+  printf '%s.%s\n' "$(printf '%s' "$1" | sed -E 's|^alloy/soak/||; s|\.als$||; s|/|.|g')" "$2"
 }
 # ── where a (root, command) pair's artifacts are in a GIVEN batch: under its key, or, in a batch made before the key
 # existed, under the bare command name when that name's meta records this root (a same-named command of another root
