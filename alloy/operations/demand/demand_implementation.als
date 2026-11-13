@@ -102,9 +102,10 @@ fun contributionIdentityViol[o: AttachOcc]: set Reason {
     the id, or a committed external attach — of ANY demand — named it (`PoolUsedByContribution`), or a committed
     StartProduction — of ANY demand — named it as its holding (`PoolUsedByHolding`, MD-083). ONE notion of a used pool,
     read by the external attach and by StartProduction alike; a Complete or a Cancel does not erase it (released at rest
-    is not fresh). */
+    is not fresh). MEMBERSHIP rows are the pool's three Mutate kinds (dafny-domain `ShapeOf == Mutate`), as the kanban's
+    freshness arm reads them: an affirmation writes nothing and is no use (witness `unit_dem_affirmedPoolStaysFresh`). */
 pred poolUsedBefore[id: EntityId, o: Occurrence] {
-  (some p: resolve[id] & InventoryPool, b: PoolOcc - CreatePoolOcc - RetirePoolOcc |
+  (some p: resolve[id] & InventoryPool, b: PoolAddOcc + PoolRemoveOcc + PoolTransferOcc |
      committed[b] and b.subject = p and precedes[b.tick, o.tick])
   or (some sp: StartProcessingOcc | committed[sp] and sp.pool = id and precedes[sp.tick, o.tick])
   or (some a: AttachOcc - o | committed[a] and precedes[a.tick, o.tick]
