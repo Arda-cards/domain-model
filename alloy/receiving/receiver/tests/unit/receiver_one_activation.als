@@ -15,7 +15,8 @@ open resources/inventory_item/inventory_item_mock
 /*
  * THE ONE-ACTIVATION LAW of the receiver's three same-module pairings (the project owner's ruling QA764, option (a),
  * 2026-11-12; dafny-domain MD-089, `ReceiversContract.LinePairsOneActivation`): a committed line-side row and its
- * committed attribution-side partner cite the same activation.
+ * committed attribution-side partner cite the same activation. The law is the implementation's fact
+ * `LinePairsOneActivation`, beside its activation facts.
  *
  * DEDICATED ROOT: per pairing, a NEGATIVE CONTROL and its POSITIVE TWIN at one scope.
  *  - The control asks for a committed pair whose halves cite TWO activations, `expect 0`. Without the law it finds one.

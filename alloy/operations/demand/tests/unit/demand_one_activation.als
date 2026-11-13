@@ -11,7 +11,8 @@ open resources/kanban_card/kanban_card_mock                   // kanban as CONTR
 /*
  * THE ONE-ACTIVATION LAW of the demand's two atomic compositions (the project owner's ruling QA764, option (a),
  * 2026-11-12; dafny-domain MD-089, `DemandsContract.PairsOneActivation`): the two halves of a committed pair cite the
- * same activation.
+ * same activation. The law is `pairsOneActivation` (demand_contracts.als), enforced by the implementation's fact
+ * `DemandPairsOneActivation` beside its activation facts.
  *
  * DEDICATED ROOT: per composition, a NEGATIVE CONTROL and its POSITIVE TWIN at one scope.
  *  - The control asks for a committed pair whose halves cite TWO activations, `expect 0`. Without the law it finds one:
