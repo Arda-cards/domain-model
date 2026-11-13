@@ -235,8 +235,8 @@ pred holdingExclusiveWhileLive {
 }
 /** holdingAttachedOnce — two committed StartProductions naming a holding name different pools, on any demands
     (dafny-domain `HoldingAttachedOnce`, MD-083: the freshness arm's theorem, so the premise's own clause for holdings is
-    derivable). Stated for consumers and finders; NOT in `guarantees` (its scenario is too large for a bounded check in
-    the unit root — witness: unit_dem_twoFreshHoldings). */
+    derivable). Stated for consumers and finders; NOT in `guarantees`: it was left out while a law joined the mock's promise
+    only after a bounded check, and its scenario was too large for one in the unit root. Witness: unit_dem_twoFreshHoldings. */
 pred holdingAttachedOnce {
   all disj a, b: StartProductionOcc | (committed[a] and committed[b]) implies no (a.holding & b.holding)
 }
@@ -267,8 +267,9 @@ pred contributionPoolExclusiveWhileLive {
 
 // ── C10 · the contributions (TN-004; reflects dafny-domain MD-076 to MD-080) — single-log laws ──
 // Each is a LEMMA of the reference model (dafny-domain src/operations/demand/demand-contract.dfy), proven there for every
-// log. They are stated here so consumers and finders can name them. They are NOT in `guarantees` yet: a predicate joins the
-// mock's promise only after one bounded check has shown it agrees with the guards as written here (TN-005 D4).
+// log. They are stated here so consumers and finders can name them. They are NOT in `guarantees`. TN-005 D4 let a predicate
+// join the mock's promise only after one bounded check against the guards as written here; the project owner's ruling
+// QA779 (a), 2026-11-12, retired such checks, so which of these laws the mock promises is the classification's question.
 /** releasedHasContribution — a committed Release saw at least one LIVE contribution (Dafny `ReleasedHasContribution`). */
 pred releasedHasContribution {
   all o: ReleaseOcc | committed[o] implies some liveContributionsOf[dPre[o].sContributions, o.tick]
@@ -328,8 +329,8 @@ pred guarantees {
   and startProductionRequiresStarted
   and distributeRequiresReady
   and completeRequiresSettled
-  and holdersReleasedAtComplete        // TN-004 row 11 (MD-084): the release at Complete and Cancel, derived; check unit_dem_contract_holdersReleasedAtComplete
-  and completedItemsPlaced             // TN-004 row 14 (MD-082): the placements' call-first law; check unit_dem_contract_completedItemsPlaced
+  and holdersReleasedAtComplete        // TN-004 row 11 (MD-084): the release at Complete and Cancel, derived; Dafny HoldersReleasedAtComplete
+  and completedItemsPlaced             // TN-004 row 14 (MD-082): the placements' call-first law; Dafny CompletedItemsPlaced
   and completeStampedAfterHolding      // COORDINATOR-Q527 A5: the stamp condition in causal terms
   and withdrawnDetachReconciles
   and terminalClosure
@@ -337,7 +338,7 @@ pred guarantees {
   and deliveryTerminalRevoke    // §8.1.1 (likewise vacuous without PDs)
   and holdingProvenance         // cut 5 (the kanban poolProvenance twin; L9 publication)
   and holdingExclusiveWhileLive // §8.5.3 lattice row (premise-conditional; unit-tier discharge since cut 5)
-  and contributionFrom          // the fourth holder's provenance (TN-004, dafny-domain ContributionFrom); check unit_dem_contract_contributionFrom
-  and contributionPoolExclusiveWhileLive // the row's fourth holder (TN-004, MD-086; its cycle clause premise-conditional); check unit_dem_contract_contributionPoolExclusiveWhileLive
+  and contributionFrom          // the fourth holder's provenance (TN-004, dafny-domain ContributionFrom)
+  and contributionPoolExclusiveWhileLive // the row's fourth holder (TN-004, MD-086; its cycle clause premise-conditional); Dafny ContributionPoolExclusiveWhileLive
   // createRecordsAtomically / revokeExtractsAtomically: deliberately NOT here — see C8.
 }

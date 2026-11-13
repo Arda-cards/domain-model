@@ -258,5 +258,5 @@ pred guarantees {
   and receiverTerminalComplete
   and linePoolProvenance
   and linePoolExclusiveWhileLive
-  and lineContributionPoolDisjoint   // the row against the fourth holder (TN-004, MD-087); check unit_rcv_contract_lineContributionPoolDisjoint
+  and lineContributionPoolDisjoint   // the row against the fourth holder (TN-004, MD-087); Dafny LineContributionPoolDisjoint
 }

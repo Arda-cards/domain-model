@@ -51,7 +51,7 @@ check unit_dem_contract_completeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference expect 0
 
 // (`completeRequiresDistributed` left the contract with TN-004 row 11, dafny-domain MD-084: the release at Complete is derived
-// from the status, and what the released pools hold is checked by the placements — `completedItemsPlaced`, below.)
+// from the status, and what the released pools hold is the placements' law, `completedItemsPlaced`.)
 
 assert unit_dem_contract_withdrawnDetachReconciles { withdrawnDetachReconciles }
 check unit_dem_contract_withdrawnDetachReconciles for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
@@ -1124,29 +1124,9 @@ run unit_dem_cancelPoolNotEmptyRefused {
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
       9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
 
-// ── PR B's contract laws (check; UNSAT = the law holds of the implementation at the scope) ─────────────────────────────────
-// Each scope admits the law's own scenario, by the count in this section's header: a committed Complete of a demand born
-// with an external contribution is 8 occurrences, 9 with an item added to its pool; two demands born with one external
-// contribution each are 7. (`holdingAttachedOnce` has no check here: two committed StartProductions need 13 occurrences,
-// too many for a bounded proof in this root; its witness is unit_dem_twoFreshHoldings and its proof dafny-domain's lemma.)
-assert unit_dem_contract_holdersReleasedAtComplete { holdersReleasedAtComplete }
-check unit_dem_contract_holdersReleasedAtComplete for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      8 Occurrence, 9 Tick, 10 EntityId, 10 Snapshot, 2 Note, 2 Reference expect 0
-
-assert unit_dem_contract_completedItemsPlaced { completedItemsPlaced }
-check unit_dem_contract_completedItemsPlaced for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 1 Contribution, 1 Placement, 3 Instant,
-      9 Occurrence, 10 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 0
-
-assert unit_dem_contract_contributionPoolExclusiveWhileLive { contributionPoolExclusiveWhileLive }
-check unit_dem_contract_contributionPoolExclusiveWhileLive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 0
-
-// The fourth holder's PROVENANCE (dafny-domain `ContributionFrom`): what the receiving row reads to tell a held pool from an
-// attach row. An attach, an edit of it and the demand's item pin are 6 occurrences.
-assert unit_dem_contract_contributionFrom { contributionFrom }
-check unit_dem_contract_contributionFrom for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      8 Occurrence, 9 Tick, 10 EntityId, 10 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 0
+// ── PR B's contract laws: no check in this root (the project owner's ruling QA779, option (a), 2026-11-12) ────────────────
+// `holdersReleasedAtComplete`, `completedItemsPlaced`, `contributionPoolExclusiveWhileLive` and `contributionFrom` are lemmas
+// of the reference model (dafny-domain `HoldersReleasedAtComplete`, `CompletedItemsPlaced`,
+// `ContributionPoolExclusiveWhileLive`, `ContributionFrom`), proven there for every log. By alloy/EXTENSIONS.md's rule a
+// bounded check of a law Dafny proves is RETIRED, and the four this root carried were removed with that ruling. The finders
+// above are the laws' witnesses here. (`holdingAttachedOnce`: witness unit_dem_twoFreshHoldings, proof dafny-domain's lemma.)
