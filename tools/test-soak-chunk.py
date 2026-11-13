@@ -109,6 +109,25 @@ class SoakChunkTest(unittest.TestCase):
         self.assertEqual(sorted((row[1], row[2], row[5]) for row in ledger),
                          sorted((root, command, 'done') for root, command in EXPECTED))
 
+    def test_resume_of_a_batch_from_before_the_key_keeps_its_results(self):
+        # Review of the pull request. A batch made before results were kept per root and command has its artifacts under
+        # the bare command name, and its meta records the root. Resuming it must read that result as done for THAT root,
+        # never run it again, and still run the same-named command of the other root, which the old runner skipped.
+        self.assertEqual(self.runner('plan', 'batch').returncode, 0)
+        cmd = self.work / 'batch/cmd'
+        (cmd / 'e7_base.rc').write_text('0\n')
+        (cmd / 'e7_base.log').write_text('[main] INFO alloy -    SAT!\n')
+        (cmd / 'e7_base.meta').write_text('start\t100\nscope_hash\tabc\nroot\talloy/soak/sliced/a.als\nend\t160\n')
+        result = self.runner('chunk', 'batch', '60', '1', '1')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        ran = {tuple(line.split()) for line in self.calls.read_text().splitlines()}
+        self.assertEqual(ran, EXPECTED - {('alloy/soak/sliced/a.als', 'e7_base')})
+        ledger = [line.split('\t') for line in (self.work / 'batch/ledger.tsv').read_text().splitlines()[1:]]
+        self.assertEqual(sorted((row[1], row[2], row[5]) for row in ledger),
+                         sorted((root, command, 'done') for root, command in EXPECTED))
+        elapsed = {(row[1], row[2]): row[6] for row in ledger}
+        self.assertEqual(elapsed[('alloy/soak/sliced/a.als', 'e7_base')], '60')
+
     def test_plan_of_the_repository_lists_every_stated_soak_command(self):
         # The real tree: what the runner plans is what the soak roots state, each once.
         with tempfile.TemporaryDirectory() as directory:
