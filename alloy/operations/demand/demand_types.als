@@ -75,11 +75,18 @@ fact DemandItemRefIntegrity {
 // card's serial (a `CardSerial`). ONE space, so a card's default reference (its serial) and an external reference can be
 // compared. Written out at each use: a field's bound comes from its declared type.
 
+/** ContributionId — a contribution's KEY within its demand (dafny-domain `ContributionId`): an opaque value, minted by the
+    caller at the attach. It is NOT an `EntityId`: the kernel holds that every `EntityId` is some entity's identity or
+    reference (`NoOrphanEntityId`), and a key is neither. The laws read keys only for equality with other keys, so every
+    command of the cone pins it as an inert value (`2 ContributionId`, or as many as one demand carries contributions —
+    gotcha 7). It has no orphan fact of its own, as dafny-domain's alias has none. */
+sig ContributionId {}
+
 /** Contribution — one source of a demand's quantity (TN-004): a VALUE that carries its own id (`cid`, caller-minted at the
     attach and used once per demand) and an optional note. A state holds a set of them, at most one per id — the Alloy
     spelling of dafny-domain's `map<ContributionId, DemandContribution>` (MD-076). */
 abstract sig Contribution {
-  cid:        one  EntityId,   // the contribution's id: the key within its demand
+  cid:        one  ContributionId,   // the contribution's id: the key within its demand
   cUserNotes: lone Note        // the caller's note on this contribution
 }
 /** CardContribution — the contribution of a kanban card cycle: its quantity is the cycle's effective quantity, its reference
@@ -175,7 +182,7 @@ sig CreateDemandOcc extends lc/CreateOcc {} { bindings = subject }   // item/sta
     `extends` parent can hold both (the MemberOcc precedent of 2026-09-09). */
 sig AttachOcc in dlog/SubjectOcc { contribution: one Contribution }
 /** TargetOcc — the kinds that name an EXISTING contribution by its id share the field `target` (the same device). */
-sig TargetOcc in dlog/SubjectOcc { target: one EntityId }
+sig TargetOcc in dlog/SubjectOcc { target: one ContributionId }
 /** NotesOcc — the three kinds that write a note share the field `notes`; none given CLEARS the note (the same device). */
 sig NotesOcc in dlog/SubjectOcc { notes: lone Note }
 fact ContributionOccExtents {
@@ -237,8 +244,8 @@ sig ExtractProductionOcc extends lc/MutateOcc { delivery: lone EntityId } { bind
     (per-contribution quantities, keyed by the contribution's id — TN-004) + the caller's fullness assertion `fills` (intent-capturing — the
     keyed-Quantity partial order may be INDETERMINATE). C/OP call-first: the caller moves each
     fill → READY (cycle CompleteProcessing) first; this commit gates on fills being READY. */
-sig DistributeOcc extends lc/MutateOcc { allocation: EntityId -> lone Quantity, fills: set EntityId }
-  { bindings = subject + allocation.Quantity + EntityId.allocation + fills }
+sig DistributeOcc extends lc/MutateOcc { allocation: ContributionId -> lone Quantity, fills: set ContributionId }
+  { bindings = subject + allocation.Quantity + ContributionId.allocation + fills }
 /** Placement — where the items a Complete releases go (TN-004 rows 12 to 14; dafny-domain MD-082 `Placement`): one locator
     for all, one per released pool, or one per item. A VALUE carried by the Complete. Call-first: the items were MOVED
     before the Complete is called; its arms CHECK, the Complete never moves. */
@@ -372,7 +379,7 @@ fun preMemberCycles[o: dlog/SubjectOcc]: set CardCycle {
   { c: cyclesOf[dPre[o].sContributions] | liveCycleAt[c, o.tick] }
 }
 /** preLiveContributionIds — the ids of the contributions live as an operation reads them (Distribute's keys and fills). */
-fun preLiveContributionIds[o: dlog/SubjectOcc]: set EntityId {
+fun preLiveContributionIds[o: dlog/SubjectOcc]: set ContributionId {
   liveContributionsOf[dPre[o].sContributions, o.tick].cid
 }
 /** demandStateAt — LOCF of records: the demand item's payload as of `t`. */

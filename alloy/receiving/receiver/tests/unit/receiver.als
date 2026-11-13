@@ -46,61 +46,61 @@ assert unit_rcv_contract_linePoolProvenance { linePoolProvenance }
 check unit_rcv_contract_linePoolProvenance for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_captureWindowFrozen { captureWindowFrozen }
 check unit_rcv_contract_captureWindowFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_completeRequiresLinesFinalized { completeRequiresLinesFinalized }
 check unit_rcv_contract_completeRequiresLinesFinalized for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_capturedFactsFrozen { capturedFactsFrozen }
 check unit_rcv_contract_capturedFactsFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_receiveSameItemPool { receiveSameItemPool }
 check unit_rcv_contract_receiveSameItemPool for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_receiveAllocationBounded { receiveAllocationBounded }
 check unit_rcv_contract_receiveAllocationBounded for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Quantity, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Quantity, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_actualSetOnce { actualSetOnce }
 check unit_rcv_contract_actualSetOnce for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_deliveriesAppendOnly { deliveriesAppendOnly }
 check unit_rcv_contract_deliveriesAppendOnly for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 2 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_lineForwardMonotone { lineForwardMonotone }
 check unit_rcv_contract_lineForwardMonotone for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_receiverTerminalComplete { receiverTerminalComplete }
 check unit_rcv_contract_receiverTerminalComplete for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference expect 0
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The LATTICE ROW (§8.5.3): the COMBINED check was RELOCATED to the soak tier at DT-023
 // cut 7a (`soak_rcv_linePoolExclusiveUnitScope` — the item-log census pushed its UNSAT
@@ -113,21 +113,21 @@ check unit_rcv_contract_linesPoolLoneHolder for 5 but 2 RoleDetail, 5 Int, 3 Sca
       1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_lineCyclePoolDisjoint { lineCyclePoolDisjoint }
 check unit_rcv_contract_lineCyclePoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 assert unit_rcv_contract_lineDemandPoolDisjoint { lineDemandPoolDisjoint }
 check unit_rcv_contract_lineDemandPoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference expect 0
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The FOURTH facet (TN-004; dafny-domain `LineContributionPoolDisjoint`, MD-087): a line-held pool against a live demand's
 // EXTERNAL CONTRIBUTION, under the genesis premise's Receive-against-attach clause. Its OWN published law — not a conjunct
@@ -149,7 +149,7 @@ run unit_rcv_latticeCompanion {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
       1 CardCycle, 1 KanbanCard, 1 InventoryItem, 3 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      16 EntityId, 10 Tick, 12 Snapshot, 4 Quantity, 10 Occurrence, 2 Note, 2 Reference expect 1
+      16 EntityId, 10 Tick, 12 Snapshot, 4 Quantity, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── SAT witnesses — the S3prep / S3 arc + refusal surfaces ──────────────────────────────────────
 // Smoke/genesis: Create births EDITING.
@@ -159,7 +159,7 @@ run unit_rcv_createEditing {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      7 EntityId, 2 Note, 2 Reference expect 1
+      7 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // DT-023 cut 7b: the header captures a PINNED carrier — pin + CARRIER role selector, the pin
 // current-and-Live at capture (CarrierPinCurrency + ReceiverCarrierPinAgrees jointly
@@ -175,7 +175,7 @@ run unit_rcv_carrierPinnedCapture {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference expect 1
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // S3prep-A (from scratch): a blind line — no order linkage, no expectation; the BLIND and
 // Undetermined readings hold (the benign, manifest-backed default — §8.4.2).
@@ -189,7 +189,7 @@ run unit_rcv_addLineBlind {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // S3prep-A (from an OrderLine): the line is born WITH its attribution — the same-module
 // pairing exercised (AddReceivingLine's attribution arm + the AttachAttribution genesis);
@@ -204,7 +204,7 @@ run unit_rcv_addLineAttributed {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      10 EntityId, 8 Tick, 8 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // S3 (the freeze): a full Receive — pool attached (born with the line's act — §8.5.3),
 // birth pins stamped, the sActual fan-out committed on the attribution's own log, line
@@ -222,7 +222,7 @@ run unit_rcv_receiveFreezes {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      16 EntityId, 13 Tick, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      16 EntityId, 13 Tick, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
       // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 6 in the night window — each committed row brings its activation call
 
 // §8.3.5: a fully-rejected line — received none, rejected present; births NOTHING and
@@ -237,7 +237,7 @@ run unit_rcv_receiveRejectedOnly {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 EntityId, 8 Tick, 8 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Tick, 8 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.4.2: the UNEXPECTED classification — no linkage + the operator's explicit off-manifest
 // assertion (the exceptional-path input; sStatedQty plays no part).
@@ -250,7 +250,7 @@ run unit_rcv_offManifestUnexpected {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Refusal: a wrong-Item pool is REFUSED with exactly RWrongItem (the same-Item gate — the
 // RPoolWrongItem precedent; the pool's classifier may dangle, the mismatch suffices).
@@ -260,7 +260,7 @@ run unit_rcv_wrongItemPoolRefused {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      14 EntityId, 12 Tick, 12 Snapshot, 2 Note, 2 Reference expect 1
+      14 EntityId, 12 Tick, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
       // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 5 in the night window — each committed row brings its activation call
 
 // Refusal: a pool visibly in use (here: held by ANOTHER line) is REFUSED with exactly
@@ -271,7 +271,7 @@ run unit_rcv_poolInUseRefused {
       1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      16 EntityId, 13 Tick, 14 Snapshot, 2 Note, 2 Reference expect 1
+      16 EntityId, 13 Tick, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
       // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 6 in the night window — each committed row brings its activation call
 
 // Refusal (D3 blind-receiving refinement, MP 2026-08-10): a BLIND AddLine pinning a
@@ -291,7 +291,7 @@ run unit_rcv_blindRetiredItemRefused {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Refusal (D3 blind-receiving refinement): the late-resolution dodge CLOSES at the
 // re-pin — an Update pinning a retired item on a line with NO attributions (a blind
@@ -308,7 +308,7 @@ run unit_rcv_blindUpdateRetiredRefused {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Grandfather (the ungated half of the split): an ORDER-CONNECTED AddLine pinning a
 // RETIRED item COMMITS — capture riding the order's already-gated commitment (ordered
@@ -324,7 +324,7 @@ run unit_rcv_attributedRetiredItemAllowed {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 8 Tick, 10 Snapshot, 8 Occurrence, 3 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 8 Tick, 10 Snapshot, 8 Occurrence, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Refusal: the Σ-expected attach bound (§8.3.3 d, case n=0) — an attribution whose
 // `expected` exceeds the line's cap is REFUSED with exactly ROverAttributed.
@@ -334,7 +334,7 @@ run unit_rcv_overAttributedRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      10 EntityId, 8 Tick, 8 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Refusal: the Σ-actual Receive bound (§8.3.3 d, one key) — an allocation exceeding the
 // accepted count is REFUSED with exactly ROverAllocated.
@@ -344,7 +344,7 @@ run unit_rcv_overAllocatedRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 10 Snapshot, 5 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.1.3: the distribute C/OP's closing append — a committed RecordDelivery lands the PD
 // ref in `sDeliveries` on a RECEIVED line (idempotent by set semantics).
@@ -358,7 +358,7 @@ run unit_rcv_recordDelivery {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 1 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 9 Tick, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      10 EntityId, 9 Tick, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.2.1/C3: release — Complete([locator]) detaches the pool (custody ends, the derived
 // reading; the pool persists) and the line stands DISTRIBUTED.
@@ -372,7 +372,7 @@ run unit_rcv_releaseLine {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // §8.2: the capture-finalization gate — Complete commits once every child line is
 // finalized (the caller's cascade came first); the Receiver stands COMPLETE.
@@ -386,7 +386,7 @@ run unit_rcv_completeReceiver {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 9 Tick, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      10 EntityId, 9 Tick, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // Refusal: Complete against a still-RECEIVING line — exactly RLinesReceiving (the gate).
 run unit_rcv_completeRefusedLinesReceiving {
@@ -395,7 +395,7 @@ run unit_rcv_completeRefusedLinesReceiving {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 8 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── CUT 6 (DT-022 TQ-2 / TQ-7(c) / TQ-3) ────────────────────────────────────────────────────────
 // TQ-2: a rejection carries its WHY and the operator's clarification, landing AT Receive with
@@ -414,7 +414,7 @@ run unit_rcv_receiveWithReason {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 8 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 8 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // TQ-7(c): the Receiver's INTERNAL notes are editable at ANY time — Annotate commits on a
 // COMPLETE receiver and CHANGES the note set (the deliberate terminal-law exemption,
@@ -429,7 +429,7 @@ run unit_rcv_annotateAfterComplete {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      8 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference expect 1
+      8 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // TQ-3 CONFIRMATION (MP follow-up, 2026-08-08): after release, the line's former pool is AT
 // REST — it persists (the atom outlives the line's custody, §8.5.1: never re-held) and NO
@@ -449,7 +449,7 @@ run unit_rcv_atRestAfterRelease {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── QA704 Q4 (a), DT-009 Q27: the carrier pin and line item pin facts are guard arms (reflects dafny-domain
 // src/receiving/receiver/receiver.dfy CarrierViol, ItemPinViol) ──
@@ -462,7 +462,7 @@ run unit_rcv_carrierPinUnsoundRefused {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference expect 1
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 // A header write pinning a carrier version that is not the current one at the write is refused with exactly RCarrierPinStale.
 run unit_rcv_carrierPinStaleRefused {
   some o: CreateReceiverOcc, p: o.carrierPin | not pinsCurrentBa[p, o.tick]
@@ -471,7 +471,7 @@ run unit_rcv_carrierPinStaleRefused {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference expect 1
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 // A line write pinning an item version that is not the current one at the write is refused with exactly RItemPinStale.
 run unit_rcv_lineItemPinStaleRefused {
   some o: UpdateReceivingLineOcc, p: o.item | not pinsCurrentItem[p, o.tick] and rlPre[o].sStatus = RL_RECEIVING
@@ -480,7 +480,7 @@ run unit_rcv_lineItemPinStaleRefused {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The currency laws are THEOREMS of the arms (Dafny CarrierPinCurrency, ItemPinCurrency): committed writes pin current versions.
 check unit_rcv_carrierPinCurrencyHolds {
   all o: ReceiverHeaderOcc | (committed[o] and some o.carrierPin) implies pinsCurrentBa[o.carrierPin, o.tick]
@@ -488,7 +488,7 @@ check unit_rcv_carrierPinCurrencyHolds {
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference expect 0
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 check unit_rcv_lineItemPinCurrencyHolds {
   all o: AddReceivingLineOcc    | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
   all o: UpdateReceivingLineOcc | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
@@ -496,14 +496,14 @@ check unit_rcv_lineItemPinCurrencyHolds {
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference expect 0
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 // The definitional law is a THEOREM of the RCarrierPinUnsound arm over committed header writes.
 check unit_rcv_receiverCarrierPinAgreesHolds { receiverCarrierPinAgrees }
   for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference expect 0
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── MF-004 (found by the bots on dafny-domain#32, 2026-11-05; confirmed in both trees): the line-side attach guards mirror
 // the partner's arm. An attribution whose OWN log is started (attached once, since detached) is refused by `AttachAttribution`
@@ -519,7 +519,7 @@ run unit_rcv_appendStartedAttributionRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 run unit_rcv_addLineStartedAttributionRefused {
   some g: AttachAttributionOcc, o: AddReceivingLineOcc |
     committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
@@ -528,7 +528,7 @@ run unit_rcv_addLineStartedAttributionRefused {
       1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference expect 1
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 // The line-side guard excludes exactly what the partner refuses: a committed append or attributed add never names an attribution
 // already started (the premise the paired composite's preservation needs — dafny-domain STYLE.md SO-1 (a)).
 check unit_rcv_lineAttachAgreesWithPartner {
@@ -540,4 +540,4 @@ check unit_rcv_lineAttachAgreesWithPartner {
       1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference expect 0
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
