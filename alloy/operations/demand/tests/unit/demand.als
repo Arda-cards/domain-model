@@ -764,6 +764,36 @@ run unit_dem_externalPoolNotFreshRefused {
       2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Contribution,
       9 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference expect 1
 
+// An AFFIRMED pool is still fresh. dafny-domain's `KC.PoolUsed` reads the pool's MEMBERSHIP rows only (`ShapeOf == Mutate`): an
+// affirmation writes nothing and is no use. A twin and its control at one scope (8 occurrences counted, one spare):
+// the twin — a pool affirmed, then named by a committed external attach.
+run unit_dem_affirmedPoolStaysFresh {
+  some f: AffirmPoolOcc, a: AddContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    committed[f] and committed[a] and precedes[f.tick, a.tick]
+    f.subject = p and a.contribution = e and p = resolve[e.cPool]
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 1
+
+// the control — an attach refused RPoolNotFresh on a pool that only its create and an affirmation wrote, and that no committed
+// attach, StartProcessing or StartProduction named: there is none. (It found one while the freshness arm counted every pool row
+// but the create and the retire — Copilot's review of domain-model PR #12.)
+run unit_dem_affirmedOnlyPoolNotFreshRefused {
+  some f: AffirmPoolOcc, a: AddContributionOcc, e: ExternalContribution, p: InventoryPool | {
+    committed[f] and precedes[f.tick, a.tick]
+    f.subject = p and a.contribution = e and p = resolve[e.cPool]
+    refusedAtAdmission[a] and RPoolNotFresh in a.admission.because
+    no b: PoolAddOcc + PoolRemoveOcc + PoolTransferOcc | committed[b] and b.subject = p and precedes[b.tick, a.tick]
+    no sp: StartProcessingOcc | committed[sp] and sp.pool = e.cPool and precedes[sp.tick, a.tick]
+    no a0: AttachOcc - a | committed[a0] and precedes[a0.tick, a.tick]
+      and a0.contribution in ExternalContribution and a0.contribution.cPool = e.cPool
+    no sd: StartProductionOcc | committed[sd] and precedes[sd.tick, a.tick] and sd.holding = e.cPool
+  }
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution,
+      9 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 2 Note, 2 Reference expect 0
+
 // ── DemandTests.EditAndRemove ──────────────────────────────────────────────────────────────────────────────────────────────
 // An edit of an external contribution sets the fields it carries (quantity and reference) and keeps the pool and the id.
 run unit_dem_editExternalSetsFields {
