@@ -179,6 +179,20 @@ pred revokeExtractsAtomically {
     (one v: RevokeDeliveryOcc | committed[v] and v.subject.eId = x.delivery
        and x.subject.eId = v.subject.demandRef)
 }
+/** pairsOneActivation — THE ONE-ACTIVATION LAW of the two atomic compositions (the project owner's ruling QA764, option (a),
+    2026-11-12; reflects dafny-domain `DemandsContract.PairsOneActivation` over `PairedRows`, MD-089): the two halves of a
+    committed pair cite ONE activation. Stated over EVERY matching pair (the matching the two predicates above make: the
+    delivery's id and the demand's), so a pair written under two activations is refused. NOT in `guarantees` (the
+    pairings' own non-publication rationale); enforced by the implementation's fact beside its activation facts, as the
+    reference model has it a conjunct of `Activated`. Controls and twins: tests/unit/demand_one_activation.als. */
+pred pairsOneActivation {
+  all c: CreateDeliveryOcc, r: RecordProductionOcc |
+    (committed[c] and committed[r] and r.delivery = c.subject.eId and r.subject.eId = c.subject.demandRef)
+      implies r.arche = c.arche
+  all v: RevokeDeliveryOcc, x: ExtractProductionOcc |
+    (committed[v] and committed[x] and x.delivery = v.subject.eId and x.subject.eId = v.subject.demandRef)
+      implies x.arche = v.arche
+}
 /** Once REVOKED, forever REVOKED (SL-4; §8.1.1 reversing-entry semantics: the terminal record
     is kept, the delivery contributes NOTHING — `contributionsFor` excludes it forever). */
 pred deliveryTerminalRevoke {
