@@ -37,7 +37,7 @@ run unit_rcv_addLineAttachOneActivation {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      8 Occurrence, 8 Tick, 10 EntityId, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      8 Occurrence, 8 Tick, 10 EntityId, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_rcv_splitAddLineAttachRefused {
   some c: AddReceivingLineOcc, g: AttachAttributionOcc | {
@@ -49,7 +49,7 @@ run unit_rcv_splitAddLineAttachRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      8 Occurrence, 8 Tick, 10 EntityId, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 0
+      8 Occurrence, 8 Tick, 10 EntityId, 9 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── the attach pairing, carrier 2: AppendAttribution on an existing line, with the AttachAttribution ─────────────────
 run unit_rcv_appendAttachOneActivation {
@@ -62,7 +62,7 @@ run unit_rcv_appendAttachOneActivation {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      10 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      10 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_rcv_splitAppendAttachRefused {
   some c: AppendAttributionOcc, g: AttachAttributionOcc | {
@@ -74,7 +74,7 @@ run unit_rcv_splitAppendAttachRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      10 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 0
+      10 Occurrence, 10 Tick, 10 EntityId, 11 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── the detach pairing: RemoveAttribution on the line, with the DetachAttribution ────────────────────────────────────
 run unit_rcv_detachPairOneActivation {
@@ -87,7 +87,7 @@ run unit_rcv_detachPairOneActivation {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      11 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 1
+      11 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_rcv_splitDetachPairRefused {
   some c: RemoveAttributionOcc, g: DetachAttributionOcc | {
@@ -99,7 +99,7 @@ run unit_rcv_splitDetachPairRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      11 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 3 Quantity, 2 Note, 2 Reference expect 0
+      11 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 3 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── the receive pairing: ReceiveLine, with the RecordActual of one of its allocation keys ────────────────────────────
 run unit_rcv_receivePairOneActivation {
@@ -112,7 +112,7 @@ run unit_rcv_receivePairOneActivation {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      10 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      10 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_rcv_splitReceivePairRefused {
   some r: ReceiveLineOcc, x: RecordActualOcc | {
@@ -124,7 +124,7 @@ run unit_rcv_splitReceivePairRefused {
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      10 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 0
+      10 Occurrence, 10 Tick, 12 EntityId, 12 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── the receive against TWO allocation keys: the first actual under the receive's activation, the second split ───────
 run unit_rcv_receiveTwoKeysOneActivation {
@@ -138,7 +138,7 @@ run unit_rcv_receiveTwoKeysOneActivation {
       1 Receiver, 1 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      13 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 1
+      13 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_rcv_splitSecondActualRefused {
   some r: ReceiveLineOcc, x, y: RecordActualOcc | {
@@ -151,4 +151,4 @@ run unit_rcv_splitSecondActualRefused {
       1 Receiver, 1 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 0 Contribution, 0 Placement,
-      13 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference expect 0
+      13 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 4 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0

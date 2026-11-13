@@ -30,7 +30,7 @@ run unit_dem_createPairOneActivation {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 1
+      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_splitCreatePairRefused {
   some c: CreateDeliveryOcc, r: RecordProductionOcc | {
@@ -40,7 +40,7 @@ run unit_dem_splitCreatePairRefused {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference expect 0
+      12 Occurrence, 12 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── the revoke pairing: RevokeDelivery with the ExtractProduction naming its delivery on its demand ──────────────────
 run unit_dem_revokePairOneActivation {
@@ -51,7 +51,7 @@ run unit_dem_revokePairOneActivation {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 1
+      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 run unit_dem_splitRevokePairRefused {
   some v: RevokeDeliveryOcc, x: ExtractProductionOcc | {
@@ -61,4 +61,4 @@ run unit_dem_splitRevokePairRefused {
   }
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
-      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference expect 0
+      14 Occurrence, 14 Tick, 14 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
