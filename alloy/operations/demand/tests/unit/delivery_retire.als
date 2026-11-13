@@ -16,14 +16,18 @@ open meta/subject_log/lifecycle[dt/ProductionDelivery, dt/PDState] as pdlc   // 
  * Written and run RED at 1e79b89 BEFORE the sig lands (team-operations.md § Test-driven development; model-changes-sequence.md §9):
  * the root fails to parse on `RetireDeliveryOcc` / `pdlc`. One witness per behaviour and per branch of each pair.
  * Scopes: the demand unit root's delivery commands (1 ProductionDelivery; 11 Tick / 11 EntityId / 10 Snapshot / 10 Occurrence).
+ * RE-SIZED with the TN-004 projection (2026-11-13; Copilot's review of domain-model PR #12): with no card cycle the delivery's
+ * demand reaches IN_PROCESS only through an external contribution and its pool, so a committed create pair COUNTS 10
+ * occurrences and a revoke pair 12 (measured: found at 12 and 14 by the one-activation twins). Each witness below has its
+ * count and two spare; `unit_pdr_retireNeverCreatedRefused` needs no delivery and keeps its scope.
  */
 
 // ── the act commits on a REVOKED delivery (terminal) and tombstones it ─────────────────────────
 run unit_pdr_retireAfterRevoke {
   some o: RetireDeliveryOcc | committed[o] and pdPre[o].sStatus = PD_REVOKED and o.post = o.pre
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
+      15 Tick, 14 EntityId, 16 Snapshot, 15 Occurrence, 2 Note, 2 Reference expect 1
 
 // complement: a committed retire never writes a new record (RetireEffect)
 assert unit_pdr_retireIsTombstone { all o: RetireDeliveryOcc | committed[o] implies o.post = o.pre }
@@ -36,8 +40,8 @@ run unit_pdr_retireNotTerminalRefused {
   some o: RetireDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
     and some o.pre and pdPre[o].sStatus = PD_CREATED
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
+      13 Tick, 14 EntityId, 14 Snapshot, 13 Occurrence, 2 Note, 2 Reference expect 1
 
 // ── refused on a delivery that never started (no history) — the generic arm, the adopter's atom ─
 run unit_pdr_retireNeverCreatedRefused {
@@ -51,16 +55,16 @@ run unit_pdr_retireTwiceRefused {
   some disj r1, r2: RetireDeliveryOcc | committed[r1] and r2.subject = r1.subject and precedes[r1.tick, r2.tick]
     and refusedAtAdmission[r2] and RDeliveryClosed in r2.admission.because
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
+      16 Tick, 14 EntityId, 16 Snapshot, 16 Occurrence, 2 Note, 2 Reference expect 1
 
 // ── complement of the pair: a Revoke after a committed retire is refused (the log is closed) ───
 run unit_pdr_revokeAfterRetireRefused {
   some r: RetireDeliveryOcc, v: RevokeDeliveryOcc | committed[r] and v.subject = r.subject and precedes[r.tick, v.tick]
     and refusedAtAdmission[v] and RDeliveryClosed in v.admission.because
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
+      16 Tick, 14 EntityId, 16 Snapshot, 16 Occurrence, 2 Note, 2 Reference expect 1
 
 // ── the theorem: nothing commits on the delivery's log after a committed retire ────────────────
 assert unit_pdr_nothingAfterRetire { pdlc/nothingAfterRetire }
@@ -78,5 +82,5 @@ run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
     refusedAtAdmission[c] and not pdlc/recorded[c]
     and refusedAtAdmission[r] and pdlc/liveAt[r] and pdlc/recorded[r]
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery,
-      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note, 2 Reference expect 1
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Contribution, 0 Placement,
+      16 Tick, 15 EntityId, 15 Snapshot, 16 Occurrence, 2 Note, 2 Reference expect 1

@@ -43,6 +43,12 @@ run int_rcv_deliveryArc {
   }
 } for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem,
-      1 ProductionDelivery, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      14 Tick, 18 EntityId, 14 Snapshot, 5 Quantity, 13 Occurrence, 2 Note, 2 Reference expect 1
+      1 ProductionDelivery, 0 CardCycle, 0 KanbanCard, 2 InventoryItem, 3 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 1 Contribution, 0 Placement,
+      21 Tick, 22 EntityId, 22 Snapshot, 5 Quantity, 20 Occurrence, 2 Note, 2 Reference expect 1
+      // RE-SIZED with the TN-004 projection (2026-11-13; Copilot's review of domain-model PR #12): the demand is released
+      // only with a contribution, here an external one with its own pool. The arc COUNTS at least 16 occurrences: its ten
+      // rows (the nine named and the RecordProduction paired with the delivery's create), the contribution's attach and
+      // its pool's Create, the item version the demand pins, and one call each for the demand's, the receiver's and the
+      // pool's services. At 13 it was unfinished after 3 h 36 min (the night window of 2026-11-13). 20 leaves room for
+      // the rows a receive with an accepted quantity brings; the third pool is the contribution's.
