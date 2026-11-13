@@ -2,7 +2,10 @@ module operations/demand/demand_reset
 
 /*
  * DEMAND — the CONFINED ResetQty Σ (R3b: THE arity-4 entrant). Opened ONLY by its dedicated
- * root (tests/unit/demand_reset.als). FINDING (2026-07-06, solver-limits): even confined, the
+ * root (tests/unit/demand_reset.als). Reflects dafny-domain src/operations/demand/demand.dfy: under QA704 Q3 (a)
+ * (MP, 2026-11-05) the guard computes the sum, the effect stores the fold and `ResetSnapsToSum` is the reference
+ * model's theorem; this module is that effect at the witness sizes, a class-2 extension (alloy/EXTENSIONS.md) —
+ * kept confined for the solver budget below, not retired (DT-015's plan said retired; the budget decided). FINDING (2026-07-06, solver-limits): even confined, the
  * demand cone CANNOT carry the keyed_sum fold — the transitive vocabulary (kanban + II + item)
  * fixes ~250+ atoms into every universe, past Kodkod's ~215-atom arity-4 ceiling. So the Σ is
  * stated CASE-WISE for the witness sizes (0/1/2 live members — exact) and left UNCONSTRAINED

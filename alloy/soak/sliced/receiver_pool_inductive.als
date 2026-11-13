@@ -23,7 +23,7 @@ module soak/sliced/receiver_pool_inductive
  * and ref-integrity facts still apply — they are record-level well-formedness we keep).
  * Seeds are forced committed and strictly BEFORE every real line occurrence; e7_step
  * excludes steps INTO a seed tick. All admission/effect witnessing in the implementation
- * is per-kind, so seeds are swept only by `chained`/`commitAlwaysAccepts` (both benign).
+ * is per-kind, so seeds are swept only by `chained` (benign; `commitAlwaysAccepts` left with the second gate, TN-003 row 9).
  */
 
 open receiving/receiver/receiver_implementation

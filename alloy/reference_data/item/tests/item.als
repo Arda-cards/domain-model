@@ -1,4 +1,5 @@
 module reference_data/item/tests/item
+// Reflects dafny-domain src/reference-data/item/tests/item-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open reference_data/item/item_implementation
@@ -17,10 +18,37 @@ run unit_item_coherent {
   some o: CreateItemOcc | committed[o] and some o.supplies
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-// Supply-row ownership is exclusive (C1 axiom regression) — UNSAT = holds.
+// Supply-row ownership is exclusive across COMMITTED histories (C1, a THEOREM of the RSupplyNotOwned arm since QA704 Q4 (a)) — UNSAT = holds.
 check unit_item_supplyOwnership {
   no c: ItemSupply | some disj i1, i2: Item | c in itemSuppliesOf[i1] and c in itemSuppliesOf[i2]
 } for 6 but 2 RoleDetail, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
+
+// ── QA704 Q4 (a), DT-009 Q27: the three content facts are guard arms (reflects dafny-domain src/reference-data/item/item.dfy ContentViol) ──
+// A write stating a supply row another item's committed history already holds is refused with exactly RSupplyNotOwned.
+// RED on the tree before the arms: `supplyOwnership` was a FACT, so the second item's write was unrepresentable (UNSAT).
+run unit_item_supplyNotOwnedRefused {
+  some disj i1, i2: Item, c1, c2: CreateItemOcc, s: ItemSupply {
+    c1.subject = i1 and committed[c1] and s in c1.supplies
+    c2.subject = i2 and precedes[c1.tick, c2.tick] and s in c2.supplies
+    c2.admission in Rejected and c2.admission.because = RSupplyNotOwned
+  }
+} for 6 but 2 RoleDetail, 6 Tick, 3 Snapshot, 5 Occurrence expect 1
+// A write whose supply row names a role selector without its pin is refused with exactly RSupplierPinUnsound.
+run unit_item_supplierPinUnsoundRefused {
+  some c: CreateItemOcc, s: c.supplies | no s.supplierPin and some s.supplierRole
+    and c.admission in Rejected and c.admission.because = RSupplierPinUnsound
+} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
+// A write whose supply row pins a vendor version that is not the current one at the write is refused with exactly
+// RSupplierPinStale. RED before: `ItemSupplyPinCurrency` was a FACT over committed writes, and the solver could still make the
+// write refused for no reason of the guard's — now the stale pin IS the reason.
+run unit_item_supplierPinStaleRefused {
+  some c: CreateItemOcc, s: c.supplies, p: s.supplierPin | not pinsCurrentBa[p, c.tick]
+    and c.admission in Rejected and c.admission.because = RSupplierPinStale
+} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 4 Occurrence expect 1
+// The currency law is now a THEOREM of the arm: every committed write's vendor pins are current at its tick.
+check unit_item_supplyPinCurrencyHolds {
+  all o: ItemWriteOcc | committed[o] implies all s: o.supplies | some s.supplierPin implies pinsCurrentBa[s.supplierPin, o.tick]
+} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 4 Occurrence expect 0
 
 // ── Inventory-tracking mode & UoM scheme (DT-009 — identity-carried, version-independent) ──────
 // A tracked Item exists with a multi-unit scheme (`each` + another configured unit).
@@ -60,7 +88,7 @@ run unit_item_lifecycleArc {
     itemLiveAt[i, u.tick] and not itemLiveAt[i, d.tick]
     u.post.sSupplies != c.post.sSupplies
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
 check unit_item_lifecycleShape { itemLifecycleShape } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
@@ -71,7 +99,7 @@ run unit_item_retiredMutateRefused {
     committed[d] and u.subject = d.subject and precedes[d.tick, u.tick]
     u.admission in Rejected and u.admission.because = RItemRetired
   }
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 1
+} for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
 
 // ── DT-023 cut 7a: version pins (R3) ───────────────────────────────────────────────────────────
 

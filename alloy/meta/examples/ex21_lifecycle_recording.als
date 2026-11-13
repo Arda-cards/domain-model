@@ -30,7 +30,7 @@ sig OpenFolioOcc  extends lc/CreateOcc {} { bindings = subject }
 sig ChargeOcc     extends lc/MutateOcc { amount: one Int } { bindings = subject + amount }
 sig CloseFolioOcc extends lc/RetireOcc {} { bindings = subject }
 
-fact SpineAdopted { flog/chained and flog/commitAlwaysAccepts }
+fact SpineAdopted { flog/chained }
 
 fun domainViol[o: lc/MutateOcc]: set Reason { ((o & ChargeOcc).amount <= 0) => RNonPositiveCharge else none }
 fact Witness {

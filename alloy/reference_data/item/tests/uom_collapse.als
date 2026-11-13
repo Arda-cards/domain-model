@@ -1,4 +1,5 @@
 module reference_data/item/tests/uom_collapse
+// Reflects dafny-domain src/reference-data/item/tests/uom-collapse-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
  * Verification of the multi-unit UoM collapse (DT-009): `collapse(sch, q) = { each ↦ Σ_u q[u]·factor[u] }`.

@@ -1,4 +1,5 @@
 module receiving/receiver/tests/unit/receiver
+// Reflects dafny-domain src/receiving/receiver/tests/receiver-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open receiving/receiver/receiver_implementation
 open receiving/receiver/receiver_contracts
@@ -211,11 +212,12 @@ run unit_rcv_receiveFreezes {
     some resolve[rlStateAt[r.subject, r.tick].sPool] & InventoryPool
     some t: Tick | some oaStateAt[x.subject, t].sActual
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 11 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 4 Quantity, 2 Note expect 1
+      16 EntityId, 13 Tick, 14 Snapshot, 4 Quantity, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 6 in the night window — each committed row brings its activation call
 
 // §8.3.5: a fully-rejected line — received none, rejected present; births NOTHING and
 // attaches NO pool (ReceiveBirthsPooled); still freezes RECEIVED.
@@ -248,21 +250,23 @@ run unit_rcv_offManifestUnexpected {
 // RPoolWrongItem precedent; the pool's classifier may dangle, the mismatch suffices).
 run unit_rcv_wrongItemPoolRefused {
   some o: ReceiveLineOcc | refusedAtAdmission[o] and o.admission.because = RWrongItem
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 8 Tick, 8 Snapshot, 2 Note expect 1
+      14 EntityId, 12 Tick, 12 Snapshot, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 5 in the night window — each committed row brings its activation call
 
 // Refusal: a pool visibly in use (here: held by ANOTHER line) is REFUSED with exactly
 // RPoolInUse — receiving's per-entity-type availability semantics (§8.5.3).
 run unit_rcv_poolInUseRefused {
   some o: ReceiveLineOcc | refusedAtAdmission[o] and o.admission.because = RPoolInUse
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      12 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
+      16 EntityId, 13 Tick, 14 Snapshot, 2 Note expect 1
+      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — UNSAT at for 6 in the night window — each committed row brings its activation call
 
 // Refusal (D3 blind-receiving refinement, MP 2026-08-10): a BLIND AddLine pinning a
 // RETIRED item is REFUSED with exactly RRetiredRef — a blind line IS the acceptance
@@ -440,3 +444,94 @@ run unit_rcv_atRestAfterRelease {
       0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       12 EntityId, 9 Tick, 10 Snapshot, 3 Quantity, 2 Note expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the carrier pin and line item pin facts are guard arms (reflects dafny-domain
+// src/receiving/receiver/receiver.dfy CarrierViol, ItemPinViol) ──
+// A header write whose carrier role selector comes without its pin is refused with exactly RCarrierPinUnsound. RED before the
+// arm: `ReceiverCarrierPinAgrees` was a DEFINITIONAL fact over every header record, so the shape was unrepresentable (UNSAT).
+run unit_rcv_carrierPinUnsoundRefused {
+  some o: CreateReceiverOcc | some o.carrierRole and no o.carrierPin
+    and refusedAtAdmission[o] and o.admission.because = RCarrierPinUnsound
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 1
+// A header write pinning a carrier version that is not the current one at the write is refused with exactly RCarrierPinStale.
+run unit_rcv_carrierPinStaleRefused {
+  some o: CreateReceiverOcc, p: o.carrierPin | not pinsCurrentBa[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RCarrierPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 1
+// A line write pinning an item version that is not the current one at the write is refused with exactly RItemPinStale.
+run unit_rcv_lineItemPinStaleRefused {
+  some o: UpdateReceivingLineOcc, p: o.item | not pinsCurrentItem[p, o.tick] and rlPre[o].sStatus = RL_RECEIVING
+    and refusedAtAdmission[o] and o.admission.because = RItemPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 1
+// The currency laws are THEOREMS of the arms (Dafny CarrierPinCurrency, ItemPinCurrency): committed writes pin current versions.
+check unit_rcv_carrierPinCurrencyHolds {
+  all o: ReceiverHeaderOcc | (committed[o] and some o.carrierPin) implies pinsCurrentBa[o.carrierPin, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 0
+check unit_rcv_lineItemPinCurrencyHolds {
+  all o: AddReceivingLineOcc    | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
+  all o: UpdateReceivingLineOcc | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note expect 0
+// The definitional law is a THEOREM of the RCarrierPinUnsound arm over committed header writes.
+check unit_rcv_receiverCarrierPinAgreesHolds { receiverCarrierPinAgrees }
+  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note expect 0
+
+// ── MF-004 (found by the bots on dafny-domain#32, 2026-11-05; confirmed in both trees): the line-side attach guards mirror
+// the partner's arm. An attribution whose OWN log is started (attached once, since detached) is refused by `AttachAttribution`
+// (`RAttributionStarted`, genesis-once); the line-side `AppendAttribution` and the attributed `AddReceivingLine` must refuse it
+// too, or the pairing fact `AttachComposesWithAppend` EXCLUDES the attempt silently (knowledge-base: a pairing fact excludes
+// what the partner guard refuses). RED before the arms: both runs UNSAT (the attempt had no admissible partner).
+run unit_rcv_appendStartedAttributionRefused {
+  some g: AttachAttributionOcc, o: AppendAttributionOcc |
+    committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+    and some o.pre and o.attribution not in rlPre[o].sAttributions
+    and refusedAtAdmission[o] and RAttributionStarted in o.admission.because
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+run unit_rcv_addLineStartedAttributionRefused {
+  some g: AttachAttributionOcc, o: AddReceivingLineOcc |
+    committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+    and refusedAtAdmission[o] and RAttributionStarted in o.admission.because
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+// The line-side guard excludes exactly what the partner refuses: a committed append or attributed add never names an attribution
+// already started (the premise the paired composite's preservation needs — dafny-domain STYLE.md SO-1 (a)).
+check unit_rcv_lineAttachAgreesWithPartner {
+  all o: AppendAttributionOcc | committed[o] implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+  all o: AddReceivingLineOcc | (committed[o] and some o.attribution) implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note expect 0

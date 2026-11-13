@@ -2,8 +2,8 @@ module meta/kernel
 
 /*
  * Modeling kernel: identity, the Entity bound, tenant scoping, soft-reference
- * resolution. Domain payloads extend Entity (or Scoped). Timeless — the temporal
- * axis is the opt-in meta/bitemporal layer (DT-001.03). See modeling-conventions.
+ * resolution. Domain payloads extend Entity (or Scoped). Timeless — the bitemporal
+ * axis is the runtime's, not the model's (RA-02, 2026-11-05; the meta/bitemporal stub left with TN-003 row 3). See modeling-conventions.
  */
 
 /** EntityId — an opaque, globally-unique identity value. Alloy atoms are inherently

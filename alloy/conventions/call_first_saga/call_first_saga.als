@@ -101,8 +101,8 @@ fact AdmissionWitness {
 }
 
 // ── spine adoption + effects (NO cross-log enforcement facts — the guard IS the gate) ───────────
-fact SlotChain { slog/chained }   fact SlotCommits { slog/commitAlwaysAccepts }
-fact JobChain  { jlog/chained }   fact JobCommits  { jlog/commitAlwaysAccepts }
+fact SlotChain { slog/chained }
+fact JobChain  { jlog/chained }
 
 fun sPost[o: slog/SubjectOcc]: lone SlotRec { o.post & SlotRec }
 fun jPost[o: jlog/SubjectOcc]: lone JobRec { o.post & JobRec }

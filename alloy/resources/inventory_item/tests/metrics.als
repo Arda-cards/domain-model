@@ -1,6 +1,9 @@
 module resources/inventory_item/tests/metrics
+// Reflects dafny-domain src/resources/inventory-item/tests/metrics-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
-open resources/inventory_item/metrics
+open resources/inventory_item/metrics as mx          // aliased so the fold parameters below are QUALIFIED (model-gate rule 10, tools/open-params-gate.py)
+open meta/keyed_value_algebra/keyed_sum[mx/TLine] as ts   // same params ⇒ metrics.als' fold instances (S-05: amountsInPlay reads their cum)
+open meta/keyed_value_algebra/keyed_sum[mx/DLine] as ds
 open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
 
 /*
@@ -47,7 +50,7 @@ run unit_invmet_retiredExcluded {
     no c.cLevel and m.tenantId = c.cTenant and m.itemPin.subject = c.cItem
     m not in membersOf[c]
   }
-} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 7 Tick, 5 Instant, 7 Occurrence, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // A2 locator classification: a facility-level cell admits the in-prefix member and excludes a
@@ -60,7 +63,7 @@ run unit_invmet_locatorCellLoads {
     liveAsOf[m2, c.cAsOf] and m2.tenantId = c.cTenant and m2.itemPin.subject = c.cItem
     m2 not in membersOf[c]
   }
-} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+} for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 7 Tick, 5 Instant, 7 Occurrence, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 1 CountCell, 2 TLine, 2 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
 
 // The level JUMPS at a committed write: two same-query cells straddling a Replenish differ.
@@ -102,6 +105,43 @@ run unit_invmet_usableConeNotLiftable {
   some c: CountCell | classify[cellUsable[c]] = NEGATIVE
 } for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 1
+
+// ── S-05 (TN-001; MP's ruling 2026-11-05: "add the proposed in-range premise as a bounded check") ───────────────────
+// Dafny proves `UsableNonNegative` over the reals (src/resources/inventory-item/metrics.dfy:220). Here the scalar is an abstract
+// finite group whose order is only total (`orderAxioms`), so the lift fails at the boundary (the witness above). The IN-RANGE
+// PREMISE is the abstract form of "every value and every partial sum inside the bitwidth": on the amounts in play — the
+// members' actual and degraded amounts and the folds' partial sums — the order is translation-invariant. Under it the
+// inequality is a BOUNDED theorem (class 2, alloy/EXTENSIONS.md), never the theorem itself; the witness above is then UNSAT.
+/** amountsInPlay — the scalars the cells read: the members' per-unit amounts and the two folds' cumulative sums. */
+fun amountsInPlay: set Scalar {
+  SZero + univ.(InventoryItemState.sActual.byUnit) + univ.(InventoryItemState.sDegraded.byUnit)
+  + univ.(TLine.(ts/Fold.cum)) + univ.(DLine.(ds/Fold.cum))
+}
+/** inRange — translation invariance of the order on the amounts in play (the finite group's order wraps only outside them). */
+pred inRange {
+  all a, b, c: amountsInPlay | sLeq[a, b] implies sLeq[a.splus[c], b.splus[c]]   // translation by an amount in play (the Σ chain)
+  all a, b: amountsInPlay | sLeq[a, b] implies sLeq[SZero, b.splus[a.sneg]]       // translation by the NEGATION of one (the last step:
+                                                                                   //   degraded ≤ total ⟹ 0 ≤ total − degraded; the
+                                                                                   //   first solver pass found the counter-example without it)
+}
+// The premise is satisfiable with a two-member cell (vacuity guard for the two commands below).
+run unit_invmet_inRangeSat {
+  clocksAligned and inRange
+  some c: CountCell | no c.cLevel and #membersOf[c] = 2 and not isZero[cellTotal[c]]
+} for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+      expect 1
+// The boundary witness under the premise: UNSAT — no aggregate usable classifies NEGATIVE in range.
+run unit_invmet_usableConeLiftsInRange {
+  clocksAligned and inRange
+  some c: CountCell | classify[cellUsable[c]] = NEGATIVE
+} for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+      expect 0
+// The bounded theorem (Dafny UsableNonNegative, read at the source S-05): under the premise every cell's usable is ZERO or POSITIVE.
+assert unit_invmet_usableNonNegativeInRange {
+  (clocksAligned and inRange) implies all c: CountCell | classify[cellUsable[c]] in (ZERO + POSITIVE)
+}
+check unit_invmet_usableNonNegativeInRange for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+      expect 0
 
 // A QUIET window repeats the level (LOCF): no committed occurrence in (τ₁, τ₂] ⟹ same members,
 // same total — the family-B "a period with no change repeats the prior count".

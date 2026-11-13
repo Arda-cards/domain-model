@@ -1,4 +1,5 @@
 module resources/inventory_item/tests/inventory_pool
+// Reflects dafny-domain src/resources/inventory-item/tests/inventory-pool-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/inventory_item/inventory_pool
 
@@ -71,13 +72,13 @@ run unit_pool_transfer {
     and o.item not in heldAt[o.pool, o.tick]
     and (some a: PoolAddOcc | committed[a] and a.pool = o.to and a.item = o.item and precedes[o.tick, a.tick]
            and o.item in heldAt[o.to, a.tick])
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 8 Tick expect 1
 
 // A transfer into a pool of a DIFFERENT Item is refused with exactly RWrongItem (judged at the
 // DESTINATION — the pool-vs-pool item agreement, DT-020 §8.5.3).
 run unit_pool_transferWrongItemRefused {
   some o: PoolTransferOcc | refusedAtAdmission[o] and o.admission.because = RWrongItem
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 8 Tick expect 1
 
 // A transfer of an item the SOURCE pool does not currently hold is refused with exactly
 // RNotMember.
@@ -91,50 +92,44 @@ run unit_pool_transferSameTargetRefused {
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
 
 // ── splitInPool (M2b composite, a DERIVED predicate — not a kind): a split's new sibling lands
-// in the same pool that held the split target.
+// in the same pool that held the split target. RED at 54b5387 (DAFNY's read): the pred asked `a.arche = s.arche`, unsatisfiable
+// once the item log and the pool log each cite their own service's activation (`effectsCited`) — UNSAT against expectation.
 run unit_pool_splitInPool {
   some s: SplitOcc, a: PoolAddOcc | splitInPool[s, a]
 } for 7 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+// DT-015 D1 through the tree (dafny-domain#31's Copilot finding, DAFNY's read of the mirror 2026-11-05): the split is an item
+// service act and the add a pool service act, so they cannot share an activation; the add's activation is the CALL the split's
+// activation makes (`a.arche.arche = s.arche`). An add under an activation the split's did not call is not the composite.
+run unit_pool_splitInPoolOtherCallerNotComposite {
+  some s: SplitOcc, a: PoolAddOcc | committed[s] and committed[a] and a.item = s.nu and adjacentCommit[s, a]
+    and s.target in heldAt[a.pool, s.tick] and a.arche.arche != s.arche and splitInPool[s, a]
+} for 7 but 2 RoleDetail, 2 Scalar, 3 Int expect 0
 
-// ── B-mov (DT-029 E6 / SAMWISE-S1 / MINESWEEPER-Q7 = A): the causal signature on movement rows ──────────────────
-/** A re-sent movement — a second add on ONE pool citing the SAME origin a committed add already carries — is refused
-    with exactly RDuplicateOrigin (the idempotent callee; the module fact `ArcheUnique` needs this typed refusal — Q8). */
-run unit_pool_duplicateOriginRefused {
-  some g: PoolOcc, disj a, b: PoolAddOcc | committed[g] and committed[a]
-    and a.arche = g and b.arche = g and a.pool = b.pool and precedes[g.tick, a.tick] and precedes[a.tick, b.tick]
-    and b.admission in Rejected and b.admission.because = RDuplicateOrigin
+// ── the activation (DT-015 D1 to D3): every pool row cites the pool service's act that wrote it ─────────────────────
+/** THE SIBLING WITNESS (MP, Journal 192741): one activation writes TWO committed adds on ONE pool. RED on the tree before
+    DT-015: the second add was refused `RDuplicateOrigin` (B-mov, the per-row origin law `ArcheUnique`), so UNSAT. */
+run unit_pool_siblingAddsOneActivation {
+  some g: Call, disj a, b: PoolAddOcc | committed[g] and committed[a] and committed[b]
+    and a.arche = g and b.arche = g and a.pool = b.pool and precedes[a.tick, b.tick]
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
-/** Q7 = A: a CITING transfer's paired destination add carries the SAME arche — one act, one causal signature, two rows on
-    two pools (no duplicate: uniqueness is per (arche, pool)). */
+/** Q7 = A: a transfer's paired destination add carries the SAME activation — one act, one causal signature, two rows on
+    two pools. */
 run unit_pool_transferBothHalvesOneArche {
-  some g: PoolOcc, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
+  some g: Call, o: PoolTransferOcc, a: PoolAddOcc | committed[g] and committed[o] and committed[a]
     and o.arche = g and precedes[g.tick, o.tick] and a.pool = o.to and a.item = o.item and adjacentCommit[o, a]
     and a.arche = o.arche and a.pool != o.pool
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Occurrence, 7 Tick expect 1
-/** A self-minted transfer's pair cites the transfer row itself — the transfer IS the add's immediate cause. */
-run unit_pool_selfMintedTransferPairCitesTransfer {
-  some o: PoolTransferOcc, a: PoolAddOcc | committed[o] and committed[a] and o.arche = o
-    and a.pool = o.to and a.item = o.item and adjacentCommit[o, a] and a.arche = o
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 9 Tick expect 1
+/** A refused pool write cites a refused activation: the act is atomic (`effectsAgree`), and the refusal is still a row. */
+run unit_pool_refusedAddCitesRefusedActivation {
+  some g: Call, a: PoolAddOcc | refusedAtAdmission[g] and a.arche = g and refusedAtAdmission[a]
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
-/** MF-002 (MP, 2026-10-16): a transfer whose origin a CITING row on the DESTINATION already carries is refused with exactly
-    RDuplicateOrigin, judged at the destination, because the transfer's paired add would be that duplicate. RED before the
-    destination arm: the attempt had no admissible paired add, so `TransferPairing` excluded it instead of refusing it (UNSAT).
-    The source is kept clear of the origin, so the refusal is the destination arm's alone; the citing row `b` keeps the
-    witness independent of MF-001 (whether a self-initiated row takes a slot). */
-run unit_pool_transferOriginLandedOnDestinationRefused {
-  some g: Occurrence, b: PoolOcc, o: PoolTransferOcc |
-    committed[b] and b.pool = o.to and b.arche = g and b.arche != b and precedes[b.tick, o.tick]
-    and o.arche = g
-    and (no c: PoolOcc | committed[c] and c.pool = o.pool and precedes[c.tick, o.tick] and c.arche = g)
-    and refusedAtAdmission[o] and o.admission.because = RDuplicateOrigin
-} for 7 but 2 RoleDetail, 2 Scalar, 3 Int, 8 Occurrence, 9 Tick expect 1
 /** A reversal names the inverse row on the same pool, same item, earlier — and carries its OWN arche (a new context). */
 run unit_pool_reversalNamesInverse {
   some a: PoolAddOcc, r: PoolRemoveOcc | committed[a] and committed[r] and r.reverses = a and r.arche != a.arche
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
-/** An add cannot "reverse" an add (the inverse-kind discipline). */
+/** A COMMITTED add never "reverses" an add (the inverse-kind discipline; since QA704 Q4 (a) an arm, so stated over committed rows). */
 run unit_pool_reversalWrongKindImpossible {
-  some disj a, b: PoolAddOcc | b.reverses = a
+  some disj a, b: PoolAddOcc | committed[b] and b.reverses = a
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 0
 
 // ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — the pool's member and the per-log trace law:
@@ -177,4 +172,19 @@ run unit_pool_transferBackdatedDestinationRefused {
     all w: prevPoolWrite[o, o.subject] | atOrBefore[w.at, o.at]
     some w: prevPoolWrite[o, o.to] | earlierThan[o.at, w.at]
   }
-} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant expect 1
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 3 Instant, 8 Occurrence, 8 Tick expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the reversal discipline is a guard arm (reflects dafny-domain src/resources/inventory-item/inventory-pool.dfy, RReversalUnlawful) ──
+/** A remove naming a REFUSED add as the row it reverses is refused with RReversalUnlawful: the reversed row must be a COMMITTED
+    inverse row on the same pool, same item, earlier. RED before the arm: `ReversalDiscipline` was a FACT over every row, so the
+    refused-add reversal was unrepresentable (UNSAT). */
+run unit_pool_reversalUnlawfulRefused {
+  some a: PoolAddOcc, r: PoolRemoveOcc | r.reverses = a and refusedAtAdmission[a] and refusedAtAdmission[r]
+    and RReversalUnlawful in r.admission.because
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+/** An add naming an add is refused RReversalUnlawful (the inverse-kind discipline, now a refusal). */
+run unit_pool_reversalWrongKindRefused {
+  some disj a, b: PoolAddOcc | b.reverses = a and refusedAtAdmission[b] and RReversalUnlawful in b.admission.because
+} for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 1
+/** The discipline is a THEOREM over committed rows (Dafny `ReversalDiscipline`): a committed row's reversed row is lawful. */
+check unit_pool_reversalDisciplineHolds { reversalDiscipline } for 6 but 2 RoleDetail, 2 Scalar, 3 Int expect 0

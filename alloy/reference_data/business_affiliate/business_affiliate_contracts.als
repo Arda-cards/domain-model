@@ -24,15 +24,17 @@ open reference_data/business_affiliate/business_affiliate_types as bat
 open meta/subject_log/subject_log[bat/BusinessAffiliate, bat/BusinessAffiliateState] as balog  // same params ⇒ the SAME spine instance
 
 // ── C1: role ownership (versioned — DT-023 Q-C folding) ─────────────────────────────────────────
-/** Every BusinessRole belongs to exactly one affiliate's history and inherits its tenant.
-    Consumers may navigate a version's sRoles as a strict in-tenant set. */
+/** Every BusinessRole belongs to at most one affiliate's COMMITTED history and inherits its tenant.
+    Consumers may navigate a version's sRoles as a strict in-tenant set. Since QA704 Q4 (a) a THEOREM of
+    the implementation's RRoleNotOwned arm (dafny-domain `RoleOwnershipHolds`), stated over committed
+    history: a role stated only by a refused write belongs to no history. */
 pred roleOwnership {
-  all r: BusinessRole | one b: BusinessAffiliate | r in baRolesOf[b]
+  all r: BusinessRole | lone b: BusinessAffiliate | r in baRolesOf[b]
   all b: BusinessAffiliate, r: baRolesOf[b] | r.tenantId = b.tenantId
 }
-/** baRolesOf — every role appearing anywhere in `b`'s history (payloads + records). */
+/** baRolesOf — every role in `b`'s COMMITTED history (the records; a committed write's payload is its record). */
 fun baRolesOf[b: BusinessAffiliate]: set BusinessRole {
-  let os = { o: BaOcc | o.subject = b } | os.post.sRoles + (os & BaWriteOcc).roles
+  { o: BaOcc | o.subject = b and committed[o] }.post.sRoles
 }
 
 // ── C2: the lifecycle shape (DT-023 R1 — theorem of guards + effects) ──────────────────────────

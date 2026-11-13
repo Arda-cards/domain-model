@@ -22,8 +22,5 @@ Added 2026-08-24 (DT-024 E7): inductive_invariant — the state-local proof of t
 exclusivity laws (havoc seeds, base/step/law obligations, faithfulness + vacuity), the idiom
 that superseded trace soaking for the receiving lattice row.
 
-Added 2026-08-28 (DT-027, SAMWISE): intent_log — the intent-log pattern for "two logs, one fact":
-reserve on an own chain keyed by the peer entity, act once, confirm/release; both ATTRIBUTION arms
-(exclusive cart claim under the claimants-only premise; additive vat pour carrying the intent
-identity, with the late-act detector and the reversal-as-new-intent rule). Instantiates
-`meta/intent_log` twice (HOLD + MOVEMENT).
+Added 2026-08-28 (DT-027, SAMWISE), REMOVED 2026-11-05: intent_log — the intent-log pattern for "two logs, one fact"
+left the tree with `meta/intent_log` (removed 2026-11-05: the intent chains and the saga are postponed, TN-003 row 2 / DT-015 D4; the Dafny tree is the reference model).

@@ -24,12 +24,14 @@ open meta/subject_log/subject_log[ot/Order, ot/OrderState] as olog          // s
 open meta/subject_log/subject_log[ot/OrderLine, ot/OrderLineState] as llog  // same params ⇒ SAME spine as order_types
 open meta/subject_log/lifecycle[ot/Order, ot/OrderState] as lco   // same params ⇒ the SAME shapes instance as order_types
 open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption ×2 (DT-015 Q5) ───────────────────────────────────────────────────────────────
 fact OrderChaining       { olog/chained }
-fact OrderCommitAccepts  { olog/commitAlwaysAccepts }   // v1 result policy
 fact LineChaining        { llog/chained }
-fact LineCommitAccepts   { llog/commitAlwaysAccepts }
+one sig OrderService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact OrderActivated       { activated[OrderService, olog/SubjectOcc] }
+fact LineActivated        { activated[OrderService, llog/SubjectOcc] }
 
 // ── guard-side reads ────────────────────────────────────────────────────────────────────────────
 /** liveAtOccO — the order is STARTED and LIVE as the operation reads it (pre-record). */
@@ -55,6 +57,15 @@ fun supplierRefViol[b: SupplierBinding, tid: EntityId, t: Tick]: set Reason {
   ((some b.vendorPin and b.vendorPin.subject.tenantId != tid) => RForeignRef else none)
   + ((some b.vendorPin and not baLiveAt[b.vendorPin.subject, t]) => RRetiredRef else none)
 }
+/** bindingPinViol — QA704 Q4 (a), DT-009 Q27: the binding's pin laws as the arms they are in dafny-domain
+    src/procurement/order/order.dfy `BindingPinViol`: RVendorPinUnsound when pin and VENDOR role selector do not come together or
+    the selector is not a VENDOR role of the pinned version (was the definitional fact SupplierBindingPinAgrees); RVendorPinStale
+    when the pin is not the vendor's current version at the write (was the fact BindingPinCurrency, DT-023 cut 7b). */
+fun bindingPinViol[b: SupplierBinding, t: Tick]: set Reason {
+  ((not (some b.vendorPin iff some b.vendorRole) or (some b.vendorRole and not roleSelectorAgrees[b.vendorPin, b.vendorRole, VENDOR]))
+   => RVendorPinUnsound else none)
+  + ((some b.vendorPin and not pinsCurrentBa[b.vendorPin, t]) => RVendorPinStale else none)
+}
 /** assigneeRefViol — DT-023 cut 7c (the pin form): the assignee PIN must be IN-TENANT
     (RForeignRef) and its member LIVE at the introducing write (RRetiredRef — the D3
     pre-Submit new-ref row; an absent assignee stays LEGAL). `tid` is the acting subject's
@@ -62,6 +73,7 @@ fun supplierRefViol[b: SupplierBinding, tid: EntityId, t: Tick]: set Reason {
 fun assigneeRefViol[m: lone StaffOcc, tid: EntityId, t: Tick]: set Reason {
   ((some m and m.subject.tenantId != tid) => RForeignRef else none)
   + ((some m and not staffLiveAt[m.subject, t]) => RRetiredRef else none)
+  + ((some m and not pinsCurrentStaff[m, t]) => RAssigneePinStale else none)   // QA704 Q4 (a), DT-009 Q27: was the fact AssigneePinCurrency (DT-023 cut 7c)
 }
 /** parentGateViol — the line-mutator preconditions on the PARENT order: it must be live
     (ROrderClosed) and DRAFT (RFrozen — the F5 freeze family). */
@@ -100,11 +112,13 @@ fun attachDemandViol[o: llog/SubjectOcc, m: EntityId]: set Reason {
 fun createOrderViol[o: CreateOrderOcc]: set Reason {
   lco/createViol[o, ROrderStarted]
   + supplierRefViol[o.supplier, o.subject.tenantId, o.tick]
+  + bindingPinViol[o.supplier, o.tick]   // QA704 Q4 (a)
 }
 fun updateSupplierViol[o: UpdateSupplierOcc]: set Reason {
   ((not liveAtOccO[o]) => ROrderClosed else none)
   + ((liveAtOccO[o] and oPre[o].sStatus != OS_DRAFT) => RFrozen else none)
   + supplierRefViol[o.supplier, o.subject.tenantId, o.tick]
+  + bindingPinViol[o.supplier, o.tick]   // QA704 Q4 (a)
 }
 fun resetToSupplierViol[o: ResetToSupplierOcc]: set Reason {
   ((not liveAtOccO[o]) => ROrderClosed else none)
@@ -169,20 +183,9 @@ fun addLineViol[o: AddLineOcc]: set Reason {
 // (LinePinCurrency RETIRED at cut 10 — PDEV-1536: the line stores the item IDENTITY only; the
 //  effective version is the read-time derivation `effectiveItemAt`, so genesis-currency of a
 //  stored version pin is no longer meaningful. Genesis liveness stays guarded in addLineViol.)
-// DT-023 cut 7b: a committed binding write's vendor pin is THEN-CURRENT (Q-A floating during
-// DRAFT — each choose/override re-pins current; the Submit freeze then freezes the pin).
-fact BindingPinCurrency {
-  all o: CreateOrderOcc     | (committed[o] and some o.supplier.vendorPin) implies
-    pinsCurrentBa[o.supplier.vendorPin, o.tick]
-  all o: UpdateSupplierOcc  | (committed[o] and some o.supplier.vendorPin) implies
-    pinsCurrentBa[o.supplier.vendorPin, o.tick]
-}
-// DT-023 cut 7c: a committed details write's assignee pin is THEN-CURRENT (floats pre-Submit;
-// the headerDetailFrozen freeze then freezes the pin at Submit).
-fact AssigneePinCurrency {
-  all o: UpdateOrderDetailsOcc | (committed[o] and some o.assignee) implies
-    pinsCurrentStaff[o.assignee, o.tick]
-}
+// (Binding-pin currency, DT-023 cut 7b, and assignee-pin currency, cut 7c, are the RVendorPinStale and RAssigneePinStale arms
+// above since QA704 Q4 (a); their laws are the theorems tests/unit/order.als unit_ord_bindingPinCurrencyHolds and
+// unit_ord_assigneePinCurrencyHolds.)
 fun updateLineViol[o: UpdateLineOcc]: set Reason {
   ((not usableLineAtOcc[o]) => RLineClosed else none)
   + parentGateViol[o]

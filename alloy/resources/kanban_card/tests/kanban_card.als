@@ -1,4 +1,5 @@
 module resources/kanban_card/tests/kanban_card
+// Reflects dafny-domain src/resources/kanban-card/tests/kanban-card-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/kernel
 open shared/values
@@ -42,7 +43,7 @@ run unit_kc_loadedCycle {
     resolve[stateOfCycleAt[c, t].sPool] = p and some heldAt[p, t]
     some c.sourcedBy
   }
-} for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 InventoryItem, 1 InventoryPool, 2 Note expect 1
+} for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 InventoryItem, 1 InventoryPool, 9 Occurrence, 9 Tick, 2 Note expect 1
 
 // A card whose loop resolves to a Loop (KC-MH-5).
 run unit_kc_cardOnLoop {
@@ -62,7 +63,7 @@ run unit_kc_multiMaterials {
     some disj a, b: InventoryItem | (a + b) in heldAt[p, t]
   }
 } for 7 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar,
-      9 EntityId, 3 InventoryItem, 1 InventoryPool, 2 CardCycle, 1 KanbanCard, 2 Note expect 1
+      9 EntityId, 3 InventoryItem, 1 InventoryPool, 2 CardCycle, 1 KanbanCard, 10 Occurrence, 10 Tick, 2 Note expect 1
 
 // ── UNSAT: structural invariants forbid the bad case ────────────────────────────────────────
 // The pool ref is typed — it can never resolve to a non-InventoryPool entity.

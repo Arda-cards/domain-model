@@ -14,7 +14,7 @@ module meta/subject_log/affirm[Subject, Rec]
  * act, below this model's resolution (streams/samwise/system-versions-are-not-acts.md). The act is named `Affirm` so
  * the two never share a word; under D13 the runtime verb is `affirm`.
  *
- * SHAPE (the intent_log shape): open with the log's OWN parameters and this module rides the SAME spine instance:
+ * SHAPE (the parametric-companion shape): open with the log's OWN parameters and this module rides the SAME spine instance:
  *   open meta/subject_log/affirm[InventoryPool, PoolState] as aff
  *   fact PoolAffirmWitness { aff/affirmAdmissionWitness[RPoolNotCreated, RPoolClosed] }   // the adopter names its not-created and closed atoms
  * WHAT STAYS WITH THE ADOPTER (the spine idiom, subject_log.als:59–74): the not-created and closed atoms (its own taxonomy).

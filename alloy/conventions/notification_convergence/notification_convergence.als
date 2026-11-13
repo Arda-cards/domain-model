@@ -81,8 +81,8 @@ fact AdmissionWitness {
 }
 
 // ── spine adoption + effects ────────────────────────────────────────────────────────────────────
-fact SourceChain { xlog/chained }   fact SourceCommits { xlog/commitAlwaysAccepts }
-fact MirrorChain { mlog/chained }   fact MirrorCommits { mlog/commitAlwaysAccepts }
+fact SourceChain { xlog/chained }
+fact MirrorChain { mlog/chained }
 
 fun xPost[o: xlog/SubjectOcc]: lone SourceRec { o.post & SourceRec }
 fun mPost[o: mlog/SubjectOcc]: lone MirrorRec { o.post & MirrorRec }

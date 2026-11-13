@@ -1,4 +1,5 @@
 module shared/measurement/tests/quantity
+// Reflects dafny-domain src/shared/measurement/tests/quantity-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
  * Tests for the V=Quantity instantiation: MIN/MAX (keyed partial order) and the metricResult dispatch.

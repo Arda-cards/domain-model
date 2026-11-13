@@ -1,4 +1,5 @@
 module procurement/order/tests/unit/order
+// Reflects dafny-domain src/procurement/order/tests/order-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open procurement/order/order_implementation
 open procurement/order/order_contracts
@@ -124,9 +125,9 @@ run unit_ord_receiptSettles {
     receiptsSettledAt[t]
     receivingReadingAt[parentOf[rr.subject], t]
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 Tick, 11 EntityId, 11 Snapshot, 4 Quantity, 2 Note, 8 Occurrence expect 1
+      12 Tick, 11 EntityId, 11 Snapshot, 4 Quantity, 2 Note, 11 Occurrence expect 1
       // census +1 at DT-023 cut 7a: the item-log fixture behind the attach agreement pushed
       // this deep witness past the old default-6 occurrence ceiling
 
@@ -155,9 +156,9 @@ run unit_ord_reverseOnClosedLineRefused {
     o.admission.because = RLineClosed
     lPre[o].sLineStatus = L_CLOSED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
+      11 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
 // Scenario 4b (the C/NOTIF MISSED-NOTIFICATION WINDOW — must be LEGAL): an accrual committed,
 // no posting yet, the quiescence law FALSE. The emitter cannot fix it; the listener/probe will.
@@ -183,9 +184,9 @@ run unit_ord_selfHealRestores {
     not receiptsSettledAt[t1]
     receiptsSettledAt[t2]
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 Tick, 10 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
+      12 Tick, 10 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
 // Scenario 5 (close short): a line closed BY ACT with open ≠ 0 (the derived "short" reading),
 // then the order closes.
@@ -197,9 +198,9 @@ run unit_ord_closeShort {
     some openOf[cl.subject, cl.tick]              // short: the open reading is non-zero at the close tick
     orderStatusAt[ord, c.tick] = OS_CLOSED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
+      11 Tick, 9 EntityId, 10 Snapshot, 4 Quantity, 2 Note expect 1
 
 // Scenario 6 (cancel, DRAFT only): plain abandonment while composing.
 run unit_ord_cancelDraft {
@@ -294,13 +295,13 @@ run unit_ord_lineClosedRefused {
 
 run unit_ord_frozenRefused {
   some o: AddLineOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
 run unit_ord_badStateRefused {
   some o: CancelOrderOcc | refusedAtAdmission[o] and o.admission.because = RBadState
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -330,7 +331,7 @@ run unit_ord_foreignRefRefused {
 
 run unit_ord_demandHeldRefused {
   some o: AttachDemandOcc | refusedAtAdmission[o] and o.admission.because = RDemandHeld
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 9 Snapshot, 2 Note expect 1
 
@@ -339,7 +340,7 @@ run unit_ord_demandIneligibleRefused {
     refusedAtAdmission[o] and o.admission.because = RDemandIneligible
     demandStatusAt[resolve[o.demand] & DemandItem, o.tick] = DS_OPEN   // the item is not yet in the queue
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -369,7 +370,7 @@ run unit_ord_freeFormAttachRefused {
     demandStatusAt[d, o.tick] = DS_RELEASED
     freeForm[o.subject]
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -381,7 +382,7 @@ run unit_ord_notAttachedRefused {
 
 run unit_ord_linesOpenRefused {
   some o: CloseOrderOcc | refusedAtAdmission[o] and o.admission.because = RLinesOpen
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
 
@@ -540,9 +541,9 @@ run unit_ord_deleteRetiresTerminal {
     orderStatusAt[x.subject, x.tick] = OS_CLOSED
     orderDeletedAt[x.subject, x.tick]
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
+      12 Tick, 9 EntityId, 10 Snapshot, 2 Note expect 1
 
 // ── CUT 6 (DT-022 TQ-7): header details + internal notes ────────────────────────────────────────
 // The C11 law: priority / assignee / vendor notes unchanged by every post-DRAFT reader.
@@ -582,9 +583,9 @@ run unit_ord_detailsFrozenRefused {
     o.admission.because = RFrozen
     oPre[o].sStatus = OS_SUBMITTED
   }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
+      10 EntityId, 11 Tick, 10 Snapshot, 2 Note expect 1
 
 // A foreign assignee refuses precisely: exactly RForeignRef (a cross-tenant staff PIN —
 // the cut-7c form of the cross-tenant soft ref).
@@ -619,15 +620,15 @@ run unit_ord_internalNotesAnyTime {
     oPre[o].sStatus = OS_CLOSED
     oPost[o].sInternalNotes != oPre[o].sInternalNotes
   }
-} for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 Tick, 9 EntityId, 12 Snapshot, 2 Note expect 1
+      12 Tick, 9 EntityId, 12 Snapshot, 2 Note expect 1
 
 // ── DT-030 retire cut (2026-09-09): two acts, the annotate-line fix, terminality ─────────────────
 // RemoveLine on a line still servicing a demand is refused RDemandAttached (TWO ACTS: detach first — MP's word).
 run unit_ord_removeWithDemandRefused {
   some o: RemoveLineOcc | some lPre[o].sDemand and refusedAtAdmission[o] and RDemandAttached in o.admission.because
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note expect 1
 // A committed RemoveLine saw no demand attached (the law behind the two acts).
@@ -666,6 +667,48 @@ run unit_ord_refusedGenesisNotRecordedLineRefusalRecorded {
   some c: CreateOrderOcc, u: UpdateLineOcc |
     refusedAtAdmission[c] and not lco/recorded[c]
     and refusedAtAdmission[u] and lcl/liveAt[u] and lcl/recorded[u]
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note expect 1
+
+// ── QA704 Q4 (a), DT-009 Q27: the binding and assignee pin facts are guard arms (reflects dafny-domain src/procurement/order/order.dfy
+// BindingPinViol, AssigneeRefViol) ──
+// A binding write whose vendor role selector comes without its pin is refused with exactly RVendorPinUnsound. RED before the arm:
+// `SupplierBindingPinAgrees` was a DEFINITIONAL fact over every binding value, so the shape was unrepresentable (UNSAT).
+run unit_ord_vendorPinUnsoundRefused {
+  some o: CreateOrderOcc | some o.supplier.vendorRole and no o.supplier.vendorPin
+    and refusedAtAdmission[o] and o.admission.because = RVendorPinUnsound
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 1
+// A binding write pinning a vendor version that is not the current one at the write is refused with exactly RVendorPinStale.
+run unit_ord_vendorPinStaleRefused {
+  some o: CreateOrderOcc, p: o.supplier.vendorPin | not pinsCurrentBa[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RVendorPinStale
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 1
+// A details write pinning a staff version that is not the current one at the write is refused with exactly RAssigneePinStale.
+run unit_ord_assigneePinStaleRefused {
+  some o: UpdateOrderDetailsOcc, p: o.assignee | not pinsCurrentStaff[p, o.tick]
+    and refusedAtAdmission[o] and o.admission.because = RAssigneePinStale
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 1
+// The currency laws are THEOREMS of the arms (Dafny BindingPinCurrency, AssigneePinCurrency): committed writes pin current versions.
+check unit_ord_bindingPinCurrencyHolds {
+  all o: CreateOrderOcc    | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
+  all o: UpdateSupplierOcc | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 0
+check unit_ord_assigneePinCurrencyHolds {
+  all o: UpdateOrderDetailsOcc | (committed[o] and some o.assignee) implies pinsCurrentStaff[o.assignee, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      10 EntityId, 9 Tick, 10 Snapshot, 2 Note expect 0
+// The definitional law is a THEOREM of the RVendorPinUnsound arm over committed binding writes.
+check unit_ord_supplierBindingPinAgreesHolds { supplierBindingPinAgrees }
+  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note expect 0

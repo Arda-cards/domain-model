@@ -1,4 +1,5 @@
 module resources/inventory_item/tests/unit/inventory_item
+// Reflects dafny-domain src/resources/inventory-item/tests/inventory-item-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open resources/inventory_item/inventory_item_implementation
 open resources/inventory_item/inventory_item_types  // DIRECT (rule 10): `inventory_item_types/CreateOcc` — the module's own kind, disambiguated from the lifecycle family's `lc/CreateOcc` now in the transitive namespace (Tier B 793cfe0 parse red, 2026-09-09)
@@ -70,7 +71,7 @@ run unit_occ_resurrectionRefused {
     committed[d] and d.target = c.target and precedes[d.tick, c.tick]
     refusedAtAdmission[c] and RAlreadyExists in c.admission.because
   }
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 
 // A committed Split exists: both sides' records produced, the new item live, the origin still live.
 run unit_occ_splitProjects {
@@ -100,7 +101,7 @@ run unit_occ_movePreservesSealed {
 // Move on a LOCKED item is REFUSED with exactly RLocked (ForceMove — the privileged override — on demand).
 run unit_occ_moveLockedRefused {
   some o: MoveOcc | refusedAtAdmission[o] and o.admission.because = RLocked
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 
 // ── theorems (check; UNSAT = holds) — invariants DERIVED from the witnessed guards ───────────────
 // No committed consume overdraws (the guard, seen from the projection side).
@@ -273,23 +274,23 @@ run unit_occ_deleteNonEmptyRefused {
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 run unit_occ_consumeDisabledRefused {
   some o: ConsumeOcc | refusedAtAdmission[o] and RUnfit in o.admission.because
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_replenishLockedRefused {
   some o: ReplenishOcc | refusedAtAdmission[o] and o.admission.because = RLocked
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_splitSerializedRefused {
   some o: SplitOcc | refusedAtAdmission[o] and RSerialized in o.admission.because
 } for 6 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 run unit_occ_mergeDifferentItemRefused {
   some o: MergeOcc | refusedAtAdmission[o] and o.admission.because = RIncompatible
     and o.target.itemPin.subject != o.absorbed.itemPin.subject
-} for 6 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 6 but 2 RoleDetail, 3 Scalar, 5 Int, 8 Occurrence, 8 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_sealEmptyRefused {
   some o: SealOcc | refusedAtAdmission[o] and o.admission.because = REmpty
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_lockAlreadyLockedRefused {
   some o: LockOcc | refusedAtAdmission[o] and o.admission.because = RNotApplicable
-} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int, 7 Occurrence, 7 Tick expect 1   // QA704/DT-015: two more atoms for the activations the rows cite
 run unit_occ_nonPositiveRefused {
   some o: inventory_item_types/CreateOcc | refusedAtAdmission[o] and o.admission.because = RNonPositive
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
@@ -297,17 +298,57 @@ run unit_occ_notLiveRefused {
   some o: ConsumeOcc | refusedAtAdmission[o] and RNotLive in o.admission.because
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
 
-// Structural guards inherited from the legacy structure suite (the entity facts, regression-guarded):
+// Structural guards inherited from the legacy structure suite, restated over items WITH COMMITTED HISTORY since QA704 Q4 (a)
+// (the identity facts are arms of the births; an atom no birth committed is outside their reach):
 run unit_occ_lpnClashImpossible {
-  some disj a, b: InventoryItem | a.licensePlate = b.licensePlate
+  some disj a, b: InventoryItem | startedII[a] and startedII[b] and a.licensePlate = b.licensePlate
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
 run unit_occ_serialClashImpossible {
-  some disj a, b: InventoryItem | a.tenantId = b.tenantId and a.itemPin.subject = b.itemPin.subject
+  some disj a, b: InventoryItem | startedII[a] and startedII[b] and a.tenantId = b.tenantId and a.itemPin.subject = b.itemPin.subject
     and some a.serialNumber and a.serialNumber = b.serialNumber
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
 run unit_occ_crossTenantClassifierImpossible {
   some ii: InventoryItem | let i = ii.itemPin.subject |
     i.tenantId != ii.tenantId
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
+
+// ── QA704 Q4 (a), DT-009 Q27: the identity facts are arms of the births (reflects dafny-domain src/resources/inventory-item/inventory-item.dfy IdentityViol, CreateViol) ──
+// A birth whose license plate an item with committed history already bears is refused with exactly RLicensePlateTaken.
+// RED on the tree before the arms: `LicensePlateUnique` was a FACT over every item atom, so the clash was unrepresentable.
+run unit_occ_lpnTakenRefused {
+  some disj a, b: InventoryItem, c: inventory_item_types/CreateOcc, d: inventory_item_types/CreateOcc |
+    a.licensePlate = b.licensePlate and c.target = a and committed[c] and d.target = b and precedes[c.tick, d.tick]
+    and refusedAtAdmission[d] and d.admission.because = RLicensePlateTaken
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+// A birth whose serial number an item of the same (tenant, Item) with committed history already bears is refused RSerialTaken.
+run unit_occ_serialTakenRefused {
+  some disj a, b: InventoryItem, c: inventory_item_types/CreateOcc, d: inventory_item_types/CreateOcc |
+    a.tenantId = b.tenantId and a.itemPin.subject = b.itemPin.subject and some a.serialNumber and a.serialNumber = b.serialNumber
+    and a.licensePlate != b.licensePlate
+    and c.target = a and committed[c] and d.target = b and precedes[c.tick, d.tick]
+    and refusedAtAdmission[d] and d.admission.because = RSerialTaken
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+// A split whose new sibling bears a plate an item with history already bears is refused RLicensePlateTaken (the Split arm).
+run unit_occ_splitLpnTakenRefused {
+  some s: SplitOcc, b: InventoryItem - s.nu | b.licensePlate = s.nu.licensePlate and some priorOn[s, b]
+    and refusedAtAdmission[s] and RLicensePlateTaken in s.admission.because
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+// A birth pinning an item version that is not current at its tick is refused with exactly RItemPinStale.
+run unit_occ_itemPinStaleRefused {
+  some c: inventory_item_types/CreateOcc | not pinsCurrentItem[c.target.itemPin, c.tick]
+    and refusedAtAdmission[c] and c.admission.because = RItemPinStale
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 1
+// The identity laws are THEOREMS over items with committed history (Dafny LicensePlateUniqueHolds, SerialNumberUniquePerItemHolds,
+// ItemPinCurrencyHolds); the two "impossible" runs above keep their verdict for started items only.
+check unit_occ_lpnUniqueAmongStarted {
+  all disj a, b: InventoryItem | (startedII[a] and startedII[b]) implies a.licensePlate != b.licensePlate
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
+check unit_occ_serialUniqueAmongStarted {
+  all disj a, b: InventoryItem | (startedII[a] and startedII[b] and a.tenantId = b.tenantId
+    and a.itemPin.subject = b.itemPin.subject and some a.serialNumber) implies a.serialNumber != b.serialNumber
+} for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
+check unit_occ_itemPinCurrencyHolds {
+  all o: inventory_item_types/CreateOcc | committed[o] implies pinsCurrentItem[o.target.itemPin, o.tick]
 } for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
 
 // End-to-end lifecycle (the legacy lifecycle suite's spine): create → consume-to-zero (LIVE husk) →

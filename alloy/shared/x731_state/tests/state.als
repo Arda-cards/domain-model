@@ -1,4 +1,5 @@
 module shared/x731_state/tests/state
+// Reflects dafny-domain src/shared/x731-state/tests/state-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open meta/state_machine/machine
 open shared/x731_state/state

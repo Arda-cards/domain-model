@@ -1,4 +1,5 @@
 module operations/demand/tests/unit/delivery_retire
+// Reflects dafny-domain src/operations/demand/tests/demand-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 open operations/demand/demand_implementation
 open operations/demand/demand_contracts
@@ -51,7 +52,7 @@ run unit_pdr_retireTwiceRefused {
     and refusedAtAdmission[r2] and RDeliveryClosed in r2.admission.because
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note expect 1
 
 // ── complement of the pair: a Revoke after a committed retire is refused (the log is closed) ───
 run unit_pdr_revokeAfterRetireRefused {
@@ -59,7 +60,7 @@ run unit_pdr_revokeAfterRetireRefused {
     and refusedAtAdmission[v] and RDeliveryClosed in v.admission.because
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note expect 1
 
 // ── the theorem: nothing commits on the delivery's log after a committed retire ────────────────
 assert unit_pdr_nothingAfterRetire { pdlc/nothingAfterRetire }
@@ -78,4 +79,4 @@ run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
     and refusedAtAdmission[r] and pdlc/liveAt[r] and pdlc/recorded[r]
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery,
-      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note expect 1
+      13 Tick, 11 EntityId, 10 Snapshot, 12 Occurrence, 2 Note expect 1

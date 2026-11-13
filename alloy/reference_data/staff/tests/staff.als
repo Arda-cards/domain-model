@@ -1,4 +1,5 @@
 module reference_data/staff/tests/staff
+// Reflects dafny-domain src/reference-data/staff/tests/staff-tests.dfy (the reference model since MP's ruling of 2026-11-04; this root's kept commands are its extensions, alloy/EXTENSIONS.md)
 
 /*
  * STAFF — module suite (DT-022 TQ-7(b) cut 6; LOG-CARRIED since DT-023 cut 7c). The
@@ -16,12 +17,21 @@ pred unit_stf_loads {
 }
 run unit_stf_loads for 4 but 6 EntityId, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-/** unit_stf_nameUniqueInTenant — no two same-tenant members share a name (the law,
-    restated as an assertion over the implementation). */
-assert unit_stf_nameUniqueInTenant {
-  all disj a, b: StaffMember | a.tenantId = b.tenantId implies a.name != b.name
-}
+/** unit_stf_nameUniqueInTenant — no two CREATED same-tenant members share a name: the published law, a THEOREM of the
+    RStaffNameTaken arm since QA704 Q4 (a) (a member atom with no committed Create is outside its reach). */
+assert unit_stf_nameUniqueInTenant { staffNameUnique }
 check unit_stf_nameUniqueInTenant for 5 but 8 EntityId, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
+
+// ── QA704 Q4 (a), DT-009 Q27: the content fact is a guard arm (reflects dafny-domain src/reference-data/staff/staff.dfy) ──
+// A Create whose member's name is already borne by a created member of the tenant is refused with exactly RStaffNameTaken.
+// RED on the tree before the arm: `staffNameUnique` was a FACT over every member, so the clash was unrepresentable (UNSAT).
+run unit_stf_nameTakenRefused {
+  some disj a, b: StaffMember, c: CreateStaffOcc, d: CreateStaffOcc {
+    a.tenantId = b.tenantId and a.name = b.name
+    c.subject = a and committed[c] and d.subject = b and precedes[c.tick, d.tick]
+    d.admission in Rejected and d.admission.because = RStaffNameTaken
+  }
+} for 5 but 8 EntityId, 4 Tick, 4 Snapshot, 4 Occurrence expect 1
 
 /** unit_stf_sameNameAcrossTenants — BOUNDARY: the SAME name legally recurs in two
     different tenants (uniqueness is tenant-scoped, not global). */
@@ -51,7 +61,7 @@ run unit_stf_retiredDeleteRefused {
     committed[d] and d2.subject = d.subject and precedes[d.tick, d2.tick]
     d2.admission in Rejected and d2.admission.because = RStaffRetired
   }
-} for 5 but 5 Tick, 4 Snapshot, 3 Occurrence, 6 EntityId expect 1
+} for 5 but 7 Tick, 4 Snapshot, 5 Occurrence, 6 EntityId expect 1
 
 // A pinnable version exists; and a pin survives retirement (the grandfather half).
 run unit_stf_pinSurvivesRetirement {

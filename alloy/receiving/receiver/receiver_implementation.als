@@ -33,14 +33,16 @@ open receiving/receiver/receiver_types as rt   // rule 10: the parameter below w
 open meta/subject_log/subject_log[rt/Receiver, rt/ReceiverState] as rvlog           // same params ⇒ the SAME spine instances
 open meta/subject_log/subject_log[rt/ReceivingLine, rt/ReceivingLineState] as rllog //   as receiver_types
 open meta/subject_log/subject_log[rt/OrderAttribution, rt/AttributionState] as oalog
+open meta/activation/activation   // the activation every row cites (DT-015 D1 to D3)
 
 // ── spine adoption (DT-015 Q5; three subjects) ─────────────────────────────────────────────────
 fact ReceiverChaining       { rvlog/chained }
-fact ReceiverCommitAccepts  { rvlog/commitAlwaysAccepts }   // v1 result policy (no commit-gate refusals)
 fact RcvLineChaining        { rllog/chained }
-fact RcvLineCommitAccepts   { rllog/commitAlwaysAccepts }
 fact AttributionChaining    { oalog/chained }
-fact AttributionCommitAccepts { oalog/commitAlwaysAccepts }
+one sig ReceiverService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
+fact ReceiverActivated    { activated[ReceiverService, rvlog/SubjectOcc] }
+fact RcvLineActivated     { activated[ReceiverService, rllog/SubjectOcc] }
+fact AttributionActivated { activated[ReceiverService, oalog/SubjectOcc] }
 
 // ── the same-module ATOMIC compositions (enforcement facts — NOT in `guarantees`; see the
 // contracts header for why) ─────────────────────────────────────────────────────────────────────
@@ -103,6 +105,20 @@ fun carrierTenancyViol[o: ReceiverHeaderOcc]: set Reason {
   ((some o.carrierPin and o.carrierPin.subject.tenantId != o.subject.tenantId)
    => RForeignRef else none)
 }
+/** carrierPinViol — QA704 Q4 (a), DT-009 Q27: the carrier pin laws as the arms they are in dafny-domain
+    src/receiving/receiver/receiver.dfy `CarrierViol`: RCarrierPinUnsound when pin and CARRIER role selector do not come together
+    or the selector is not a CARRIER role of the pinned version (was the definitional fact ReceiverCarrierPinAgrees);
+    RCarrierPinStale when the pin is not the carrier's current version at the write (was the fact CarrierPinCurrency). */
+fun carrierPinViol[o: ReceiverHeaderOcc]: set Reason {
+  ((not (some o.carrierPin iff some o.carrierRole) or (some o.carrierRole and not roleSelectorAgrees[o.carrierPin, o.carrierRole, CARRIER]))
+   => RCarrierPinUnsound else none)
+  + ((some o.carrierPin and not pinsCurrentBa[o.carrierPin, o.tick]) => RCarrierPinStale else none)
+}
+/** lineItemPinViol — QA704 Q4 (a): a capture write re-pins the item's CURRENT version (dafny-domain `ItemPinViol`, RItemPinStale —
+    the item log's atom reused; was the fact LineExpectedItemPinCurrency, DT-023 cut 7a). */
+fun lineItemPinViol[p: lone ItemOcc, t: Tick]: set Reason {
+  ((some p and not pinsCurrentItem[p, t]) => RItemPinStale else none)
+}
 /** attachSumViol — the §8.3.3(d) Σ-expected clause, CASE-WISE (exact at 0/1 pre-existing
     resolved members; ≥2 is the documented ceiling — suite scopes stay within it BY DESIGN):
     with the cap (`sExpectedQty`) present, the would-be membership's Σ expected must stay
@@ -133,11 +149,13 @@ fun receiveSumViol[o: ReceiveLineOcc]: set Reason {
 fun createReceiverViol[o: CreateReceiverOcc]: set Reason {
   (startedBeforeRV[o] => RReceiverStarted else none)
   + carrierTenancyViol[o]
+  + carrierPinViol[o]   // QA704 Q4 (a)
 }
 fun updateReceiverViol[o: UpdateReceiverOcc]: set Reason {
   ((no o.pre) => RReceiverClosed else none)
   + ((some o.pre and rvPre[o].sStatus != RV_EDITING) => RFrozen else none)
   + carrierTenancyViol[o]
+  + carrierPinViol[o]   // QA704 Q4 (a)
 }
 fun annotateReceiverViol[o: AnnotateReceiverOcc]: set Reason {
   ((no o.pre) => RReceiverClosed else none)   // any state incl. RV_COMPLETE (TQ-7(c)); the subject must exist
@@ -163,6 +181,8 @@ fun addLineViol[o: AddReceivingLineOcc]: set Reason {
                                  // acceptance decision — only currently defined items
                                  // may be received without an order behind them
   + attachSumViol[o, o.attribution, o.expectedQty]   // the newborn's cap is the payload's
+  + lineItemPinViol[o.item, o.tick]   // QA704 Q4 (a)
+  + ((some o.attribution and attributionStartedBefore[o.attribution, o.tick]) => RAttributionStarted else none)   // MF-004
 }
 fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
   ((no o.pre) => RLineClosed else none)
@@ -173,6 +193,7 @@ fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
       and some o.item and not itemLiveAt[o.item.subject, o.tick])
      => RRetiredRef else none)   // D3 blind-receiving refinement: re-pin on a line with
                                  // no attributions is a blind acceptance — gated
+  + lineItemPinViol[o.item, o.tick]   // QA704 Q4 (a)
 }
 // DT-023 cut 7a: capture-window writes RE-PIN the item's CURRENT version (the Q-A floating
 // semantics — sExpectedItem floats until the Receive freeze). The RRetiredRef gate follows
@@ -180,20 +201,21 @@ fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
 // add/re-pin stays UNGATED — capture riding the order's already-gated commitment (the D3
 // grandfather rows: ordered goods arrive regardless); BLIND add/re-pin refuses a retired
 // item with RRetiredRef (there is no upstream gate — the blind write is the commitment).
-fact LineExpectedItemPinCurrency {
-  all o: AddReceivingLineOcc    | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
-  all o: UpdateReceivingLineOcc | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
-}
-// DT-023 cut 7b: a committed header write's carrier pin is THEN-CURRENT (capture re-pins
-// current; the COMPLETE freeze then freezes the pin with the other captured facts).
-fact CarrierPinCurrency {
-  all o: ReceiverHeaderOcc | (committed[o] and some o.carrierPin) implies
-    pinsCurrentBa[o.carrierPin, o.tick]
+// (Line item-pin currency, DT-023 cut 7a, and carrier-pin currency, cut 7b, are the RItemPinStale and RCarrierPinStale arms
+// above since QA704 Q4 (a); their laws are the theorems tests/unit/receiver.als unit_rcv_lineItemPinCurrencyHolds and
+// unit_rcv_carrierPinCurrencyHolds.)
+/** attributionStartedBefore — MF-004 (2026-11-05): the attribution's OWN log has a committed genesis before `t` — what the partner
+    act `AttachAttribution` refuses (`RAttributionStarted`, genesis-once; `attachAttributionViol`). The line-side carriers mirror
+    the arm, or `AttachComposesWithAppend` excludes the attempt silently (knowledge-base: a pairing fact excludes what the
+    partner guard refuses; reflects dafny-domain PR 4's `AppendAttributionViol` / `AddLineViol` arms). */
+pred attributionStartedBefore[id: EntityId, t: Tick] {
+  some g: AttachAttributionOcc | committed[g] and g.subject.eId = id and precedes[g.tick, t]
 }
 fun appendAttributionViol[o: AppendAttributionOcc]: set Reason {
   ((no o.pre) => RLineClosed else none)
   + ((some o.pre and rlPre[o].sStatus != RL_RECEIVING) => RFrozen else none)
   + ((o.attribution in rlPre[o].sAttributions) => RAlreadyMember else none)
+  + (attributionStartedBefore[o.attribution, o.tick] => RAttributionStarted else none)   // MF-004: the partner's arm, mirrored
   + ((some a: resolve[o.attribution] & OrderAttribution | a.tenantId != o.subject.tenantId)
      => RForeignRef else none)
   + attachSumViol[o, o.attribution, rlPre[o].sExpectedQty]
