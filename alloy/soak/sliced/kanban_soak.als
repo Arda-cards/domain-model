@@ -1,4 +1,6 @@
 module soak/sliced/kanban_soak
+// Refines Dafny: KanbanCardsContract.PoolProvenance
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * SOAK tier (DT-022 TQ-5 ruling; scaling-outlook to-do #5 — built 2026-08-08): the kanban

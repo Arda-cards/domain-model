@@ -1,4 +1,6 @@
 module soak/sliced/order_terminal_closure_inductive
+// Refines Dafny: OrdersContract.OrderTerminalClosure
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * E7 generalization ladder, priority 4 — RUNG T (DT-024 priority-4 plan, window-2 report):

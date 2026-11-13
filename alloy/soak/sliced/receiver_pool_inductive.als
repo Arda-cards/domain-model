@@ -1,4 +1,9 @@
 module soak/sliced/receiver_pool_inductive
+// Refines Dafny: ReceiversContract.LinePoolProvenance
+// Refines Dafny: ReceiversContract.LinesPoolLoneHolder
+// Refines Dafny: ReceiversContract.LineCyclePoolDisjoint
+// Refines Dafny: ReceiversContract.LineDemandPoolDisjoint
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * E7 (DT-024 plan-of-record) — inductiveness check of `linePoolExclusiveWhileLive`.

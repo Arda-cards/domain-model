@@ -1,4 +1,6 @@
 module soak/sliced/zlattice_soak
+// Refines Dafny: PoolLattice.PoolLatticeGlobal
+//   (dafny-domain, the reference model; this root is listed in alloy/EXTENSIONS.md)
 
 /*
  * SOAK tier (DT-022 TQ-5): the GLOBAL exclusivity-lattice row at WIDENED scopes — the
