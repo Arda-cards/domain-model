@@ -151,6 +151,19 @@ class SoakChunkTest(unittest.TestCase):
             job.kill()
             job.wait()
 
+    def test_roots_whose_paths_differ_by_a_separator_and_an_underscore_are_kept_apart(self):
+        # Review of the pull request. `sliced/a_b.als` and `sliced/a/b.als` are two roots; with `/` written as `_` in the
+        # key, their same-named commands shared one key and the second was skipped.
+        (self.work / 'alloy/soak/sliced/a_b.als').write_text('module soak/sliced/a_b\ncheck e7_base for 3 expect 0\n')
+        (self.work / 'alloy/soak/sliced/a').mkdir()
+        (self.work / 'alloy/soak/sliced/a/b.als').write_text('module soak/sliced/a/b\ncheck e7_base for 3 expect 0\n')
+        expected = EXPECTED | {('alloy/soak/sliced/a_b.als', 'e7_base'), ('alloy/soak/sliced/a/b.als', 'e7_base')}
+        self.assertEqual(self.runner('plan', 'batch').returncode, 0)
+        result = self.runner('chunk', 'batch', '90', '1', '1')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        ran = [tuple(line.split()) for line in self.calls.read_text().splitlines()]
+        self.assertEqual(sorted(ran), sorted(expected))
+
     def test_plan_of_the_repository_lists_every_stated_soak_command(self):
         # The real tree: what the runner plans is what the soak roots state, each once.
         with tempfile.TemporaryDirectory() as directory:
