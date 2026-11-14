@@ -47,18 +47,33 @@ run int_dem_productionToReady {
 // ── re-collation after production failure (R8 amended: PF → REQUESTING): the failed member
 // re-enters the queue and joins a NEW demand item via a fresh Accept + attach. ──────────────────
 run int_dem_recollationAfterFailure {
-  some disj d1, d2: DemandItem, c: CardCycle, pf: ProductionFailureOcc, a2: AttachOcc | {
+  some disj d1, d2: DemandItem, c: CardCycle, pf: ProductionFailureOcc, a2: AttachOcc,
+       vi: CreateItemOcc, vp: CreatePoolOcc, q: RequestOcc, disj ac1, ac2: AcceptOcc, c1: CreateWithContributionOcc,
+       r1: ReleaseOcc, sp: StartProcessingOcc, s1: StartProductionOcc, o: CompleteOcc | {
     committed[pf] and pf.cycle = c
     committed[a2] and a2.subject = d2 and cyclesOf[a2.contribution] = c
     precedes[pf.tick, a2.tick]
     demandStatusAt[d1, a2.tick] = DS_COMPLETE and c in attachedAt[d1, a2.tick]
     c in attachedAt[d2, a2.tick]
+    // the twelve rows, named and ordered (a finder needs one history, not every interleaving of the fixtures)
+    committed[vi] and committed[vp] and committed[q] and committed[ac1] and committed[ac2]
+    committed[c1] and committed[r1] and committed[sp] and committed[s1] and committed[o]
+    q.cycle = c and ac1.cycle = c and ac2.cycle = c and sp.cycle = c and sp.pool = vp.subject.eId
+    c1.subject = d1 and cyclesOf[c1.contribution] = c and r1.subject = d1 and s1.subject = d1 and o.subject = d1
+    precedes[vi.tick, vp.tick] and precedes[vp.tick, q.tick] and precedes[q.tick, ac1.tick] and precedes[ac1.tick, c1.tick]
+    precedes[c1.tick, r1.tick] and precedes[r1.tick, sp.tick] and precedes[sp.tick, s1.tick] and precedes[s1.tick, pf.tick]
+    precedes[pf.tick, o.tick] and precedes[o.tick, ac2.tick] and precedes[ac2.tick, a2.tick]
   }
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
       20 Tick, 18 EntityId, 20 Snapshot, 20 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
-      // NOT RE-RUN (QA740 (c), 2026-11-09): bounds raised on paper, verified at the next night window — no verdict in 4 h at 15 Occurrence in the night window — two demands' rows, the
-      // cycle's, the failure and the re-attach, each with its activation call
+      // NOT DECIDED at this scope, and not run on this model. Its history: no verdict in 4 hours at 15 occurrences (the night
+      // run of 2026-11-06), where it could not have an instance, since the arc COUNTS 16 on the real stacks: twelve rows (the
+      // item's version, the pool's Create; the cycle's Request, Accept, StartProcessing, ProductionFailure and second Accept;
+      // the first demand's create, Release, StartProduction and Complete; the second demand's create with the card) and one
+      // call per service (four). The bound of 20 was set on paper (QA740 (c), 2026-11-09); at 20 it had no verdict in 4 hours
+      // in the night window of 2026-11-13, on the model before two fixes, and the window of 2026-11-14 left it out.
+      // THE ROWS ARE NAMED AND ORDERED since 2026-11-14 (a scope and symmetry read); four occurrences are spare.
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layers) ──────
 assert int_dem_contract_cycleIndivisible { cycleIndivisible }
