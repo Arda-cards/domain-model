@@ -42,13 +42,23 @@ run int_ord_loads {
 // REAL gate holds vacuously with no member cycles), then Submit commits on the C/OP gate. ──────
 run int_ord_submitArc {
   some ord: Order, d: DemandItem,
-       dc: CreateDemandOcc, dr: ReleaseOcc, dsp: StartProductionOcc,
-       a: AddLineOcc, s: SubmitOcc | {
-    dc.subject = d and dr.subject = d and dsp.subject = d
-    parentOf[a.subject] = ord and s.subject = ord
-    committed[dc] and committed[dr] and committed[dsp] and committed[a] and committed[s]
+       ki, kb, kp, kd, ko: Call,
+       vi: CreateItemOcc, vb: CreateBaOcc, vp: CreatePoolOcc,
+       dc: CreateDemandOcc, da: AddContributionOcc, dr: ReleaseOcc, dsp: StartProductionOcc,
+       oc: CreateOrderOcc, a: AddLineOcc, s: SubmitOcc | {
+    dc.subject = d and da.subject = d and dr.subject = d and dsp.subject = d
+    oc.subject = ord and parentOf[a.subject] = ord and s.subject = ord
+    committed[vi] and committed[vb] and committed[vp]
+    committed[dc] and committed[da] and committed[dr] and committed[dsp]
+    committed[oc] and committed[a] and committed[s]
     resolve[a.demand] = d
-    precedes[dc.tick, dr.tick] and precedes[dr.tick, a.tick]
+    // ONE order of the fifteen occurrences: a finder needs one history, not every interleaving of the fixtures
+    vi.arche = ki and vb.arche = kb and vp.arche = kp
+    (dc + da + dr + dsp).arche = kd and (oc + a + s).arche = ko
+    precedes[ki.tick, vi.tick] and precedes[vi.tick, kb.tick] and precedes[kb.tick, vb.tick]
+    precedes[vb.tick, kp.tick] and precedes[kp.tick, vp.tick] and precedes[vp.tick, kd.tick]
+    precedes[kd.tick, dc.tick] and precedes[dc.tick, da.tick] and precedes[da.tick, dr.tick]
+    precedes[dr.tick, ko.tick] and precedes[ko.tick, oc.tick] and precedes[oc.tick, a.tick]
     precedes[a.tick, dsp.tick] and precedes[dsp.tick, s.tick]
     orderStatusAt[ord, s.tick] = OS_SUBMITTED
     demandStatusAt[d, s.tick] = DS_IN_PROCESS
@@ -57,9 +67,12 @@ run int_ord_submitArc {
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
       1 Contribution, 0 Placement, 19 Tick, 17 EntityId, 19 Snapshot, 17 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
-      // 17 occurrences: the arc COUNTS 15 on the real stacks (the item's version, the vendor's version and the pool's
-      // Create with one call each; the demand's Create, attach, Release, StartProduction and call; the order's Create,
-      // AddLine, Submit and call), and at exactly 15 it had no verdict in 900 s (2026-11-13). Two are spare.
+      // 17 occurrences: the arc COUNTS 15 on the real stacks, ten rows (the item's version, the vendor's version and the
+      // pool's Create; the demand's Create, attach, Release and StartProduction; the order's Create, AddLine and Submit) and
+      // one call per service (five). Two are spare.
+      // THE ORDER IS PINNED (2026-11-14, a scope and symmetry read): the command names the fifteen and fixes one order of
+      // their ticks. A finder needs one history, not every interleaving of the fixtures. Unpinned at this scope it had no
+      // verdict in 1,800 s; pinned it is found in 285 s, and at the exact count of 15 in 795 s (measured at 4ee3a08).
       // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads: +1 pool, +1 contribution, +3 occurrences
       // (the pool's Create, its call, the contribution's attach)
       // census +2 EntityId / +2 Occurrence at DT-023 cut 8 (mirrors unit_ord_buildAndSubmit):
