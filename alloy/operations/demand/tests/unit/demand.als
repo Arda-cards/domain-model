@@ -1054,7 +1054,7 @@ run unit_dem_twoFreshHoldings {
     precedes[h2.tick, kd.tick] and precedes[kd.tick, c1.tick]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 5 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
       0 ProductionDelivery, 0 Station, 3 Quantity,
       20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
       // WIDENED 2026-11-14 (a scope read): at the earlier scope (for 5, 2 Contribution, Quantity and ContributionId, 3 Instant,
@@ -1064,6 +1064,9 @@ run unit_dem_twoFreshHoldings {
       // THE CALLS ARE PINNED (2026-11-15): at this scope with its calls free, this finder had no verdict at its 1,800 s cap
       // (2026-11-15, at b6cdfc3), where its two siblings above and below were found in 119 s and 96 s. The fourteen
       // occurrences (eleven rows, three calls) now have one order; the scope is unchanged.
+      // 5 InventoryPool (2026-11-15, a scope read): with the calls pinned, at 4 InventoryPool, this finder had no verdict
+      // in 1,800 s (b48b912), nor did the same form with its second StartProduction dropped. The forms of this root found
+      // at this scope create three pools; this one creates four. One bound is raised, by one.
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
