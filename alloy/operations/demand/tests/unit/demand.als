@@ -1026,9 +1026,11 @@ run unit_dem_startProductionUsedHoldingRefused {
     precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14: two externals plus a started demand need 3 of each of Contribution, Quantity and ContributionId,
+      // and 4 Instant: in the diagnostic runs of 2026-11-14 the same history had no instance at 2 and 3 and was found at these
 
 // ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
 // Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
@@ -1045,9 +1047,11 @@ run unit_dem_twoFreshHoldings {
     precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 16 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      15 Occurrence, 16 Tick, 16 EntityId, 17 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14: two externals plus a started demand need 3 of each of Contribution, Quantity and ContributionId,
+      // and 4 Instant: in the diagnostic runs of 2026-11-14 the same history had no instance at 2 and 3 and was found at these
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
@@ -1185,9 +1189,11 @@ run unit_dem_releasedHoldingStaysUsed {
     precedes[r1.tick, s1.tick] and precedes[s1.tick, o.tick] and precedes[o.tick, c2.tick] and precedes[r2.tick, sp.tick]
   }
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 15 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 3 Contribution, 1 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      15 Occurrence, 16 Tick, 15 EntityId, 17 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14: two externals plus a started demand need 3 of each of Contribution, Quantity and ContributionId,
+      // and 4 Instant: in the diagnostic runs of 2026-11-14 the same history had no instance at 2 and 3 and was found at these
 
 // ── DemandTests.CancelPoolNotEmpty ─────────────────────────────────────────────────────────────────────────────────────────
 // An OPEN demand whose external contribution's pool holds an item: its Cancel is refused with exactly RPoolNotEmpty
