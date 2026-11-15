@@ -1037,8 +1037,8 @@ run unit_dem_startProductionUsedHoldingRefused {
 // ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
 // Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
 run unit_dem_twoFreshHoldings {
-  some disj d1, d2: DemandItem, vi: CreateItemOcc, disj p1, p2, h1, h2: CreatePoolOcc, disj c1, c2: CreateWithContributionOcc,
-       disj r1, r2: ReleaseOcc, disj s1, s2: StartProductionOcc | {
+  some disj d1, d2: DemandItem, disj ki, kp, kd: Call, vi: CreateItemOcc, disj p1, p2, h1, h2: CreatePoolOcc,
+       disj c1, c2: CreateWithContributionOcc, disj r1, r2: ReleaseOcc, disj s1, s2: StartProductionOcc | {
     committed[s1] and committed[s2] and s1.subject != s2.subject
     some s1.holding and some s2.holding and s1.holding != s2.holding
     // the rows, named and ordered: two released demands, each then starting production on its own holding
@@ -1047,6 +1047,11 @@ run unit_dem_twoFreshHoldings {
     s1.subject = d1 and s2.subject = d2
     precedes[p1.tick, p2.tick] and precedes[p2.tick, h1.tick] and precedes[h1.tick, h2.tick] and precedes[h2.tick, c1.tick]
     precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
+    // the calls, named and ordered (2026-11-15): one per service, each just before the first row it writes, as the order's
+    // Submit arc does. With them the fourteen occurrences have ONE order: ki, vi, kp, p1, p2, h1, h2, kd, c1, r1, s1, c2, r2, s2
+    vi.arche = ki and (p1 + p2 + h1 + h2).arche = kp and (c1 + c2 + r1 + r2 + s1 + s2).arche = kd
+    precedes[ki.tick, vi.tick] and precedes[vi.tick, kp.tick] and precedes[kp.tick, p1.tick]
+    precedes[h2.tick, kd.tick] and precedes[kd.tick, c1.tick]
   }
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
@@ -1056,6 +1061,9 @@ run unit_dem_twoFreshHoldings {
       // the counted occurrences) and with only those four bounds raised, the pinned form had no instance. A diagnostic of two
       // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
       // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
+      // THE CALLS ARE PINNED (2026-11-15): at this scope with its calls free, this finder had no verdict at its 1,800 s cap
+      // (2026-11-15, at b6cdfc3), where its two siblings above and below were found in 119 s and 96 s. The fourteen
+      // occurrences (eleven rows, three calls) now have one order; the scope is unchanged.
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
