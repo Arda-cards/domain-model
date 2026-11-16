@@ -309,8 +309,9 @@ pred poolStampsMonotone {
 
 // M2c (DT-020 §8.5.3/§8.2.1, SPEARHEAD-D1 A′-2): "AT REST" IS THE POOL'S CUSTODY READING —
 // a pool CANNOT know who holds it (the DAG requirement: this module sees no ReceivingLine /
-// DemandItem / CardCycle), so "at rest" (no live holder among the three kinds) is DERIVED,
+// DemandItem / CardCycle), so "at rest" (no live holder among the FOUR kinds: a line, a card cycle,
+// a demand's holding and, since TN-004, a live demand's external contribution) is DERIVED,
 // never a stored pool-side state (§8.2.1: "Bin ≠ Pool" — items carry their own location and
 // availability). The predicate itself (`atRestAt`) is defined at the COMPOSITION level, where
-// all three holder kinds are visible: `tests/pool_lattice.als` (the existing root that already
+// all four holder kinds are visible: `tests/pool_lattice.als` (the existing root that already
 // composes ReceivingLine/DemandItem/CardCycle over their MOCKS for the global exclusivity row).
