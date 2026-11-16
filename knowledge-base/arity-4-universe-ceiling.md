@@ -14,7 +14,8 @@ but with translation blow-ups or capacity failures.
 2. **The confined-root pattern.** A file whose formulation needs an arity-4 relation
    (a Σ over three keys, a case-wise accumulate) gets its own module opened **only** by
    one dedicated test root, never by the module's main libraries. Precedents:
-   `operations/demand/demand_reset.als` and `procurement/order/order_received.als` —
+   `operations/demand/demand_quantity.als` (which replaced `demand_reset.als` with TN-004) and
+   `procurement/order/order_received.als` —
    each verified in its own root with a small universe, invisible to every other cone.
 
 ## Checking
