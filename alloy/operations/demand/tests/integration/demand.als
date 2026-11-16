@@ -67,13 +67,13 @@ run int_dem_recollationAfterFailure {
 } for 9 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
       20 Tick, 18 EntityId, 20 Snapshot, 20 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
-      // NOT DECIDED at this scope, and not run on this model. Its history: no verdict in 4 hours at 15 occurrences (the night
-      // run of 2026-11-06), where it could not have an instance, since the arc COUNTS 16 on the real stacks: twelve rows (the
-      // item's version, the pool's Create; the cycle's Request, Accept, StartProcessing, ProductionFailure and second Accept;
-      // the first demand's create, Release, StartProduction and Complete; the second demand's create with the card) and one
-      // call per service (four). The bound of 20 was set on paper (QA740 (c), 2026-11-09); at 20 it had no verdict in 4 hours
-      // in the night window of 2026-11-13, on the model before two fixes, and the window of 2026-11-14 left it out.
-      // THE ROWS ARE NAMED AND ORDERED since 2026-11-14 (a scope and symmetry read); four occurrences are spare.
+      // FOUND in 856 s at 36ea315 (2026-11-14, a day run), in this form: THE ROWS ARE NAMED AND ORDERED (41f277e, a scope and
+      // symmetry read); four occurrences are spare. Its history before this form: no verdict in 4 hours at 15 occurrences (the
+      // night run of 2026-11-06), where it could not have an instance, since the arc COUNTS 16 on the real stacks: twelve rows
+      // (the item's version, the pool's Create; the cycle's Request, Accept, StartProcessing, ProductionFailure and second
+      // Accept; the first demand's create, Release, StartProduction and Complete; the second demand's create with the card) and
+      // one call per service (four). The bound of 20 was set on paper (QA740 (c), 2026-11-09); at 20 it had no verdict in 4
+      // hours in the night window of 2026-11-13, on the model before two fixes, and the window of 2026-11-14 left it out.
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layers) ──────
 assert int_dem_contract_cycleIndivisible { cycleIndivisible }
