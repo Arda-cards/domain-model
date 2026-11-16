@@ -16,6 +16,27 @@ the full gate.
 - When running the jar directly (outside make), pass `-s glucose` yourself or accept the
   slow default.
 
+## CI heap
+
+The `affected-cones` solver job and all `full-regression` solver jobs (including the
+cookbook examples) set `JAVA_TOOL_OPTIONS=-Xmx5g`. Java reads this for every solver
+process, including commands launched by Make. The limit leaves room for JNI solver
+allocations and runner processes on a 7 GB hosted runner. It is a heap ceiling, not
+a limit on the JVM's total resident memory; native solver memory is additional.
+
+In automatic selection, CI runs a small glucose probe in a unique temporary
+directory. A failure prints the probe's stdout/stderr and a warning before
+selecting SAT4J. The message says that the probe failed: a nonzero command exit
+alone does not diagnose a native-library load failure. Explicit solver choices in
+`full-regression` retain their forced behavior.
+
+The historical run cited in the solver ticket, 37030352223, logged
+`solver: glucose (native loaded)` in all nine solver-selecting shards. The
+unchanged probe also succeeded in Ubuntu 24.04 with Temurin 21 during this work.
+No native-library installation or search-path change was justified by those
+observations. The heap and diagnostic changes make the resource limit explicit
+and preserve evidence if a future probe fails.
+
 ## Why switching is always safe
 
 Both solvers are sound and complete: SAT/UNSAT answers and `expect` verdicts are

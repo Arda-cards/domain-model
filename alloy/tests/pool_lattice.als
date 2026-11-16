@@ -52,7 +52,7 @@ pred contributionHoldsPool[d: DemandItem, p: InventoryPool, t: Tick] {
 // M2c (DT-020 §8.5.3/§8.2.1, SPEARHEAD-D1 A′-2): "AT REST" — a pool with NO live holder among
 // the FOUR kinds this root composes (the fourth since TN-004: a live demand's external contribution). DERIVED here (never a stored pool-side state — a pool
 // cannot know who holds it, the DAG requirement; `inventory_pool.als` carries the annotation,
-// this root carries the reading since it is the one place all three holder kinds are visible).
+// this root carries the reading since it is the one place all four holder kinds are visible).
 pred atRestAt[p: InventoryPool, t: Tick] {
   no l: ReceivingLine | resolve[rlStateAt[l, t].sPool] = p
   no c: CardCycle | liveCycleAt[c, t] and resolve[stateOfCycleAt[c, t].sPool] = p

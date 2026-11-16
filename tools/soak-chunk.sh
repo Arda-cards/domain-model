@@ -12,11 +12,20 @@
 #
 # Batch dir layout (soak/<YYYYMMDD-HHMM>/ at the repo root, gitignored):
 #   plan.tsv            tier  root  command  scope_hash  estimate_s   (dispatch order)
+#                       `command` is what the tool's -c takes: the command's LABEL when it has one
+#                       (`e7_step_w: check e7_step for ...` is the command e7_step_w), else its name.
 #   batch.meta          created epoch, model_sha (+dirty flag) — the corpus provenance key
 #   dispatch.log        the dispatcher's decisions (dispatched / deferred / window end)
-#   cmd/<name>.log      solver output          cmd/<name>.rc    exit code
-#   cmd/<name>.meta     start/end epochs       cmd/<name>.d/    harvested instances (-o)
-#   cmd/<name>.overbudget   cap + elapsed when the watchdog killed the command
+#   cmd/<key>.log       solver output          cmd/<key>.rc     exit code
+#   cmd/<key>.meta      start/end epochs, root, command      cmd/<key>.d/   harvested instances (-o)
+#   cmd/<key>.overbudget    cap + elapsed when the watchdog killed the command
+#                       <key> = the root's path under alloy/soak with `/` as `.`, a dot, the command
+#                       (sliced.cycle_pool_inductive.e7_base): two roots may state commands of one
+#                       name (every rung has e7_base), and each is its own command. A dot cannot
+#                       occur in an Alloy module path or a command name, so the key is unique
+#                       (with `_` for `/`, sliced/a_b.als and sliced/a/b.als would share one).
+#                       A batch made before the key keeps its artifacts under the bare command name; they
+#                       are read for the root their meta records (art_of), so it can be resumed.
 #   ledger.tsv          materialized by `status` from plan + artifacts
 #
 # Estimates: alloy/soak/estimates.tsv (committed) — command<TAB>scope_hash<TAB>seconds.
@@ -75,6 +84,29 @@ soak_roots() { # tier order: lemmas, sliced, then the transitional tests/
 
 tier_of() { case "$1" in */lemmas/*) echo 0;; */sliced/*) echo 1;; *) echo 2;; esac; }
 
+# ── the commands a root states, one per line: the label when the command has one, else its name ──
+commands_of() { # $1 = root .als path
+  sed -nE 's/^[[:space:]]*(([A-Za-z_][A-Za-z_0-9]*)[[:space:]]*:[[:space:]]*)?(run|check)[[:space:]]+([A-Za-z_][A-Za-z_0-9]*).*/\2 \4/p' "$1" \
+    | awk '{print $1}'
+}
+
+# ── the artifact key of a (root, command) pair: unique across roots that share a command name ──
+key_of() { # $1 = root .als path  $2 = command
+  printf '%s.%s\n' "$(printf '%s' "$1" | sed -E 's|^alloy/soak/||; s|\.als$||; s|/|.|g')" "$2"
+}
+# ── where a (root, command) pair's artifacts are in a GIVEN batch: under its key, or, in a batch made before the key
+# existed, under the bare command name when that name's meta records this root (a same-named command of another root
+# then reads as pending, which it was: the old runner skipped it) ──
+art_of() { # $1 = batch dir  $2 = root .als path  $3 = command
+  local k; k=$(key_of "$2" "$3")
+  if [ ! -e "$1/cmd/$k.meta" ] && [ -f "$1/cmd/$3.meta" ] \
+     && [ "$(awk -F'\t' '$1=="root"{print $2}' "$1/cmd/$3.meta" 2>/dev/null)" = "$2" ]; then
+    printf '%s\n' "$3"
+  else
+    printf '%s\n' "$k"
+  fi
+}
+
 # ── foreign solvers (quiet window): Alloy JVMs on this host NOT belonging to $1 ──────
 foreign_solvers() { # $1 = batch dir (our own jobs carry "-o <batch>/" in their args)
   ps -axo pid,command | grep -F 'alloy.jar' | grep -v grep | grep -vF "$1/" || true
@@ -91,7 +123,7 @@ cmd_plan() {
   : > "$batch/plan.unsorted"
   for root in $(soak_roots); do
     h=$(cone_hash "$root"); tier=$(tier_of "$root")
-    for c in $(grep -E '^[[:space:]]*(run|check)[[:space:]]+[A-Za-z_][A-Za-z_0-9]*' "$root" | awk '{print $2}'); do
+    for c in $(commands_of "$root"); do
       e=-1
       [ -f "$est" ] && e=$(awk -F'\t' -v c="$c" -v h="$h" '$1==c && $2==h {print $3; exit}' "$est")
       [ -n "$e" ] || e=-1
@@ -106,17 +138,18 @@ cmd_plan() {
 
 # ── chunk (the dispatcher) ───────────────────────────────────────────────────────────
 launch_one() { # $1 batch  $2 root  $3 command  $4 scope_hash
-  local batch="$1" root="$2" c="$3" h="$4"
-  mkdir -p "$batch/cmd/$c.d"
-  printf 'start\t%s\nscope_hash\t%s\nroot\t%s\n' "$(date +%s)" "$h" "$root" > "$batch/cmd/$c.meta"
-  nohup sh -c "java -jar '$ALLOY_JAR' -D info exec $ALLOY_FLAGS -c '$c' -o '$batch/cmd/$c.d' -f '$root' \
-                 > '$batch/cmd/$c.log' 2>&1; \
-               echo \$? > '$batch/cmd/$c.rc'; \
-               printf 'end\t%s\n' \"\$(date +%s)\" >> '$batch/cmd/$c.meta'; \
-               tools/soak-chunk.sh harvest-one '$batch' '$c' >> '$batch/dispatch.log' 2>&1 || true" \
+  local batch="$1" root="$2" c="$3" h="$4" k
+  k=$(key_of "$root" "$c")
+  mkdir -p "$batch/cmd/$k.d"
+  printf 'start\t%s\nscope_hash\t%s\nroot\t%s\ncommand\t%s\n' "$(date +%s)" "$h" "$root" "$c" > "$batch/cmd/$k.meta"
+  nohup sh -c "java -jar '$ALLOY_JAR' -D info exec $ALLOY_FLAGS -c '$c' -o '$batch/cmd/$k.d' -f '$root' \
+                 > '$batch/cmd/$k.log' 2>&1; \
+               echo \$? > '$batch/cmd/$k.rc'; \
+               printf 'end\t%s\n' \"\$(date +%s)\" >> '$batch/cmd/$k.meta'; \
+               tools/soak-chunk.sh harvest-one '$batch' '$k' >> '$batch/dispatch.log' 2>&1 || true" \
        >/dev/null 2>&1 &
-  echo "$!" > "$batch/cmd/$c.pid"
-  echo "$(date '+%H:%M:%S') DISPATCH $c (root $root, pid $(cat "$batch/cmd/$c.pid"))" | tee -a "$batch/dispatch.log"
+  echo "$!" > "$batch/cmd/$k.pid"
+  echo "$(date '+%H:%M:%S') DISPATCH $c (root $root, pid $(cat "$batch/cmd/$k.pid"))" | tee -a "$batch/dispatch.log"
 }
 
 running_count() { # jobs with a pid file, no rc yet, process alive
@@ -146,7 +179,7 @@ cmd_chunk() {
     now=$(date +%s); remaining=$((end - now))
     # ── budget-cap watchdog (PDEV-1610 / DT-025 R2): a kill here is a bracket data ──
     # point ("too hard at this scope"), never a lost run — the ledger keeps it.
-    local wp wc wpid ws0 wel we wcap
+    local wp wc wpid ws0 wel we wcap wroot wcmd
     for wp in "$batch"/cmd/*.pid; do
       [ -f "$wp" ] || continue
       wc=$(basename "$wp" .pid)
@@ -155,7 +188,11 @@ cmd_chunk() {
       wpid=$(cat "$wp"); kill -0 "$wpid" 2>/dev/null || continue
       ws0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null); [ -n "$ws0" ] || continue
       wel=$((now - ws0))
-      we=$(awk -F'\t' -v c="$wc" '$3==c{print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
+      # the job's own plan row: by the root and the command its meta records (a job from before the key has no
+      # `command` line: its key is the command), never by the first same-named row of the plan
+      wroot=$(awk -F'\t' '$1=="root"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null)
+      wcmd=$(awk -F'\t' '$1=="command"{print $2}' "$batch/cmd/$wc.meta" 2>/dev/null); wcmd=${wcmd:-$wc}
+      we=$(awk -F'\t' -v r="$wroot" -v c="$wcmd" '$2==r && $3==c {print $5; exit}' "$batch/plan.tsv"); we=${we:--1}
       if [ "$we" -ge 0 ]; then wcap=$((we * CAP_NUM)); else wcap=$UNKNOWN_CAP; fi
       [ "$wcap" -gt 0 ] || continue
       if [ "$wel" -gt "$wcap" ]; then
@@ -170,9 +207,11 @@ cmd_chunk() {
     local active; active=$(running_count "$batch")
     if [ "$remaining" -gt 0 ] && [ "$active" -lt "$par" ]; then
       local dispatched=0
+      local k
       while IFS=$(printf '\t') read -r tier root c h e; do
-        [ -f "$batch/cmd/$c.rc" ] && continue           # done (this batch)
-        [ -f "$batch/cmd/$c.pid" ] && kill -0 "$(cat "$batch/cmd/$c.pid")" 2>/dev/null && continue  # running
+        k=$(art_of "$batch" "$root" "$c")
+        [ -f "$batch/cmd/$k.rc" ] && continue           # done (this batch)
+        [ -f "$batch/cmd/$k.pid" ] && kill -0 "$(cat "$batch/cmd/$k.pid")" 2>/dev/null && continue  # running
         if [ "$e" -ge 0 ]; then
           [ $((e * MARGIN_NUM)) -le "$remaining" ] || { echo "$(date '+%H:%M:%S') DEFER $c est=${e}s remaining=${remaining}s" >> "$batch/dispatch.log"; continue; }
         else
@@ -183,7 +222,7 @@ cmd_chunk() {
       done < "$batch/plan.tsv"
       # nothing dispatchable and nothing running and window still open -> all done or all deferred
       if [ "$dispatched" -eq 0 ] && [ "$active" -eq 0 ]; then
-        local pending; pending=$(awk -F'\t' '{print $3}' "$batch/plan.tsv" | while read -r c; do [ -f "$batch/cmd/$c.rc" ] || echo "$c"; done | wc -l | tr -d ' ')
+        local pending; pending=$(while IFS=$(printf '\t') read -r tier root c h e; do [ -f "$batch/cmd/$(art_of "$batch" "$root" "$c").rc" ] || echo "$c"; done < "$batch/plan.tsv" | wc -l | tr -d ' ')
         echo "$(date '+%H:%M:%S') CHUNK idle: 0 running, $pending pending (deferred for window)" | tee -a "$batch/dispatch.log"
         break
       fi
@@ -206,9 +245,10 @@ cmd_chunk() {
 }
 
 # ── harvest (corpus registration — DT-025 R3 bulk tier) ─────────────────────────────
-harvest_one() { # $1 batch  $2 command — idempotent (dedupes on solution path)
-  local batch="$1" c="$2" sols s sha root h n=0
-  sols=$(find "$batch/cmd/$c.d" -name '*solution*' -type f 2>/dev/null | sort)
+harvest_one() { # $1 batch  $2 key — idempotent (dedupes on solution path)
+  local batch="$1" k="$2" c sols s sha root h n=0
+  c=$(awk -F'\t' '$1=="command"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null); c=${c:-$k}   # a batch from before the key: its key is the command
+  sols=$(find "$batch/cmd/$k.d" -name '*solution*' -type f 2>/dev/null | sort)
   [ -n "$sols" ] || return 0
   mkdir -p "$CORPUS"
   [ -f "$CORPUS/manifest.tsv" ] || printf 'registered\tmodel_sha\troot\tcommand\tscope_hash\tbatch\tsolution\n' > "$CORPUS/manifest.tsv"
@@ -220,8 +260,8 @@ harvest_one() { # $1 batch  $2 command — idempotent (dedupes on solution path)
     sha=$( [ -n "$ts" ] && git rev-list -1 --before="$ts" HEAD 2>/dev/null || true )
     sha="${sha:-unknown}+retro"
   fi
-  root=$(awk -F'\t' '$1=="root"{print $2}' "$batch/cmd/$c.meta" 2>/dev/null)
-  h=$(awk -F'\t' '$1=="scope_hash"{print $2}' "$batch/cmd/$c.meta" 2>/dev/null)
+  root=$(awk -F'\t' '$1=="root"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null)
+  h=$(awk -F'\t' '$1=="scope_hash"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null)
   for s in $sols; do
     grep -qF "	$s" "$CORPUS/manifest.tsv" 2>/dev/null && continue
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$sha" "${root:-?}" "$c" "${h:-?}" "$batch" "$s" >> "$CORPUS/manifest.tsv"
@@ -250,20 +290,22 @@ cmd_status() {
   [ -f "$batch/plan.tsv" ] || die "no plan.tsv in $batch"
   printf 'tier\troot\tcommand\tscope_hash\testimate_s\tstatus\telapsed_s\n' > "$batch/ledger.tsv"
   local nd=0 nm=0 ne=0 nr=0 np=0 nb=0
+  local k
   while IFS=$(printf '\t') read -r tier root c h e; do
     local st="pending" el=""
-    if [ -f "$batch/cmd/$c.rc" ]; then
-      local rc; rc=$(cat "$batch/cmd/$c.rc")
-      local s0 s1; s0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$c.meta" 2>/dev/null)
-      s1=$(awk -F'\t' '$1=="end"{print $2}' "$batch/cmd/$c.meta" 2>/dev/null)
+    k=$(art_of "$batch" "$root" "$c")
+    if [ -f "$batch/cmd/$k.rc" ]; then
+      local rc; rc=$(cat "$batch/cmd/$k.rc")
+      local s0 s1; s0=$(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null)
+      s1=$(awk -F'\t' '$1=="end"{print $2}' "$batch/cmd/$k.meta" 2>/dev/null)
       [ -n "$s0" ] && [ -n "$s1" ] && el=$((s1 - s0))
-      if [ -f "$batch/cmd/$c.overbudget" ]; then st="OVER-BUDGET"; nb=$((nb+1))
-      elif grep -q "against expectation" "$batch/cmd/$c.log" 2>/dev/null; then st="MISMATCH"; nm=$((nm+1))
-      elif [ "$rc" != "0" ] || grep -qE "Syntax error|\[main\] ERROR" "$batch/cmd/$c.log" 2>/dev/null; then st="ERROR"; ne=$((ne+1))
+      if [ -f "$batch/cmd/$k.overbudget" ]; then st="OVER-BUDGET"; nb=$((nb+1))
+      elif grep -q "against expectation" "$batch/cmd/$k.log" 2>/dev/null; then st="MISMATCH"; nm=$((nm+1))
+      elif [ "$rc" != "0" ] || grep -qE "Syntax error|\[main\] ERROR" "$batch/cmd/$k.log" 2>/dev/null; then st="ERROR"; ne=$((ne+1))
       else st="done"; nd=$((nd+1)); fi
-    elif [ -f "$batch/cmd/$c.pid" ] && kill -0 "$(cat "$batch/cmd/$c.pid")" 2>/dev/null; then
+    elif [ -f "$batch/cmd/$k.pid" ] && kill -0 "$(cat "$batch/cmd/$k.pid")" 2>/dev/null; then
       st="running"; nr=$((nr+1))
-      el=$(( $(date +%s) - $(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$c.meta") ))
+      el=$(( $(date +%s) - $(awk -F'\t' '$1=="start"{print $2}' "$batch/cmd/$k.meta") ))
     else np=$((np+1)); fi
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$tier" "$root" "$c" "$h" "$e" "$st" "$el" >> "$batch/ledger.tsv"
   done < "$batch/plan.tsv"

@@ -1000,29 +1000,72 @@ run unit_dem_startProductionExternalPoolRefused {
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 1 Contribution, 0 Placement, 3 Instant,
       10 Occurrence, 11 Tick, 10 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
+/** pinnedReleased — ONE order of the four rows behind a demand `d` released through an external contribution on the pool `vp`
+    created: the item's version, the pool's Create, the demand's create with that contribution, its Release. The three
+    two-demand witnesses below name their rows through it and fix one order of their ticks (2026-11-14, a scope and symmetry
+    read): a finder needs one history, not every interleaving of the fixtures. As written before, each had no verdict in
+    1,800 s, at its scope and at a probe with two more of each bound. The calls stay free, and so do the scopes. */
+pred pinnedReleased[d: DemandItem, vi: CreateItemOcc, vp: CreatePoolOcc, dc: CreateWithContributionOcc, dr: ReleaseOcc] {
+  committed[vi] and committed[vp] and committed[dc] and committed[dr]
+  dc.subject = d and dr.subject = d
+  dc.contribution in ExternalContribution and dc.contribution.cPool = vp.subject.eId
+  precedes[vi.tick, vp.tick] and precedes[vp.tick, dc.tick] and precedes[dc.tick, dr.tick]
+}
+
 // A holding another demand's committed StartProduction already named: exactly RPoolNotFresh (the demand log's own memory).
 run unit_dem_startProductionUsedHoldingRefused {
-  some disj s1, s2: StartProductionOcc | {
+  some disj d1, d2: DemandItem, vi: CreateItemOcc, disj p1, p2, ph: CreatePoolOcc, disj c1, c2: CreateWithContributionOcc,
+       disj r1, r2: ReleaseOcc, disj s1, s2: StartProductionOcc | {
     committed[s1] and precedes[s1.tick, s2.tick] and s1.subject != s2.subject
     some s1.holding and s2.holding = s1.holding
     refusedAtAdmission[s2] and s2.admission.because = RPoolNotFresh
+    // the rows, named and ordered: two released demands, then the holding's first use, then the refused second
+    pinnedReleased[d1, vi, p1, c1, r1] and pinnedReleased[d2, vi, p2, c2, r2]
+    committed[ph] and s1.holding = ph.subject.eId and s1.subject = d1 and s2.subject = d2
+    precedes[p1.tick, p2.tick] and precedes[p2.tick, ph.tick] and precedes[ph.tick, c1.tick]
+    precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
   }
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14 (a scope read): at the earlier scope (for 5, 2 Contribution, Quantity and ContributionId, 3 Instant,
+      // the counted occurrences) and with only those four bounds raised, the pinned form had no instance. A diagnostic of two
+      // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
+      // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
 
 // ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
 // Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
 run unit_dem_twoFreshHoldings {
-  some disj s1, s2: StartProductionOcc | {
+  some disj d1, d2: DemandItem, disj ki, kp, kd: Call, vi: CreateItemOcc, disj p1, p2, h1, h2: CreatePoolOcc,
+       disj c1, c2: CreateWithContributionOcc, disj r1, r2: ReleaseOcc, disj s1, s2: StartProductionOcc | {
     committed[s1] and committed[s2] and s1.subject != s2.subject
     some s1.holding and some s2.holding and s1.holding != s2.holding
+    // the rows, named and ordered: two released demands, each then starting production on its own holding
+    pinnedReleased[d1, vi, p1, c1, r1] and pinnedReleased[d2, vi, p2, c2, r2]
+    committed[h1] and committed[h2] and s1.holding = h1.subject.eId and s2.holding = h2.subject.eId
+    s1.subject = d1 and s2.subject = d2
+    precedes[p1.tick, p2.tick] and precedes[p2.tick, h1.tick] and precedes[h1.tick, h2.tick] and precedes[h2.tick, c1.tick]
+    precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
+    // the calls, named and ordered (2026-11-15): one per service, each just before the first row it writes, as the order's
+    // Submit arc does. With them the fourteen occurrences have ONE order: ki, vi, kp, p1, p2, h1, h2, kd, c1, r1, s1, c2, r2, s2
+    vi.arche = ki and (p1 + p2 + h1 + h2).arche = kp and (c1 + c2 + r1 + r2 + s1 + s2).arche = kd
+    precedes[ki.tick, vi.tick] and precedes[vi.tick, kp.tick] and precedes[kp.tick, p1.tick]
+    precedes[h2.tick, kd.tick] and precedes[kd.tick, c1.tick]
   }
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 2 Contribution, 0 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 16 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14 (a scope read): at the earlier scope (for 5, 2 Contribution, Quantity and ContributionId, 3 Instant,
+      // the counted occurrences) and with only those four bounds raised, the pinned form had no instance. A diagnostic of two
+      // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
+      // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
+      // THE CALLS ARE PINNED (2026-11-15): at this scope with its calls free, this finder had no verdict at its 1,800 s cap
+      // (2026-11-15, at b6cdfc3), where its two siblings above and below were found in 119 s and 96 s. The fourteen
+      // occurrences (eleven rows, three calls) now have one order; the scope is unchanged.
+      // NOT DECIDED (QA807 (a), 2026-11-16): in this form too, no verdict in 1,800 s and in 3,600 s (2026-11-15, at b48b912),
+      // nor with five pools (a0d1762) or in a diagnostic (72ede78). alloy/EXTENSIONS.md records it; a night window retries it.
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
@@ -1148,15 +1191,25 @@ run unit_dem_releasedExternalPoolStaysUsed {
 
 // The same for the released HOLDING: a new demand's StartProduction on it is refused with exactly RPoolNotFresh.
 run unit_dem_releasedHoldingStaysUsed {
-  some o: CompleteOcc, sp: StartProductionOcc | {
+  some disj d1, d2: DemandItem, vi: CreateItemOcc, disj p1, p2, ph: CreatePoolOcc, disj c1, c2: CreateWithContributionOcc,
+       disj r1, r2: ReleaseOcc, s1: StartProductionOcc, o: CompleteOcc, sp: StartProductionOcc | {
     committed[o] and precedes[o.tick, sp.tick] and sp.subject != o.subject
     some dPre[o].sHolding and sp.holding = dPre[o].sHolding
     refusedAtAdmission[sp] and sp.admission.because = RPoolNotFresh
+    // the rows, named and ordered: the first demand through its Complete, then the second and its refused start
+    pinnedReleased[d1, vi, p1, c1, r1] and pinnedReleased[d2, vi, p2, c2, r2]
+    committed[ph] and committed[s1] and s1.subject = d1 and s1.holding = ph.subject.eId and o.subject = d1 and sp.subject = d2
+    precedes[p1.tick, p2.tick] and precedes[p2.tick, ph.tick] and precedes[ph.tick, c1.tick]
+    precedes[r1.tick, s1.tick] and precedes[s1.tick, o.tick] and precedes[o.tick, c2.tick] and precedes[r2.tick, sp.tick]
   }
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 2 Contribution, 1 Placement, 3 Instant,
-      0 ProductionDelivery, 0 Station, 2 Quantity,
-      15 Occurrence, 16 Tick, 15 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 3 InventoryPool, 3 Contribution, 1 Placement, 4 Instant,
+      0 ProductionDelivery, 0 Station, 3 Quantity,
+      20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
+      // WIDENED 2026-11-14 (a scope read): at the earlier scope (for 5, 2 Contribution, Quantity and ContributionId, 3 Instant,
+      // the counted occurrences) and with only those four bounds raised, the pinned form had no instance. A diagnostic of two
+      // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
+      // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
 
 // ── DemandTests.CancelPoolNotEmpty ─────────────────────────────────────────────────────────────────────────────────────────
 // An OPEN demand whose external contribution's pool holds an item: its Cancel is refused with exactly RPoolNotEmpty

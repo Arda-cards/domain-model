@@ -31,8 +31,8 @@ outer limit wins.
   infrastructure). It counts as exhaustion only when the cone's elapsed time reached the effective
   budget; earlier, it is a failed verdict with a warning.
 - The dependent advisory job runs on `always()` — a job-limit kill reports `cancelled` — and refuses
-  to write when the PR's head has moved on (a superseded run), so a concurrency cancellation never
-  writes stale state.
+  to write when the PR's head, newest same-head run, run attempt, or `heavy-cone` label state
+  supersedes the event. See [Advisory freshness](affected-cones-advisory-freshness.md).
 
 **Evidence:** RED run 37380832254 on 693f5a4 (job kill at 20 min, advisory skipped); GREEN run
 37383335112 on 904b811 — `791s effective (setup took 349s; job budget remaining 851s of 1200s;
