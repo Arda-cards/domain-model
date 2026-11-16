@@ -1064,6 +1064,8 @@ run unit_dem_twoFreshHoldings {
       // THE CALLS ARE PINNED (2026-11-15): at this scope with its calls free, this finder had no verdict at its 1,800 s cap
       // (2026-11-15, at b6cdfc3), where its two siblings above and below were found in 119 s and 96 s. The fourteen
       // occurrences (eleven rows, three calls) now have one order; the scope is unchanged.
+      // NOT DECIDED (QA807 (a), 2026-11-16): in this form too, no verdict in 1,800 s and in 3,600 s (2026-11-15, at b48b912),
+      // nor with five pools (a0d1762) or in a diagnostic (72ede78). alloy/EXTENSIONS.md records it; a night window retries it.
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
