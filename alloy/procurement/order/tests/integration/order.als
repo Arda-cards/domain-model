@@ -17,8 +17,8 @@ open resources/kanban_card/kanban_card_implementation
  * REAL demand implementation (chaining + guards + effects) and the real lower stacks. Gate
  * tier: a joint loads witness, the O2 Submit arc down the real ladder (cycle legs stay empty —
  * 0 CardCycle keeps the cone within budget; the demand↔kanban legs are demand's own
- * integration suite), the cancel-returns-to-queue arc, and re-discharge of two key laws on the
- * composed stack.
+ * integration suite), the cancel-returns-to-queue arc, and the two refusals (RDemandHeld,
+ * RFrozen) on the composed stack.
  */
 
 // ── joint loads: the composed stack is satisfiable; refs resolve across the layers ──────────────
@@ -93,11 +93,24 @@ run int_ord_cancelReturnsToQueue {
       1 Contribution, 0 Placement, 12 Occurrence, 14 Tick, 13 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
       // re-scoped with the TN-004 projection (2026-11-13), as int_ord_loads
 
-// ── law re-discharge on the composed stack ──────────────────────────────────────────────────────
-assert int_ord_contract_demandIndivisible { demandIndivisible }
-check int_ord_contract_demandIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
+// ── the two refusals on the composed stack ───────────────────────────────────────────────────────
+// They replace the two contract checks this root held (`demandIndivisible`, `frozenOutsideDraft`), retired as checks of
+// laws the reference model proves (dafny-domain `DemandIndivisible`, `FrozenOutsideDraftOrder`, `FrozenOutsideDraftLine`).
+// A finder per refusal shows what a check could not show at its scope: on the REAL demand log and the real lower stacks,
+// the guard still fires.
 
-assert int_ord_contract_frozenOutsideDraft { frozenOutsideDraft }
-check int_ord_contract_frozenOutsideDraft for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
+// Extension class 1: finder for OrderTests.AttachRefusals (RDemandHeld): a demand one live line services is refused to a
+// second line. The arc is int_ord_loads' (the item's version, the pool, the demand's create and Release, the order, the
+// line that takes the demand) plus the second line's genesis and its refused attach.
+run int_ord_demandHeldRefused {
+  some o: AttachDemandOcc | refusedAtAdmission[o] and o.admission.because = RDemandHeld
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 2 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
+      1 Contribution, 0 Placement, 14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+
+// Extension class 1: finder for OrderTests.FreezeRefusals (RFrozen): a line's genesis on an order that left draft is refused.
+run int_ord_frozenRefused {
+  some o: AddLineOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
+} for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 Contribution, 0 Placement, 12 Occurrence, 13 Tick, 12 EntityId, 12 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
