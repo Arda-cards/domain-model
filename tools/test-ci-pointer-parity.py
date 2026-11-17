@@ -45,29 +45,33 @@ def step_script():
     while end < len(lines) and (not lines[end].strip() or lines[end].startswith(' ' * 10)):
         end += 1
     script = textwrap.dedent('\n'.join(lines[start:end]))
-    assert 'gh workflow run' in script and 'gh run watch' in script, 'the step script was not found in the workflow'
+    assert 'gh run watch' in script, 'the step script was not found in the workflow'
     return script
 
 
-# A stand-in for `gh`: it records each call, answers `workflow run` with the output and status the test sets, and
-# `run watch` with the status the test sets. Any other call is a mistake of the script: status 64.
+# A stand-in for `gh`. It records each call. `gh api` (the dispatch) prints what the test sets as the response's run id,
+# as `--jq .workflow_run_id` would, and ends with the status the test sets; `gh run watch` ends with the status the test
+# sets. Any other call is a mistake of the script: status 64.
 FAKE_GH = '''#!/bin/sh
 echo "$*" >> "$GH_CALLS"
-case "$1 $2" in
-  "workflow run") [ -z "$GH_DISPATCH_OUT" ] || echo "$GH_DISPATCH_OUT"; exit "$GH_DISPATCH_RC" ;;
-  "run watch") exit "$GH_WATCH_RC" ;;
+case "$1" in
+  api) [ -z "$GH_DISPATCH_OUT" ] || echo "$GH_DISPATCH_OUT"; exit "$GH_DISPATCH_RC" ;;
+  run) [ "$2" = watch ] && exit "$GH_WATCH_RC" ;;
 esac
 exit 64
 '''
-RUN_URL = 'https://github.com/Arda-cards/dafny-domain/actions/runs/4242'
-DISPATCH = 'workflow run pointer-parity.yaml --repo Arda-cards/dafny-domain --ref main -f domain_model_ref=abc123'
+# The dispatch is the REST call, asking for the run's details: its response carries the run's id (the endpoint's
+# `return_run_details`, documented for API version 2022-11-28). Nothing is read from a CLI's message for people.
+DISPATCH = ('api --method POST -H X-GitHub-Api-Version: 2022-11-28 '
+            'repos/Arda-cards/dafny-domain/actions/workflows/pointer-parity.yaml/dispatches '
+            '-f ref=main -f inputs[domain_model_ref]=abc123 -F return_run_details=true --jq .workflow_run_id')
 WATCH = 'run watch 4242 --repo Arda-cards/dafny-domain --exit-status'
 
 
 class DispatchAndWait(unittest.TestCase):
     """The step's script, run as the runner runs a `run:` block with no `shell:` (`bash -e`), against the fake `gh`."""
 
-    def run_step(self, *, token='a-token', dispatch_out=RUN_URL, dispatch_rc=0, watch_rc=0):
+    def run_step(self, *, token='a-token', dispatch_out='4242', dispatch_rc=0, watch_rc=0):
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             gh = work / 'gh'
@@ -82,32 +86,29 @@ class DispatchAndWait(unittest.TestCase):
             return result.returncode, result.stdout + result.stderr, \
                 calls.read_text().splitlines() if calls.exists() else []
 
-    def test_it_dispatches_for_the_commit_and_watches_the_run_it_started(self):
+    def test_it_dispatches_for_the_commit_and_watches_the_run_the_response_names(self):
         status, log, calls = self.run_step()
         self.assertEqual(status, 0, log)
         self.assertEqual(calls, [DISPATCH, WATCH])
 
-    def test_the_run_id_is_the_last_segment_of_the_last_line(self):
-        # `gh` may say more before the run's address; the id is what follows the last slash
-        status, log, calls = self.run_step(dispatch_out='created a workflow_dispatch event\n' + RUN_URL)
-        self.assertEqual(status, 0, log)
-        self.assertEqual(calls, [DISPATCH, WATCH])
+    def test_a_dispatch_that_succeeds_and_returns_no_run_id_fails_and_watches_nothing(self):
+        # an empty response (204: the run's details were not returned), or one without the field (`--jq` prints null)
+        for out in ['', 'null']:
+            with self.subTest(out=out):
+                status, log, calls = self.run_step(dispatch_out=out)
+                self.assertEqual(status, 1, log)
+                self.assertIn('::error::the dispatch returned no run id', log)
+                self.assertEqual(calls, [DISPATCH])
 
-    def test_an_empty_dispatch_output_fails_and_watches_nothing(self):
-        status, log, calls = self.run_step(dispatch_out='')
+    def test_a_run_id_that_is_not_a_number_fails_and_watches_nothing(self):
+        status, log, calls = self.run_step(dispatch_out='https://github.com/Arda-cards/dafny-domain/actions/runs/4242')
         self.assertEqual(status, 1, log)
-        self.assertIn('::error::no run id', log)
-        self.assertEqual(calls, [DISPATCH])
-
-    def test_an_output_with_no_slash_fails_and_watches_nothing(self):
-        status, log, calls = self.run_step(dispatch_out='done')
-        self.assertEqual(status, 1, log)
-        self.assertIn('::error::no run id', log)
+        self.assertIn('::error::the dispatch returned no run id', log)
         self.assertEqual(calls, [DISPATCH])
 
     def test_a_failed_dispatch_fails_and_watches_nothing(self):
         # the dispatch is refused (no permission, no such workflow): whatever it printed, nothing is watched
-        for out in ['', RUN_URL]:
+        for out in ['', '4242']:
             with self.subTest(out=out):
                 status, log, calls = self.run_step(dispatch_out=out, dispatch_rc=1)
                 self.assertNotEqual(status, 0, log)
@@ -140,9 +141,10 @@ class PointerParityTrigger(unittest.TestCase):
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', job)
         # the token is the organization's existing dispatch key, whose applicability the project owner widened (card QA814)
         self.assertIn('GITHUB_TOKEN: ${{ secrets.ARDA_API_TEST_WORKFLOW_DISPATCH }}', job)
-        self.assertIn('gh workflow run pointer-parity.yaml', job)
-        self.assertIn('--repo Arda-cards/dafny-domain --ref main', job)
-        self.assertIn('-f domain_model_ref="$HEAD_SHA"', job)
+        self.assertIn('repos/Arda-cards/dafny-domain/actions/workflows/pointer-parity.yaml/dispatches', job)
+        self.assertIn('-f ref=main', job)
+        self.assertIn('-f "inputs[domain_model_ref]=$HEAD_SHA"', job)
+        self.assertIn('-F return_run_details=true', job)
 
     def test_it_waits_and_takes_the_runs_result(self):
         job = '\n'.join(block('dispatch', '  '))
@@ -150,9 +152,9 @@ class PointerParityTrigger(unittest.TestCase):
 
     def test_a_run_that_cannot_start_fails(self):
         job = '\n'.join(block('dispatch', '  '))
-        # no secret, or no run id back from the dispatch: both exit 1, and nothing in the step swallows a failure
+        # no secret, or no run id in the dispatch's response: both exit 1, and nothing in the step swallows a failure
         self.assertRegex(job, r'\[ -n "\$\{GITHUB_TOKEN:-\}" \] \|\| \{ echo "::error::[^"]*"; exit 1; \}')
-        self.assertRegex(job, r'\[ -n "\$id" \] && \[ "\$id" != "\$url" \] \|\| \{ echo "::error::[^"]*"; exit 1; \}')
+        self.assertRegex(job, r'\[\[ "\$id" =~ \^\[0-9\]\+\$ \]\] \|\| \{ echo "::error::[^"]*"; exit 1; \}')
         self.assertNotIn('|| true', job)
         self.assertIn('set -u', job)
 
