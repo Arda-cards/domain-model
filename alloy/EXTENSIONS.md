@@ -27,7 +27,7 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
 4. `make check-alloy` runs the kept roots only.
 
-## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is the Alloy cut's work; step A's removals marked)
+## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is applied below; step A's removals marked)
 
 The counts are commands per root today. The class is the ROOT's default; a command may be reclassified in the cut.
 
@@ -114,6 +114,49 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1). Since the TN-004 projection: 4 runs, 0 checks — the check `sys_poolLatticeGlobal` is RETIRED (the project owner's ruling QA761, Q1 (a), 2026-11-12: Dafny proves `PoolLattice.PoolLatticeGlobal` for every log), and the finders cover the four holder kinds |
 | `tests/system.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 
+## The checks, classified command by command (applied 2026-11-16)
+
+The project owner's rulings QA779, option (a) (2026-11-12), and QA808, option (c) (2026-11-16): a `check` of a law the
+reference model proves is retired, and a check Dafny has no proof of is kept. An executed test is not a proof. The scope
+is the 249 `check` commands outside `soak/` and `conventions/`, as main stood at `2986f32`.
+
+The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
+state, need not prove, tests on one machine, or assumes.
+
+- **Retired, 211.** Each is a check of a law that a Dafny lemma proves. Every match was read against the lemma's
+  statement. The record, check by check with its lemma, is in the project's notebook (the QA779 classification).
+  - 207 left the tree with this classification.
+  - Four leave with the four integration finders that replace them (ruling QA787, second question, option (a)):
+    `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`, `int_ord_contract_demandIndivisible`
+    and `int_ord_contract_frozenOutsideDraft`.
+- **Kept, 38.** The card for QA808 counted 36. The kanban card's two print-machine checks were counted as retired
+  there; they are kept, since Dafny decides them by an executed test, as it does the kit's machines.
+
+| Why Dafny has no proof | Kept checks | Root |
+| --- | --- | --- |
+| **The arithmetic is Alloy's own** (8). They show that Alloy's bounded `Int` behaves as a ring. Dafny proves the same axioms of its unbounded scalar, so it says nothing of Alloy's integers. | `int_addAssoc`, `int_addComm`, `int_addId`, `int_addInv`, `int_distrib`, `int_mulComm`, `int_mulId`, `int_posClosed_bounded` | `meta/keyed_value_algebra/tests/scalar_int.als` |
+| **True by construction in Dafny** (14). In Dafny each is a type or a function, with nothing to prove. In Alloy each is a relation that a wrong fact could break. | `unit_action_outcomesPartition`, `unit_action_refusalHasReason`, `unit_action_successNoReason`, `unit_action_prePostDomains`, `unit_action_prefixMonotone`, `unit_action_prefixOnlyCommitted` | `meta/action/tests/action.als` |
+| | `unit_attr_oneActor` | `meta/action/tests/attributed.als` |
+| | `unit_aff_refusalWritesNothing` | `meta/subject_log/tests/affirm.als` |
+| | `unit_lc_refusalWritesNothing` | `meta/subject_log/tests/lifecycle.als` |
+| | `unit_occ_archeTotal` | `meta/occurrence/tests/occurrence.als` |
+| | `unit_act_originsAreSelfInitiated` | `meta/activation/tests/activation.als` |
+| | `unit_duration_zeroIsMin` | `meta/time/tests/duration.als` |
+| | `unit_time_endpointsUnique` | `meta/time/tests/time.als` |
+| | `unit_meas_endpointsLone` | `meta/measurement/tests/measurement.als` |
+| **Tested on each concrete state machine** (9). Reachability and live signals are properties of one machine. Dafny decides them by an executed test per machine, not by a lemma. | `unit_sm_allReachable`, `unit_sm_firedInto`, `unit_sm_liveSignals` | `meta/state_machine/tests/machine.als` |
+| | `x731_admin_reachable`, `x731_op_reachable`, `x731_usage_reachable`, `x731_liveSignals` | `shared/x731_state/tests/state.als` |
+| | `unit_kc_printReachable`, `unit_kc_printLiveSignals` | `resources/kanban_card/tests/kanban_card.als` |
+| **A premise in Dafny** (2). Dafny assumes it and derives nothing: one sample per instant in the measurement lemmas, and tenant isolation in the kernel's well-formed universe. Alloy checks that its facts imply it. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
+| | `unit_shared_tenantIsolation` | `reference_data/shared/tests/shared.als` |
+| **True by construction in Dafny, in a domain module** (3). The state is a datatype and the effect a function, and the transfer composite takes one stamp. | `unit_ba_postHoldsExactlyTheWrittenVersions`, `unit_ba_statesWithEqualPayloadsAreEqual` | `reference_data/business_affiliate/tests/business_affiliate.als` |
+| | `unit_pool_transferPairOneStamp` | `resources/inventory_item/tests/inventory_pool.als` |
+| **True of the Alloy universe only** (1). The record-side wrong-item refusal never fires where ids are keys and pins are static. Dafny's witness `RecordWrongItem` shows it firing. | `unit_dem_recordProductionItemArmSubsumed` | `operations/demand/tests/unit/demand.als` |
+| **The bounded theorem the Dafny tree names as an extension** (1; TN-001's row S-05). | `unit_invmet_usableNonNegativeInRange` | `resources/inventory_item/tests/metrics.als` |
+
+The Inventory table above keeps its counts as measured at the cut. A root's row there that reads "checks RETIRED" is now
+exact, except for the roots this table names.
+
 ## Retired with the cut, by design item of DT-015
 
 - D3: `meta/subject_log/tests/subject_log.als`'s duplicate-origin commands (`unit_slog_archeSelfMintedReactionAllowed` and its pair), the pool's `RDuplicateOrigin` witnesses in `resources/inventory_item/tests/inventory_pool.als`.
@@ -135,7 +178,7 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 - OQ-1 (DT-015): RULED, QA708 (a) with the activation atom standing for `ActId` (MP, 2026-11-05); taken verbatim in step B.
 - QA704 Q2 (b): DONE at `bb7570a` — `RNoSuchPool` (declared in `inventory_pool.als`, `poolLiveAt`/`namedPoolLive`) at StartProduction, CreateDelivery and RecordProduction (demand) and at StartProcessing (kanban), reading A of dafny-domain #33: a holding retired between two deliveries refuses the second `Deliver` whole; witnesses `unit_dem_startProductionNoSuchPoolRefused`, `unit_dem_recordProductionHoldingRetiredRefused`, `unit_dem_createDeliveryHoldingRetiredRefused`, `unit_cyr_startProcessingNoSuchPoolRefused`; theorems `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive`, `unit_cyr_startedPoolLive`.
 - MF-004 (dafny-domain #32's bot finding, #33's remedy): `RAttributionStarted` on the receiver's line-side attach (`appendAttributionViol`, `addLineViol`) at `4c29334`; the pairing fact stays, `unit_rcv_lineAttachAgreesWithPartner` checks it no longer excludes what the partner refuses.
-- The per-command classification of the 300-odd `check` commands, root by root, with the Dafny lemma named for each kept one. RULED: QA779, option (a) (the project owner, 2026-11-12): every unit-root `check` of a law Dafny proves is retired, the finders stay, and each kept check is named here with its class. Measured before the ruling: of the 65 contract checks of the demand's, the order's, the inventory item's and the receiver's unit roots, 12 found no instance of their scenario at their scope and 2 more only half of it. The classification is its own change, after the TN-004 projection.
+- The per-command classification of the 300-odd `check` commands, root by root, with the Dafny lemma named for each kept one. RULED: QA779, option (a) (the project owner, 2026-11-12): every unit-root `check` of a law Dafny proves is retired, the finders stay, and each kept check is named here with its class. Measured before the ruling: of the 65 contract checks of the demand's, the order's, the inventory item's and the receiver's unit roots, 12 found no instance of their scenario at their scope and 2 more only half of it. The classification is its own change, after the TN-004 projection. DONE on 2026-11-16 for the 249 checks outside the soak tier and the conventions (the section "The checks, classified command by command"): 211 retired, 38 kept and named with their reason. The kit's checks followed QA808, option (c).
 - `int_dem_recollationAfterFailure` (`operations/demand/tests/integration/demand.als`): FOUND in 856 s at `36ea315` (2026-11-14, a day run), in its form with the twelve rows named and ordered (`41f277e`). Before that form it had no verdict: 4 hours at 15 occurrences (2026-11-06), where it could not have an instance (the arc counts 16), and 4 hours at 20 (the bound QA740 (c) set on paper) in the night window of 2026-11-13.
 - QA807 (a) (the project owner, 2026-11-16: "Option (a) plus add an extended scope check in the nightly window to try to verify the pending ones"): five commands are NOT DECIDED at their present scope. They stay in the tree, and an extended run in a night window the project owner opens tries them again. None found a counterexample or was refuted.
   - `soak_sys_poolLatticeGlobal` (`soak/sliced/zlattice_soak.als`), the check of the whole-system pool-lattice row over four holder kinds, at 10 ticks and occurrences: no verdict in 3 h 50 min (the window of 2026-11-13, at `c788153`) or in 7 h 45 min (2026-11-14, at `005a59b`). The law is proven for every log in the reference model (`PoolLattice.PoolLatticeGlobal`); its sixteen companion finders are found at this scope.
