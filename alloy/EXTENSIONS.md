@@ -126,7 +126,8 @@ The kept checks are none of the three classes above. They guard Alloy's own enco
 state, need not prove, tests on one machine, or assumes.
 
 - **Retired, 211.** Each is a check of a law that a Dafny lemma proves. Every match was read against the lemma's
-  statement. The record, check by check with its lemma, is in the project's notebook (the QA779 classification).
+  statement. The record is [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named
+  Dafny revision, and the premises it assumes.
   - 207 left the tree with this classification.
   - Four leave with the four integration finders that replace them (ruling QA787, second question, option (a)):
     `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`, `int_ord_contract_demandIndivisible`
