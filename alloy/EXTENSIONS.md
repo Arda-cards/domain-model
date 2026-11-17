@@ -26,6 +26,9 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
    `// Extension class 2: counter-example search for <Module>.<Lemma> (deferred | S-07)`.
 3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
 4. `make check-alloy` runs the kept roots only.
+5. The pointers of rules 1 to 3 are checked on every pull request, in both directions: `.github/workflows/pointer-parity-trigger.yaml`
+   starts dafny-domain's pointer parity check for the pull request's commit and waits for it. A pointer that names nothing on
+   the other side fails it.
 
 ## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is the Alloy cut's work; step A's removals marked)
 
