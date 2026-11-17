@@ -43,6 +43,23 @@ one sig ReceiverService extends Service {}   // DT-015 R2: the service's activat
 fact ReceiverActivated    { activated[ReceiverService, rvlog/SubjectOcc] }
 fact RcvLineActivated     { activated[ReceiverService, rllog/SubjectOcc] }
 fact AttributionActivated { activated[ReceiverService, oalog/SubjectOcc] }
+/** LinePairsOneActivation — THE ONE-ACTIVATION LAW of the three same-module pairings (the project owner's ruling QA764,
+    option (a), 2026-11-12; reflects dafny-domain `ReceiversContract.LinePairsOneActivation` over `PairedLineRows`, MD-089):
+    a committed line-side row and its committed attribution-side partner cite ONE activation. Stated over EVERY pair the
+    three pairing facts below match (both attach carriers; every actual of a receive), so a pair written under two
+    activations is refused. Beside the activation facts, as the reference model has it a conjunct of `Activated`; not in
+    `guarantees`, like the pairings. Controls and twins: tests/unit/receiver_one_activation.als. */
+fact LinePairsOneActivation {
+  all g: AttachAttributionOcc, c: AddReceivingLineOcc |
+    (committed[g] and committed[c] and c.attribution = g.subject.eId) implies c.arche = g.arche
+  all g: AttachAttributionOcc, c: AppendAttributionOcc |
+    (committed[g] and committed[c] and c.attribution = g.subject.eId) implies c.arche = g.arche
+  all g: DetachAttributionOcc, c: RemoveAttributionOcc |
+    (committed[g] and committed[c] and c.attribution = g.subject.eId) implies c.arche = g.arche
+  all r: ReceiveLineOcc, x: RecordActualOcc |
+    (committed[r] and committed[x] and x.subject.eId in r.allocation.Quantity and x.actual = (x.subject.eId).(r.allocation))
+      implies x.arche = r.arche
+}
 
 // ── the same-module ATOMIC compositions (enforcement facts — NOT in `guarantees`; see the
 // contracts header for why) ─────────────────────────────────────────────────────────────────────
