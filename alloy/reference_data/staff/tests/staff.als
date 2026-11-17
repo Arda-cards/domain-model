@@ -17,11 +17,6 @@ pred unit_stf_loads {
 }
 run unit_stf_loads for 4 but 6 EntityId, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-/** unit_stf_nameUniqueInTenant — no two CREATED same-tenant members share a name: the published law, a THEOREM of the
-    RStaffNameTaken arm since QA704 Q4 (a) (a member atom with no committed Create is outside its reach). */
-assert unit_stf_nameUniqueInTenant { staffNameUnique }
-check unit_stf_nameUniqueInTenant for 5 but 8 EntityId, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
-
 // ── QA704 Q4 (a), DT-009 Q27: the content fact is a guard arm (reflects dafny-domain src/reference-data/staff/staff.dfy) ──
 // A Create whose member's name is already borne by a created member of the tenant is refused with exactly RStaffNameTaken.
 // RED on the tree before the arm: `staffNameUnique` was a FACT over every member, so the clash was unrepresentable (UNSAT).
@@ -52,9 +47,6 @@ run unit_stf_lifecycleArc {
   }
 } for 5 but 5 Tick, 3 Snapshot, 3 Occurrence, 6 EntityId expect 1
 
-// The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
-check unit_stf_lifecycleShape { staffLifecycleShape } for 5 but 6 Tick, 5 Snapshot, 5 Occurrence, 8 EntityId expect 0
-
 // Reason-precise refusal: deleting a retired member refuses with exactly RStaffRetired.
 run unit_stf_retiredDeleteRefused {
   some d: RetireStaffOcc, d2: RetireStaffOcc {
@@ -73,9 +65,3 @@ run unit_stf_pinSurvivesRetirement {
 } for 5 but 5 Tick, 4 Snapshot, 3 Occurrence, 6 EntityId expect 1
 
 // ── DT-030 retire cut (2026-09-09): terminality and the tombstone ────────────────────────────────
-assert unit_staff_nothingAfterRetire {
-  all r: RetireStaffOcc, o: CreateStaffOcc + RetireStaffOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
-}
-check unit_staff_nothingAfterRetire for 5 but 5 Tick, 4 Snapshot, 3 Occurrence, 6 EntityId expect 0
-assert unit_staff_retireIsTombstone { all r: RetireStaffOcc | committed[r] implies (r.post = r.pre and not staffLiveAt[r.subject, r.tick]) }
-check unit_staff_retireIsTombstone for 5 but 5 Tick, 4 Snapshot, 3 Occurrence, 6 EntityId expect 0

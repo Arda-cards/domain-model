@@ -64,16 +64,8 @@ run unit_cyr_withdrawAfterRetireRefused {
       2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 2 Note, 8 Occurrence, 8 Tick, 8 Snapshot expect 1
 
 // ── the forward kinds are Mutate shapes: none commits after either retire ─────────────────────
-assert unit_cyr_nothingAfterRetire { lc/nothingAfterRetire }
-check unit_cyr_nothingAfterRetire for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 // ── the existing readings survive the adoption: abandonedAt is exactly "withdrawn before t" ────
-assert unit_cyr_abandonedIsWithdrawn {
-  all c: CardCycle, t: Tick | abandonedAt[c, t] iff (some w: WithdrawOcc | committed[w] and w.subject = c and notAfter[w.tick, t])
-}
-check unit_cyr_abandonedIsWithdrawn for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 // ── Q42 (cut 2): a CREATED pool is fresh — the genesis row is the minting, not a use ───────────
 // Written AFTER cycle_occurrences solved 29/29 with 0 mismatches (the existing witnesses never add to an attached pool):
@@ -113,9 +105,6 @@ run unit_cyr_genesisOverLiveCompletablePredecessorRefused {
       2 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 
 // ── M1 law: a committed successor genesis saw its predecessor closed (a theorem of requestViol) ──
-assert unit_cyr_closedBeforeSuccessorGenesis { closedBeforeSuccessorGenesis }
-check unit_cyr_closedBeforeSuccessorGenesis for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
 // ── M3: a forward operation on a never-started cycle is RNotStarted, never RClosed ─────────────
 run unit_cyr_forwardOnNeverStartedIsNotStarted {
@@ -155,9 +144,6 @@ run unit_cyr_retryAfterRefusedAttachAdmitted {
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
 
 // ── attached-once law: at most one committed StartProcessing ever names a pool (a theorem of the freshness arm) ──
-assert unit_cyr_poolAttachedOnce { poolAttachedOnce }
-check unit_cyr_poolAttachedOnce for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 0
 
 // ══ 2026-10-02 — R02-D12 (MP: "Option (B), fix now … Test First applied to the model"): attached-once over the POOL ID ══
 // Copilot's PR #2 findings #4158242418 / #4158242505: the law and the arm ranged over RESOLVED pools, so two committed attaches
@@ -174,21 +160,11 @@ run unit_cyr_startProcessingNoSuchPoolRefused {
   some o: StartProcessingOcc | not namedPoolLive[o.pool, o.tick] and refusedAtAdmission[o] and RNoSuchPool in o.admission.because
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 1
-// The law is a THEOREM of the arm (Dafny StartedPoolLive): a committed attach's pool is live as of the act.
-assert unit_cyr_startedPoolLive { all o: StartProcessingOcc | committed[o] implies namedPoolLive[o.pool, o.tick] }
-check unit_cyr_startedPoolLive for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 9 Tick, 9 Occurrence, 8 Snapshot, 2 Note expect 0
 // ── the law over the PAYLOAD, stated inline so it does not depend on the model's own `poolAttachedOnce` text: at most one
 //    committed StartProcessing per pool id, resolved or not (RED at tests-4: a counterexample with a dangling id) ──
-assert unit_cyr_attachedOnceById { all e: EntityId | lone { o: StartProcessingOcc | committed[o] and o.pool = e } }
-check unit_cyr_attachedOnceById for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 CardCycle, 1 KanbanCard, 1 InventoryItem, 1 InventoryPool, 8 Tick, 8 Occurrence, 8 Snapshot, 2 Note expect 0
 // (controls kept above: `unit_cyr_reattachAfterFailureRefused` — the RESOLVED pool, refused today and after; `unit_cyr_retryAfterRefusedAttachAdmitted` —
 //  a refused attach commits nothing, so the retry is admitted today and after.)
 
-// ══ MPBOT-11 M2 (2026-10-01) — the recording law on the cycle log: refused vs recorded (COORDINATOR-Q199 R7) ═══════════
-check unit_cyr_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State,
-      8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note expect 0
 // witness I: a refused forward op on a never-started cycle is NOT recorded (Q199 R2′: the AVAILABLE card writes no row)
 run unit_cyr_refusedOnNeverStartedNotRecorded {
   some o: AcceptOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]

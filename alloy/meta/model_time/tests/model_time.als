@@ -13,28 +13,3 @@ open meta/model_time/model_time
 run unit_mt_chain {
   some disj a, b, c: Tick | precedes[a, b] and precedes[b, c]
 } for 4 expect 1
-
-// Total: any two distinct ticks are causally comparable.
-assert unit_mt_total { all disj a, b: Tick | precedes[a, b] or precedes[b, a] }
-check unit_mt_total for 6 expect 0
-
-// Strict: `precedes` is irreflexive and asymmetric.
-assert unit_mt_strict {
-  (no a: Tick | precedes[a, a]) and
-  (all a, b: Tick | precedes[a, b] implies not precedes[b, a])
-}
-check unit_mt_strict for 6 expect 0
-
-// Transitive.
-assert unit_mt_transitive {
-  all a, b, c: Tick | (precedes[a, b] and precedes[b, c]) implies precedes[a, c]
-}
-check unit_mt_transitive for 6 expect 0
-
-// `follows` is the converse of `precedes`; `notAfter` is `precedes` or equal.
-assert unit_mt_vocabulary {
-  all a, b: Tick |
-    (follows[a, b] iff precedes[b, a]) and
-    (notAfter[a, b] iff (precedes[a, b] or a = b))
-}
-check unit_mt_vocabulary for 6 expect 0

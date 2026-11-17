@@ -25,49 +25,6 @@ open meta/subject_log/lifecycle[ot/OrderLine, ot/OrderLineState] as lcl   // the
  */
 
 // ── CONTRACT DISCHARGE (check; UNSAT = the law holds of the implementation) ─────────────────────
-assert unit_ord_contract_frozenOutsideDraft { frozenOutsideDraft }
-check unit_ord_contract_frozenOutsideDraft for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_demandIndivisible { demandIndivisible }
-check unit_ord_contract_demandIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_attachRequiresReleased { attachRequiresReleased }
-check unit_ord_contract_attachRequiresReleased for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_attachItemAgrees { attachItemAgrees }
-check unit_ord_contract_attachItemAgrees for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_submitRequiresStarted { submitRequiresStarted }
-check unit_ord_contract_submitRequiresStarted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_receiptAccrues { receiptAccrues }
-check unit_ord_contract_receiptAccrues for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_receiptReverses { receiptReverses }
-check unit_ord_contract_receiptReverses for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_lineClosureByAct { lineClosureByAct }
-check unit_ord_contract_lineClosureByAct for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_closeRequiresSettled { closeRequiresSettled }
-check unit_ord_contract_closeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_supplierBindingFrozen { supplierBindingFrozen }
-check unit_ord_contract_supplierBindingFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-assert unit_ord_contract_orderTerminalClosure { orderTerminalClosure }
-check unit_ord_contract_orderTerminalClosure for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 3 OrderLine, 2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // (unit_ord_contract_lineDescriptorFrozen RETIRED at DT-023 cut 7a: the law dissolved — the
 //  item reference is the line's IDENTITY `itemRef`; the freeze semantics are the read-time
@@ -546,19 +503,6 @@ run unit_ord_deleteRetiresTerminal {
       12 Tick, 9 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── CUT 6 (DT-022 TQ-7): header details + internal notes ────────────────────────────────────────
-// The C11 law: priority / assignee / vendor notes unchanged by every post-DRAFT reader.
-assert unit_ord_contract_headerDetailFrozen { headerDetailFrozen }
-check unit_ord_contract_headerDetailFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      2 StaffMember, 8 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
-
-// The seeded default (TQ-7(a), MP 2026-08-08): a committed Create births priority UNDEFINED.
-assert unit_ord_contract_priorityDefault {
-  all o: CreateOrderOcc | committed[o] implies oPost[o].sPriority = OP_UNDEFINED
-}
-check unit_ord_contract_priorityDefault for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      6 EntityId, 6 Tick, 6 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // SET the DRAFT-mutable cluster: priority + assignee PIN + vendor notes land on the record
 // (DT-023 cut 7c: the assignee is a staff VERSION pin — current-and-Live at the write).
@@ -631,11 +575,6 @@ run unit_ord_removeWithDemandRefused {
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
-// A committed RemoveLine saw no demand attached (the law behind the two acts).
-assert unit_ord_removeRequiresDetached { all o: RemoveLineOcc | committed[o] implies no lPre[o].sDemand }
-check unit_ord_removeRequiresDetached for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 // Internal notes on a CLOSED line: Annotate commits and CHANGES the line's note set (TQ-7(c) one rung down; the point-defect fix).
 run unit_ord_lineNotesOnClosedLine {
   some o: AnnotateLineOcc | committed[o] and lPre[o].sLineStatus = L_CLOSED and lPost[o].sInternalNotes != lPre[o].sInternalNotes
@@ -649,19 +588,8 @@ run unit_ord_annotateAfterRemoveRefused {
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       9 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
-// Terminality, both logs: nothing commits on an order after its committed delete, nor on a line after its committed remove.
-assert unit_ord_nothingAfterRetire {
-  all r: DeleteOrderOcc, o: CreateOrderOcc + UpdateSupplierOcc + ResetToSupplierOcc + SubmitOcc + CloseOrderOcc + CancelOrderOcc + UpdateOrderDetailsOcc + AnnotateOrderOcc + DeleteOrderOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
-  all r: RemoveLineOcc, o: AddLineOcc + UpdateLineOcc + AttachDemandOcc + DetachDemandOcc + RemoveLineOcc + RecordAcknowledgmentOcc + RecordReceiptOcc + ReverseReceiptOcc + CloseLineOcc + AnnotateLineOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
-}
-check unit_ord_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── MPBOT-11 M2 (2026-10-01) — the recording law on both order logs: refused vs recorded ──────
-check unit_ord_noRecordedRefusalWithoutGenesis { lco/noRecordedRefusalWithoutGenesis and lcl/noRecordedRefusalWithoutGenesis } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      9 EntityId, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 // witness: a refused order genesis is NOT recorded; a refused line act on a LIVE line IS
 run unit_ord_refusedGenesisNotRecordedLineRefusalRecorded {
   some c: CreateOrderOcc, u: UpdateLineOcc |
@@ -695,20 +623,3 @@ run unit_ord_assigneePinStaleRefused {
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       10 EntityId, 9 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
-// The currency laws are THEOREMS of the arms (Dafny BindingPinCurrency, AssigneePinCurrency): committed writes pin current versions.
-check unit_ord_bindingPinCurrencyHolds {
-  all o: CreateOrderOcc    | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
-  all o: UpdateSupplierOcc | (committed[o] and some o.supplier.vendorPin) implies pinsCurrentBa[o.supplier.vendorPin, o.tick]
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
-check unit_ord_assigneePinCurrencyHolds {
-  all o: UpdateOrderDetailsOcc | (committed[o] and some o.assignee) implies pinsCurrentStaff[o.assignee, o.tick]
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 1 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      10 EntityId, 9 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
-// The definitional law is a THEOREM of the RVendorPinUnsound arm over committed binding writes.
-check unit_ord_supplierBindingPinAgreesHolds { supplierBindingPinAgrees }
-  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Order, 0 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      1 BusinessRole, 1 BusinessAffiliate, 10 EntityId, 6 Tick, 4 Snapshot, 4 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0

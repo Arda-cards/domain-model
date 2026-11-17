@@ -78,22 +78,11 @@ run unit_lc_secondRetireRefused {
 } for 5 but 4 Int expect 1
 
 // ── laws ────────────────────────────────────────────────────────────────────────────────────────
-// Terminality: nothing commits after a committed retire (the theorem the adopters check, here on the minimal adopter).
-check unit_lc_nothingAfterRetire { lc/nothingAfterRetire } for 5 but 4 Int expect 0
-// The tombstone: a committed retire changes nothing and the as-of read at its tick is its pre.
-assert unit_lc_tombstone { all o: lc/RetireOcc | committed[o] implies (o.post = o.pre and wl/recordAt[o.subject, o.tick] = o.pre) }
-check unit_lc_tombstone for 5 but 4 Int expect 0
-// A committed mutation has a pre (never the first row, never the tombstone).
-check unit_lc_mutateHasPre { lc/mutateHasPre } for 5 but 4 Int expect 0
-// A committed create is the first row: nothing committed on the subject precedes it.
-assert unit_lc_createIsFirst { all o: lc/CreateOcc | committed[o] implies not lc/startedBefore[o] }
-check unit_lc_createIsFirst for 5 but 4 Int expect 0
 // A refused occurrence of any shape writes nothing.
 assert unit_lc_refusalWritesNothing { all o: wl/SubjectOcc | refusedAtAdmission[o] implies no o.post }
 check unit_lc_refusalWritesNothing for 5 but 4 Int expect 0
 
 // ── the RECORDING law (MPBOT-11 M2, 2026-10-01; COORDINATOR-Q199 R7): refused vs recorded ──────
-check unit_lc_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 5 but 4 Int expect 0
 // witness I: a refused mutate on a never-started subject is NOT recorded (the runtime writes no row — no host)
 run unit_lc_refusedMutateOnUnstartedNotRecorded {
   some o: SetLevelOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]

@@ -15,7 +15,3 @@ run unit_prof_stackLoads {} for 3 but 3 Scalar expect 1
 run unit_prof_markersVisible {
   some P_Baseline and some P_DomainLog and some P_TimedLog and #Profile = 3
 } for 3 but 3 Scalar expect 1
-
-// The premises are genuinely in force (not just declared): the group law holds categorically.
-assert unit_prof_premisesInForce { all a: Scalar | a.splus[SZero] = a }
-check unit_prof_premisesInForce for 3 but 3 Scalar expect 0

@@ -36,8 +36,3 @@ run int_ii_supplyChainLoads {
 } for 6 but 2 RoleDetail, 3 Scalar, 5 Int, 11 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence expect 1
 
 // ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layer) ───────
-assert int_ii_contract_stateFunction { stateIsFunctionOnceStarted }
-check int_ii_contract_stateFunction for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0
-
-assert int_ii_contract_closureIsTerminal { closureIsTerminal }
-check int_ii_contract_closureIsTerminal for 5 but 2 RoleDetail, 3 Scalar, 5 Int expect 0

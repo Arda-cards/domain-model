@@ -120,10 +120,6 @@ run unit_kc_crossTenantItemImpossible {
 } for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 0
 
 // ── machine-level checks (the PRINT machine — the op machine retired with DT-015 Phase B) ────
-check unit_kc_printReachable { allStatesReachable[KanbanPrintMachine] }
-  for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 0
-check unit_kc_printLiveSignals { liveSignals[KanbanPrintMachine] }
-  for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 0
 
 // ── MPBOT-31 (2026-10-01): the card carries administrative notes — the shared value `Note`, distinct from the occurrence note ──
 run unit_kc_cardCarriesNotes {

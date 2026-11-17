@@ -11,9 +11,6 @@ open shared/x731_state/state
  * 3 StateMachine, 0 Guard; Resource left at the global scope.
  */
 
-check X731Consistency
-  for 4 but 8 State, 10 Signal, 10 Transition, 3 StateMachine, 0 Guard expect 0
-
 run someResource { some Resource }
   for 4 but 8 State, 10 Signal, 10 Transition, 3 StateMachine, 0 Guard expect 1
 

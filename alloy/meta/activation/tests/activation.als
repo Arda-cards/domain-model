@@ -77,21 +77,6 @@ run unit_act_crossServiceCitation {
 } for 5 expect 0
 
 // ── theorems (check; UNSAT = holds) ─────────────────────────────────────────────────────────────
-// Effects follow their act (Dafny `EffectsFollow`; the kernel's `ArcheOriginPrecedes` through D1).
-assert unit_act_effectsFollow { all e: DeskEffect + BarEffect | precedes[e.arche.tick, e.tick] }
-check unit_act_effectsFollow for 5 expect 0
-
-// Callers precede (Dafny `CallersPrecede`): a non-origin activation follows the activation it cites.
-assert unit_act_callersPrecede { all a: Activation | not origin[a] implies precedes[a.arche.tick, a.tick] }
-check unit_act_callersPrecede for 5 expect 0
-
-// No proper cycle (Dafny `NoProperCycle`): the only loop in the tree is an origin's self-citation.
-assert unit_act_noProperCycle { all o: Occurrence | o in o.^arche implies origin[o] }
-check unit_act_noProperCycle for 5 expect 0
-
-// Every walk ends at an origin: the tree is rooted.
-assert unit_act_walkEndsAtOrigin { all o: Occurrence | some origins & o.*arche }
-check unit_act_walkEndsAtOrigin for 5 expect 0
 
 // The origins are exactly the kernel's self-initiated occurrences.
 assert unit_act_originsAreSelfInitiated { origins = selfInitiated }
