@@ -7,8 +7,13 @@
 #
 # This workflow starts that check for THIS repository's commit and waits for it, so a pull request here that renames or
 # removes something the Dafny model points at fails before it merges. The mechanism is the one operations uses to start
-# api-test's suite after a deployment (its reusable_deployment.yaml): a `gh workflow run` with a token that may start
-# workflows in the other repository, then `gh run watch --exit-status`.
+# api-test's suite after a deployment (its reusable_deployment.yaml): a dispatch with a token that may start workflows
+# in the other repository, then `gh run watch --exit-status`.
+#
+# The run to watch is the one the dispatch's own response names. The step calls the REST endpoint "create a workflow
+# dispatch event" with `return_run_details`, which answers with the run's id (`workflow_run_id`; documented for API
+# version 2022-11-28, GitHub's changelog of 2026-02-19). It does not read the id out of `gh workflow run`'s message,
+# which is written for people and may be empty when the command is not interactive.
 #
 # The secret ARDA_API_TEST_WORKFLOW_DISPATCH is that token: the key operations and accounts-component start api-test's
 # suite with. The project owner widened its applicability (card QA814); this workflow's first run shows whether it
@@ -41,10 +46,9 @@ jobs:
         run: |
           set -u
           [ -n "${GITHUB_TOKEN:-}" ] || { echo "::error::the secret ARDA_API_TEST_WORKFLOW_DISPATCH is not set: the check did not run"; exit 1; }
-          url="$(gh workflow run pointer-parity.yaml \
-            --repo Arda-cards/dafny-domain --ref main \
-            -f domain_model_ref="$HEAD_SHA")"
-          echo "::notice title=Started dafny-domain's pointer parity check::$url"
-          id="${url##*/}"
-          [ -n "$id" ] && [ "$id" != "$url" ] || { echo "::error::no run id from $url"; exit 1; }
+          id="$(gh api --method POST -H "X-GitHub-Api-Version: 2022-11-28" \
+            repos/Arda-cards/dafny-domain/actions/workflows/pointer-parity.yaml/dispatches \
+            -f ref=main -f "inputs[domain_model_ref]=$HEAD_SHA" -F return_run_details=true --jq .workflow_run_id)"
+          [[ "$id" =~ ^[0-9]+$ ]] || { echo "::error::the dispatch returned no run id (got '$id'): the check was not watched"; exit 1; }
+          echo "::notice title=Started dafny-domain's pointer parity check::https://github.com/Arda-cards/dafny-domain/actions/runs/$id"
           gh run watch "$id" --repo Arda-cards/dafny-domain --exit-status
