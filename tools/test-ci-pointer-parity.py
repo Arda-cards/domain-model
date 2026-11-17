@@ -42,7 +42,7 @@ class PointerParityTrigger(unittest.TestCase):
     def test_it_starts_the_check_for_the_commit_under_review(self):
         job = '\n'.join(block('dispatch', '  '))
         self.assertIn('HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}', job)
-        # the token is the organization's existing dispatch key, which the project owner widened to dafny-domain (card QA814)
+        # the token is the organization's existing dispatch key, whose applicability the project owner widened (card QA814)
         self.assertIn('GITHUB_TOKEN: ${{ secrets.ARDA_API_TEST_WORKFLOW_DISPATCH }}', job)
         self.assertIn('gh workflow run pointer-parity.yaml', job)
         self.assertIn('--repo Arda-cards/dafny-domain --ref main', job)

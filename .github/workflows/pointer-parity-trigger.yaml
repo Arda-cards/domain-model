@@ -6,13 +6,14 @@
 # other side. It runs there because dafny-domain can read both repositories and this one cannot read dafny-domain.
 #
 # This workflow starts that check for THIS repository's commit and waits for it, so a pull request here that renames or
-# removes something the Dafny model points at fails before it merges. The mechanism is the one operations and
-# accounts-component use to start api-test's suite: a `gh workflow run` with a token that may start workflows in the
-# other repository, then `gh run watch --exit-status`.
+# removes something the Dafny model points at fails before it merges. The mechanism is the one operations uses to start
+# api-test's suite after a deployment (its reusable_deployment.yaml): a `gh workflow run` with a token that may start
+# workflows in the other repository, then `gh run watch --exit-status`.
 #
-# The secret ARDA_API_TEST_WORKFLOW_DISPATCH is that token: the key operations and accounts-component use for api-test,
-# which the project owner widened to dafny-domain (card QA814). A pull request from a fork has no secrets, so the job is
-# skipped for it: a skipped job, never a green one.
+# The secret ARDA_API_TEST_WORKFLOW_DISPATCH is that token: the key operations and accounts-component start api-test's
+# suite with. The project owner widened its applicability (card QA814); this workflow's first run shows whether it
+# reaches this repository and may start dafny-domain's workflows. A pull request from a fork has no secrets, so the job
+# is skipped for it: a skipped job, never a green one.
 name: pointer-parity
 
 on:
