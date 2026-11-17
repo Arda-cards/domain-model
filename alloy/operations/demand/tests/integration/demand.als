@@ -81,8 +81,19 @@ run int_dem_recollationAfterFailure {
 // check could not show at its scope: with the REAL item and station stacks under it, the guard still fires.
 
 // Extension class 1: finder for DemandTests.Refusals (RCycleHeld): a cycle a live demand holds is refused to a second one.
+// The holder is ANOTHER live demand, and the acting demand does not hold the cycle itself: `attachCycleViol` also answers
+// RCycleHeld for a cycle the acting demand already has, and that same-demand retry is not this refusal. The reason set is
+// exactly RCycleHeld.
 run int_dem_cycleHeldRefused {
-  some o: AddContributionOcc | refusedAtAdmission[o] and RCycleHeld in o.admission.because
+  some o: AddContributionOcc, d2: DemandItem - o.subject, k: CardCycle {
+    refusedAtAdmission[o]
+    o.admission.because = RCycleHeld
+    o.contribution in CardContribution
+    resolve[o.contribution.cycleRef] = k
+    liveDemandAt[d2, o.tick]
+    k in attachedAt[d2, o.tick]
+    no c: dPre[o].sContributions & CardContribution | c.cycleRef = o.contribution.cycleRef
+  }
 } for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
       12 Occurrence, 13 Tick, 14 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1

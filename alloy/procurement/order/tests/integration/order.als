@@ -101,9 +101,17 @@ run int_ord_cancelReturnsToQueue {
 
 // Extension class 1: finder for OrderTests.AttachRefusals (RDemandHeld): a demand one live line services is refused to a
 // second line. The arc is int_ord_loads' (the item's version, the pool, the demand's create and Release, the order, the
-// line that takes the demand) plus the second line's genesis and its refused attach.
+// line that takes the demand) plus the second line's genesis and its refused attach. The holder is ANOTHER live line, and
+// the acting line does not service the demand itself: `attachDemandViol` also answers RDemandHeld for a demand the acting
+// line already services, and that repeated attach is not this refusal.
 run int_ord_demandHeldRefused {
-  some o: AttachDemandOcc | refusedAtAdmission[o] and o.admission.because = RDemandHeld
+  some o: AttachDemandOcc, l2: OrderLine - o.subject, d: DemandItem {
+    refusedAtAdmission[o]
+    o.admission.because = RDemandHeld
+    resolve[o.demand] = d
+    l2 in holdingLineOf[d, o.tick]
+    o.demand not in lPre[o].sDemand
+  }
 } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 Order, 2 OrderLine, 1 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 1 InventoryPool, 0 Station,
       1 Contribution, 0 Placement, 14 Occurrence, 15 Tick, 15 EntityId, 16 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
