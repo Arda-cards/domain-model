@@ -10,8 +10,9 @@
 # accounts-component use to start api-test's suite: a `gh workflow run` with a token that may start workflows in the
 # other repository, then `gh run watch --exit-status`.
 #
-# The secret ARDA_DAFNY_DOMAIN_WORKFLOW_DISPATCH is that token (Actions write on dafny-domain, nothing else). A pull
-# request from a fork has no secrets, so the job is skipped for it: a skipped job, never a green one.
+# The secret ARDA_API_TEST_WORKFLOW_DISPATCH is that token: the key operations and accounts-component use for api-test,
+# which the project owner widened to dafny-domain (card QA814). A pull request from a fork has no secrets, so the job is
+# skipped for it: a skipped job, never a green one.
 name: pointer-parity
 
 on:
@@ -34,11 +35,11 @@ jobs:
     steps:
       - name: Start dafny-domain's pointer parity check for this commit, and wait for it
         env:
-          GITHUB_TOKEN: ${{ secrets.ARDA_DAFNY_DOMAIN_WORKFLOW_DISPATCH }}
+          GITHUB_TOKEN: ${{ secrets.ARDA_API_TEST_WORKFLOW_DISPATCH }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           set -u
-          [ -n "${GITHUB_TOKEN:-}" ] || { echo "::error::the secret ARDA_DAFNY_DOMAIN_WORKFLOW_DISPATCH is not set: the check did not run"; exit 1; }
+          [ -n "${GITHUB_TOKEN:-}" ] || { echo "::error::the secret ARDA_API_TEST_WORKFLOW_DISPATCH is not set: the check did not run"; exit 1; }
           url="$(gh workflow run pointer-parity.yaml \
             --repo Arda-cards/dafny-domain --ref main \
             -f domain_model_ref="$HEAD_SHA")"
