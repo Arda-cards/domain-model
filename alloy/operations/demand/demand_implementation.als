@@ -31,6 +31,7 @@ fact PDChaining          { pdlog/chained }
 one sig DemandService extends Service {}   // DT-015 R2: the service's activation log, adopted beside the spine
 fact DemandActivated      { activated[DemandService, dlog/SubjectOcc] }
 fact PDActivated          { activated[DemandService, pdlog/SubjectOcc] }
+fact DemandPairsOneActivation { pairsOneActivation }   // QA764 (a), dafny-domain MD-089: both halves of a pair cite one activation
 
 // ── the §8.1.2 ATOMIC compositions (enforcement facts — the model's rendering of the ONE
 // demand tx; see the C8 contracts note for why these are facts here and not in `guarantees`) ──
