@@ -66,4 +66,4 @@ fact BaEffects {
 fact BaWriteOneVersionPerRole { all o: BaWriteOcc | no disj v1, v2: o.roleVersions | v1.of = v2.of }
 fact BaBirthStatesKind { all o: CreateBaOcc, v: o.roleVersions | v.vKind = v.of.role }
 
-// (C1, role ownership, is a THEOREM of the RRoleNotOwned arm above since QA704 Q4 (a): tests/business_affiliate.als unit_ba_roleOwnership.)
+// (C1, role ownership, is a THEOREM of the RRoleNotOwned arm above since QA704 Q4 (a): proven in the reference model, dafny-domain `RoleOwnershipHolds`.)

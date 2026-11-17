@@ -464,7 +464,7 @@ fact DemandEffectWitness {
 }
 
 // (M3.2, the minted holding pool carries the demand's item pin — DT-020 §8.5.3 / SPEARHEAD-D1 A′-2 — is the RWrongItem arm of
-// startProductionViol since QA704 Q4 (a); its law is the theorem tests/unit/demand.als unit_dem_holdingPoolPinHolds.)
+// startProductionViol since QA704 Q4 (a); its law is proven in the reference model: dafny-domain `HoldingPoolPinMatchesItem`.)
 
 // (NO cross-log enforcement facts — C/OP, 2026-07-06: the guards above ARE the saga commit
 // gates; the commit-gate contract laws are THEOREMS of them, and the quiescence law

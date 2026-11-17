@@ -25,7 +25,8 @@ module meta/activation/activation
  *    writes two logs needs no `Op` of its own: the rows of both logs cite the one `Call`.
  *  - `EffectsFollow` and `CallersPrecede` are the kernel's `ArcheOriginPrecedes`; `TicksDisjoint` is `OneOccurrencePerTick`;
  *    the cross-service skeleton World and `NoProperCycle` are the one Occurrence universe of a root and the kernel's
- *    `unit_occ_archeNoProperCycle`. They are re-checked, not re-stated, in tests/activation.als.
+ *    no-proper-cycle law. They are not re-stated here: the reference model proves them (dafny-domain `ActivationPrecedes`,
+ *    `CiteNotAfter`, `NoProperCycle`), and their Alloy checks are retired.
  *  - A refused activation's reasons are NOT tied to its effects' (R4): the reasons are
  *    the effects' reasons, one atom family on both rows, so Dafny's lifting (`Same`, the demand's `DVerdict`) is the identity.
  *  - `LogsTicksDisjoint` (two entity logs of one service share no tick) is `OneOccurrencePerTick` again.

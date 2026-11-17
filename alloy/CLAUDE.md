@@ -112,7 +112,7 @@ Therefore:
   names are illegal.)
 - **Command-name tiers** (for wildcard selection): `unit_*` (module), `dom_*`
   (domain-level), `sys_*` (system). New commands follow this; relocated
-  commands kept their original names (`showSimulation`, `X731Consistency`).
+  commands kept their original names (`showSimulation`).
 - **No master root** aggregates suites — the Makefile iterates `tests/` roots.
 - **Co-change rule (STRICT).** Every model change ships with the required verification
   changes **in the same change set**: commands/`expect`s added or updated in the affected

@@ -39,4 +39,4 @@ fact StaffAdmissionWitnessed {
 
 // ── effects: none to state — the record is fieldless; the retire's tombstone is the lifecycle module's `RetireEffect` ──
 
-// (C1, name uniqueness, is a THEOREM of the RStaffNameTaken arm above since QA704 Q4 (a): tests/staff.als unit_stf_nameUniqueInTenant.)
+// (C1, name uniqueness, is a THEOREM of the RStaffNameTaken arm above since QA704 Q4 (a): proven in the reference model, dafny-domain `StaffNameUniqueHolds`.)

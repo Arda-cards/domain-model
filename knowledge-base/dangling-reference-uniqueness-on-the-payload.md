@@ -23,5 +23,5 @@ pool, its tenant, its item) stay under the resolution.
 **Test shape:** a RED-first witness per vacuity — two committed occurrences with one unresolved id
 (`s1.pool = s2.pool and no resolve[s1.pool]`) expected refused/UNSAT — plus the resolved-pool control
 kept, so the measurement can fail (`tests/cycle_retire.als`, `unit_cyr_*DanglingId*`,
-`unit_cyr_attachedOnceById`). A witness that compares `resolve[a] = resolve[b]` is satisfiable by two
+`unit_cyr_attachedOnceById`, retired since: dafny-domain `PoolAttachedOnce` proves the law). A witness that compares `resolve[a] = resolve[b]` is satisfiable by two
 DIFFERENT dangling ids; compare `a = b`.

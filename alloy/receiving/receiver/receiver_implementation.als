@@ -202,8 +202,8 @@ fun updateLineViol[o: UpdateReceivingLineOcc]: set Reason {
 // grandfather rows: ordered goods arrive regardless); BLIND add/re-pin refuses a retired
 // item with RRetiredRef (there is no upstream gate — the blind write is the commitment).
 // (Line item-pin currency, DT-023 cut 7a, and carrier-pin currency, cut 7b, are the RItemPinStale and RCarrierPinStale arms
-// above since QA704 Q4 (a); their laws are the theorems tests/unit/receiver.als unit_rcv_lineItemPinCurrencyHolds and
-// unit_rcv_carrierPinCurrencyHolds.)
+// above since QA704 Q4 (a); their laws are proven in the reference model: dafny-domain `ItemPinCurrency` and
+// `CarrierPinCurrency`.)
 /** attributionStartedBefore — MF-004 (2026-11-05): the attribution's OWN log has a committed genesis before `t` — what the partner
     act `AttachAttribution` refuses (`RAttributionStarted`, genesis-once; `attachAttributionViol`). The line-side carriers mirror
     the arm, or `AttachComposesWithAppend` excludes the attempt silently (knowledge-base: a pairing fact excludes what the
