@@ -16,3 +16,7 @@ open meta/principal/principal   // re-exports meta/kernel (Entity, resolve, …)
 run unit_principal_loads {
   some disj p, q: Principal | p.name != q.name
 } for 4 expect 1
+
+// The readable handle is a KEY: equal handles imply the same principal.
+assert unit_principal_nameIsKey { all p, q: Principal | p.name = q.name implies p = q }
+check unit_principal_nameIsKey for 6 expect 0

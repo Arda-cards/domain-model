@@ -93,3 +93,7 @@ fact ResourceInterlocks {
   all r: Resource | r.adminState = LOCKED   => r.usageState = IDLE
 }
 
+// Checkable form of the operational interlock (relocated assert; name kept).
+assert X731Consistency {
+  all r: Resource | r.opState = DISABLED => r.usageState = IDLE
+}

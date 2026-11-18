@@ -27,3 +27,8 @@ run unit_alg_scaleZero {
 run unit_alg_scaleOne {
   ringAxioms and (some a: K -> lone Scalar | isSingle[a] and scale[SOne, a] = a)
 } for 3 but exactly 3 Scalar expect 1
+
+// --- keyed-algebra laws (assume the ring; small scope) ---
+check unit_alg_scaleZeroValue {
+  ringAxioms implies all s: Scalar | scale[s, zero] = zero
+} for 3 but exactly 3 Scalar expect 0
