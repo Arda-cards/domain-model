@@ -31,7 +31,8 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
      module. That is class 1 as defined above: an instance nobody wrote.
    - **A soak check (class 2):** the Dafny lemma's docstring carries rule 3's pointer, and the root names the lemma
      in its `Refines Dafny` marker (rule 1).
-   - **A kept check that guards Alloy's own encoding** has no Dafny lemma. It is named, with the reason, in the table
+   - **A kept check that guards Alloy's own encoding** has no Dafny lemma that implies it. It is named, with the
+     reason, in the table
      under "The checks, classified command by command" below.
 
    Measured at `2f78f3e`, over the commands outside the modeling cookbook (`meta/examples/`): of the 580 finders, at
@@ -141,17 +142,22 @@ is the 249 `check` commands outside `soak/`, `conventions/` and `meta/examples/`
 teaching material, as the conventions are: they are neither retired nor in the table of kept checks.
 
 The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
-state, need not prove, tests on one machine, or assumes.
+state, need not prove, tests on one machine, assumes, or has no lemma for.
 
-- **Retired, 211.** Each is a check of a law that a Dafny lemma proves. Every match was read against the lemma's
-  statement. The record is [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named
-  Dafny revision, and the premises it assumes.
-  - 207 left the tree with this classification.
+- **Retired, 206.** Each is a check of a law that a Dafny lemma proves. The record is
+  [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
+  premises it assumes, and why its statement implies the check's property.
+  - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 were recorded as
+    retired. On 2026-11-18 each was read again, the check's text beside the lemma's statement. 171 stand, 34 had
+    their citation corrected, and 5 that no lemma implies were restored to the tree and are kept (below).
+  - 202 left the tree with this classification.
   - Four leave with the four integration finders that replace them (ruling QA787, second question, option (a)):
     `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`, `int_ord_contract_demandIndivisible`
     and `int_ord_contract_frozenOutsideDraft`.
-- **Kept, 38.** The card for QA808 counted 36. The kanban card's two print-machine checks were counted as retired
-  there; they are kept, since Dafny decides them by an executed test, as it does the kit's machines.
+- **Kept, 43.** The card for QA808 counted 36.
+  - The kanban card's two print-machine checks were counted as retired there. They are kept, since Dafny decides
+    them by an executed test, as it does the kit's machines.
+  - The reading of 2026-11-18 restored five: three that Dafny assumes as a premise, and two that no lemma states.
 
 | Why Dafny has no proof | Kept checks | Root |
 | --- | --- | --- |
@@ -168,8 +174,13 @@ state, need not prove, tests on one machine, or assumes.
 | **Tested on each concrete state machine** (9). Reachability and live signals are properties of one machine. Dafny decides them by an executed test per machine, not by a lemma. | `unit_sm_allReachable`, `unit_sm_firedInto`, `unit_sm_liveSignals` | `meta/state_machine/tests/machine.als` |
 | | `x731_admin_reachable`, `x731_op_reachable`, `x731_usage_reachable`, `x731_liveSignals` | `shared/x731_state/tests/state.als` |
 | | `unit_kc_printReachable`, `unit_kc_printLiveSignals` | `resources/kanban_card/tests/kanban_card.als` |
-| **A premise in Dafny** (2). Dafny assumes it and derives nothing: one sample per instant in the measurement lemmas, and tenant isolation in the kernel's well-formed universe. Alloy checks that its facts imply it. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
-| | `unit_shared_tenantIsolation` | `reference_data/shared/tests/shared.als` |
+| **A premise in Dafny** (5). Dafny assumes it, and no lemma establishes it. Alloy checks that its facts imply it. One sample per instant, in the measurement lemmas. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
+| Tenant isolation, in the kernel's well-formed universe. | `unit_shared_tenantIsolation` | `reference_data/shared/tests/shared.als` |
+| Entity ids are keys (`Keyed`). The lemma `Kernel.EIdIsKey` concludes it only from that premise. | `unit_kernel_eIdIsKey` | `meta/tests/kernel.als` |
+| Principal names are keys (`NamesUnique`). The lemma `Principal.NameIsKey` concludes it only from that premise. | `unit_principal_nameIsKey` | `meta/principal/tests/principal.als` |
+| The X.731 interlocks (`ResourceInterlocks`). The lemma `X731State.X731Consistency` requires both interlocks and concludes the first. | `X731Consistency` | `shared/x731_state/tests/state.als` |
+| **No Dafny lemma states it** (2). Every chain of citations reaches an origin. `Activation.TreeWalkNonIncreasing` and `Activation.NoProperCycle` state that a walk never goes forward and that only an origin loops; no lemma concludes that a walk reaches one. | `unit_act_walkEndsAtOrigin` | `meta/activation/tests/activation.als` |
+| Scaling the zero value gives the zero value. The lemma `KeyedAlgebra.ScaleZeroValue` states it for `int` keys only. | `unit_alg_scaleZeroValue` | `meta/keyed_value_algebra/tests/keyed_monoid.als` |
 | **True by construction in Dafny, in a domain module** (3). The state is a datatype and the effect a function, and the transfer composite takes one stamp. | `unit_ba_postHoldsExactlyTheWrittenVersions`, `unit_ba_statesWithEqualPayloadsAreEqual` | `reference_data/business_affiliate/tests/business_affiliate.als` |
 | | `unit_pool_transferPairOneStamp` | `resources/inventory_item/tests/inventory_pool.als` |
 | **True of the Alloy universe only** (1). The record-side wrong-item refusal never fires where ids are keys and pins are static. Dafny's witness `RecordWrongItem` shows it firing. | `unit_dem_recordProductionItemArmSubsumed` | `operations/demand/tests/unit/demand.als` |
