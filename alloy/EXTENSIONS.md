@@ -22,9 +22,21 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 1. Its header names the Dafny module it reflects: `// Reflects dafny-domain src/<path>.dfy`.
    A soak root, which refines lemmas and reflects no single module, names them instead:
    `// Refines Dafny: <Module>.<Lemma>`, one line per lemma.
-2. Each kept command names what it extends: `// Extension class 1: finder for <Module>.<Witness>` or
-   `// Extension class 2: counter-example search for <Module>.<Lemma> (deferred | S-07)`.
-3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
+2. A kept command is tied to what it extends from the Dafny side, and a gate checks the tie. No comment on the
+   command repeats it.
+   - **A finder (class 1):** the Dafny witness's docstring lists its finders in an `Alloy:` clause.
+   - **A soak check (class 2):** the Dafny lemma's docstring carries rule 3's pointer, and the root names the lemma
+     in its `Refines Dafny` marker (rule 1).
+   - **A kept check that guards Alloy's own encoding** has no Dafny lemma. It is named, with the reason, in the table
+     under "The checks, classified command by command" below.
+
+   The reference model's pointer check (`tools/check-pointer-parity.py` in `dafny-domain`) resolves every such name,
+   in both directions, in each pull request of `dafny-domain`.
+
+   Until 2026-11-18 this rule asked for an `// Extension class <n>: ...` comment on each kept command. No file
+   ever carried one: 0 of the 580 `run` and 102 `check` commands, measured at `2f78f3e`.
+3. The Dafny lemma's docstring carries the reverse pointer, `Alloy extension: <root> · <what>` (DT-015 D6). The
+   `· <what>` part may be left out.
 4. `make check-alloy` runs the kept roots only.
 
 ## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is applied below; step A's removals marked)
