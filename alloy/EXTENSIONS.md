@@ -22,19 +22,23 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 1. Its header names the Dafny module it reflects: `// Reflects dafny-domain src/<path>.dfy`.
    A soak root, which refines lemmas and reflects no single module, names them instead:
    `// Refines Dafny: <Module>.<Lemma>`, one line per lemma.
-2. A kept command is tied to what it extends from the Dafny side, and a gate checks the tie. No comment on the
-   command repeats it.
-   - **A finder (class 1):** the Dafny witness's docstring lists its finders in an `Alloy:` clause.
+2. A kept command is tied to the reference model in writing where it mirrors something there. The reference model's
+   pointer check (`tools/check-pointer-parity.py` in `dafny-domain`) resolves every tie that is written.
+   - **A finder that mirrors a Dafny witness** is named in that witness's docstring, in its `Alloy:` clause. Where
+     the Dafny side does not name it, a comment directly above the command does:
+     `// Extension class 1: finder for <Module>.<Witness>`.
+   - **A finder with no Dafny witness** has no tie of its own. Its root's `Reflects` header (rule 1) ties it to the
+     module. That is class 1 as defined above: an instance nobody wrote.
    - **A soak check (class 2):** the Dafny lemma's docstring carries rule 3's pointer, and the root names the lemma
      in its `Refines Dafny` marker (rule 1).
    - **A kept check that guards Alloy's own encoding** has no Dafny lemma. It is named, with the reason, in the table
      under "The checks, classified command by command" below.
 
-   The reference model's pointer check (`tools/check-pointer-parity.py` in `dafny-domain`) resolves every such name,
-   in both directions, in each pull request of `dafny-domain`.
-
-   Until 2026-11-18 this rule asked for an `// Extension class <n>: ...` comment on each kept command. No file
-   ever carried one: 0 of the 580 `run` and 102 `check` commands, measured at `2f78f3e`.
+   Measured at `2f78f3e`, over the commands outside the modeling cookbook (`meta/examples/`): of the 580 finders, at
+   most 329 are named in a Dafny docstring at `dafny-domain` `bedfb64fa`, and at most 390 at the head of its pull
+   request 59 (`92066ce`). The rest have no tie of their own: their root's header (rule 1) is the tie, and the
+   conventions' teaching roots carry none. No command carries the comment form at `2f78f3e`; the four integration
+   refusal finders of pull request 20 add the first.
 3. The Dafny lemma's docstring carries the reverse pointer, `Alloy extension: <root> · <what>` (DT-015 D6). The
    `· <what>` part may be left out.
 4. `make check-alloy` runs the kept roots only.
@@ -132,7 +136,9 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 
 The project owner's rulings QA779, option (a) (2026-11-12), and QA808, option (c) (2026-11-16): a `check` of a law the
 reference model proves is retired, and a check Dafny has no proof of is kept. An executed test is not a proof. The scope
-is the 249 `check` commands outside `soak/` and `conventions/`, as main stood at `2986f32`.
+is the 249 `check` commands outside `soak/`, `conventions/` and `meta/examples/`, as main stood at `2986f32`. The
+13 checks of the modeling cookbook (`meta/examples/`, run by `make check-examples`, not by `make check-alloy`) are
+teaching material, as the conventions are: they are neither retired nor in the table of kept checks.
 
 The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
 state, need not prove, tests on one machine, or assumes.
