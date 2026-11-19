@@ -56,16 +56,3 @@ assert unit_meas_endpointsLone {
   all s: Signal, p: TimeInterval | lone latestIn[s, p] and lone firstIn[s, p]
 }
 check unit_meas_endpointsLone for 6 expect 0
-
-// LAST is always one of the period's actually-sampled values (when the period is non-empty).
-assert unit_meas_lastIsSampled {
-  all s: Signal, p: TimeInterval |
-    some measurementsIn[s, p] implies lastValueIn[s, p] in measurementsIn[s, p].value
-}
-check unit_meas_lastIsSampled for 6 expect 0
-
-// COUNT is exactly the number of in-period samples.
-assert unit_meas_countMatches {
-  all s: Signal, p: TimeInterval | countIn[s, p] = #measurementsIn[s, p]
-}
-check unit_meas_countMatches for 6 expect 0

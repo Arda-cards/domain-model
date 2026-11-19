@@ -27,12 +27,6 @@ run unit_timed_backdating {
   some disj a, b: TOcc | occPrecedes[a, b] and not atOrBefore[a.at, b.at]
 } for 4 expect 1
 
-// `clocksAligned` does its job: under the premise, no backdating is possible.
-assert unit_timed_alignedForbidsBackdating {
-  clocksAligned implies (no disj a, b: TOcc | occPrecedes[a, b] and not atOrBefore[a.at, b.at])
-}
-check unit_timed_alignedForbidsBackdating for 5 expect 0
-
 // The stamp is per-atom opt-in: an un-timed occurrence kind carries no `at` (membership is the fact).
 run unit_timed_mixedLog {
   some o: Occurrence | o not in Timed

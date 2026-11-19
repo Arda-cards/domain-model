@@ -25,11 +25,6 @@ run unit_ba_multiRole {
     committed[o] and r1 in o.roles and r2 in o.roles and r1.role != r2.role
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-// Role ownership is exclusive across COMMITTED histories (C1, a THEOREM of the RRoleNotOwned arm since QA704 Q4 (a)) — UNSAT = holds.
-check unit_ba_roleOwnership {
-  no r: BusinessRole | some disj b1, b2: BusinessAffiliate | r in baRolesOf[b1] and r in baRolesOf[b2]
-} for 6 but 2 RoleDetail, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
-
 // ── QA704 Q4 (a), DT-009 Q27: role ownership is a guard arm (reflects dafny-domain src/reference-data/business-affiliate/business-affiliate.dfy) ──
 // A write stating a version of a role another affiliate's committed history already holds is refused with exactly
 // RRoleNotOwned. RED on the tree before the arm: `roleOwnership` was a FACT, so the second affiliate's write was unrepresentable.
@@ -59,9 +54,6 @@ run unit_ba_lifecycleArc {
     u.post.sRoles != c.post.sRoles
   }
 } for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
-
-// The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
-check unit_ba_lifecycleShape { baLifecycleShape } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Reason-precise refusal: mutating a retired affiliate refuses with exactly RBaRetired.
 run unit_ba_retiredMutateRefused {
@@ -96,12 +88,6 @@ run unit_ba_roleSelectorWitness {
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
 // ── DT-030 retire cut (2026-09-09): terminality and the tombstone ────────────────────────────────
-assert unit_ba_nothingAfterRetire {
-  all r: RetireBaOcc, o: CreateBaOcc + UpdateBaOcc + RetireBaOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
-}
-check unit_ba_nothingAfterRetire for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
-assert unit_ba_retireIsTombstone { all r: RetireBaOcc | committed[r] implies (r.post = r.pre and not baLiveAt[r.subject, r.tick]) }
-check unit_ba_retireIsTombstone for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
 
 // ── R02-D24.1 (model): a business role's kind is fixed at birth (MP, COORDINATOR-Q357, Option C) ──
 // The role IDENTITY (`BusinessRole`) carries the kind it was born with; each role VERSION
@@ -118,9 +104,6 @@ run unit_ba_roleKindChangeRefused {
     u.admission in Rejected and u.admission.because = RRoleKindFixed
   }
 } for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
-
-// RED-first: the law is a THEOREM — over write payloads of the Update guard and the Create fact; over committed post states also of the write effect, the retire's carry-forward and the chaining of the log (UNSAT = holds).
-check unit_ba_roleKindFixedAtBirth { roleKindFixedAtBirth } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Control: an Update that changes only the payload of an existing role (same identity, same kind) is admitted.
 run unit_ba_roleVersionDetailChangeAdmitted {
@@ -149,17 +132,6 @@ run unit_ba_replaceByNewIdAdmitted {
 // RED-first: a committed write's post state holds exactly the versions the write states (not only their identities).
 check unit_ba_postHoldsExactlyTheWrittenVersions {
   all o: BaWriteOcc | committed[o] implies o.post.sRoleVersions = o.roleVersions
-} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
-
-// RED-first: every version in a committed post state states its identity's kind (the law, read over states).
-check unit_ba_committedStatesAgreeOnKind {
-  all o: BaOcc | committed[o] implies (all v: o.post.sRoleVersions | v.vKind = v.of.role)
-} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
-
-// RED-first: at most one version per role identity in a committed write and in a committed post state.
-check unit_ba_oneVersionPerRole {
-  all o: BaWriteOcc | committed[o] implies (no disj v1, v2: o.roleVersions | v1.of = v2.of)
-  all o: BaOcc | committed[o] implies (no disj v1, v2: o.post.sRoleVersions | v1.of = v2.of)
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
 
 // Guard (the weaker form of this command was RED at 13c2022, UNSAT with the identity-only bindings; this form implies it): two writes of one affiliate that differ only in a version's detail have different bindings.

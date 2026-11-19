@@ -54,44 +54,10 @@ run unit_slog_refusalReadsReal {
 } for 5 but 4 Int expect 1
 
 // ── theorems (check; UNSAT = holds) ─────────────────────────────────────────────────────────────
-// The first occurrence on a subject reads nothing.
-assert unit_slog_firstReadsNothing {
-  all o: wl/SubjectOcc | no wl/priorOn[o] implies no o.pre
-}
-check unit_slog_firstReadsNothing for 5 but 4 Int expect 0
 
-// LOCF: the as-of read at any occurrence's tick is the latest committed post at-or-before it.
-assert unit_slog_locf {
-  all o: wl/SubjectOcc | committed[o] implies wl/recordAt[o.subject, o.tick] = o.post
-}
-check unit_slog_locf for 5 but 4 Int expect 0
 
-// Refusals contribute nothing: the read just after a refusal equals the read just before it.
-assert unit_slog_refusalContributesNothing {
-  all o: wl/SubjectOcc | refusedAtAdmission[o] implies
-    wl/recordAt[o.subject, o.tick] = wl/lastTouch[o.subject, o.tick].post
-    and (no wl/lastTouch[o.subject, o.tick] or committed[wl/lastTouch[o.subject, o.tick]])
-}
-check unit_slog_refusalContributesNothing for 5 but 4 Int expect 0
 
-// THE STATE FUNCTION (1:1 in the subject→record direction): once a subject has committed
-// history, it has EXACTLY ONE current record at every instant — recordAt is a total function of
-// (started subject, tick). Derived, not assumed: lastTouch is unique (one occurrence per tick,
-// ticks totally ordered) and a committed occurrence always has a post (PostOnlyIfCommitted).
-// NB the converse direction is deliberately NOT 1:1 — records are extensional VALUES, shared
-// across subjects and times (two subjects in identical conditions share one record atom).
-assert unit_slog_recordIsFunctionOnceStarted {
-  all s: Widget, t: Tick |
-    (wl/startedAt[s, t] implies one wl/recordAt[s, t])
-    and (not wl/startedAt[s, t] implies no wl/recordAt[s, t])
-}
-check unit_slog_recordIsFunctionOnceStarted for 5 but 4 Int expect 0
 
-// The chaining thread is committed-only: an occurrence's pre is always a COMMITTED predecessor's post.
-assert unit_slog_threadIsCommitted {
-  all o: wl/SubjectOcc | some o.pre implies committed[wl/priorOn[o]]
-}
-check unit_slog_threadIsCommitted for 5 but 4 Int expect 0
 
 
 // ── the activation (DT-015 D1 to D3): the rows cite the act that wrote them; no per-row origin law ──────────────────

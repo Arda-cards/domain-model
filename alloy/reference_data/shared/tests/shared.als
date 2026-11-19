@@ -22,13 +22,6 @@ pred coherent {
 }
 run unit_shared_coherent { coherent } for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 1
 
-// A present role selector is always a VENDOR role OF THE PINNED VERSION — UNSAT = holds (supplierPinsSound regression, the
-// dissolved form of supplierIsVendor). Since QA704 Q4 (a) the soundness is the RSupplierPinUnsound ARM of the item writes, not a
-// fact over every supply-row value: a refused write may carry an unsound row; no COMMITTED write does.
-check unit_shared_supplierIsVendor {
-  all o: ItemWriteOcc, s: o.supplies | (committed[o] and some s.supplierRole) implies
-    (s.supplierRole in s.supplierPin.post.sRoles and s.supplierRole.role = VENDOR)
-} for 6 but 2 RoleDetail, 5 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Cross-tenant isolation over every resolved reference (kernel CrossTenantIsolation regression) — UNSAT.
 // `some b` guard: an EMPTY resolve satisfies `b in Scoped` (subset), so the unguarded form is

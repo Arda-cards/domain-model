@@ -49,7 +49,7 @@ fun selfInitiated: set Occurrence { { o: Occurrence | o.arche = o } }
 
 /** A CITED origin is STRICTLY earlier than the occurrence citing it: origins never point forward; the only
     occurrence an occurrence may cite at its own tick is itself (self-initiation, exempt below). Proper cycles
-    are a THEOREM of strict precedence, checked in the tests (unit_occ_archeNoProperCycle), never a fact. The
+    are a THEOREM of strict precedence (dafny-domain `NoProperCycle`; the Alloy check is retired), never a fact. The
     one universal, cheap truth about origins — everything else about `arche` is `meta/activation/activation`'s
     (DT-015 D1 to D3). */
 fact ArcheOriginPrecedes { all o: Occurrence | o.arche != o implies precedes[o.arche.tick, o.tick] }

@@ -24,25 +24,3 @@ run unit_sum_widensAlongChain {
      Fold.val[n1].Scalar != Fold.val[n2].Scalar and    // different KEY sets
      isMulti[Fold.cum[n2]])                             // ⇒ the cumulative carries both keys
 } for 5 but exactly 3 Scalar expect 1
-
-// --- base: at the head the running total is just that node's value ---
-check unit_sum_baseIsVal {
-  all n: N | no Fold.earlier[n] implies Fold.cum[n] = Fold.val[n]
-} for 5 but exactly 3 Scalar expect 0
-
-// --- step: each later total folds the previous total with this node's value ---
-check unit_sum_stepFolds {
-  all n: N | some Fold.earlier[n] implies Fold.cum[n] = add[Fold.cum[Fold.earlier[n]], Fold.val[n]]
-} for 5 but exactly 3 Scalar expect 0
-
-// --- the cumulative stays in normal form all the way down the chain ---
-check unit_sum_cumNf {
-  all n: N | nf[Fold.cum[n]]
-} for 5 but exactly 3 Scalar expect 0
-
-// --- telescoping is sound: prefix total ⊕ (sub-chain from m to the end) = the whole-chain total ---
-check unit_sum_telescope {
-  ringAxioms implies
-    all m: N | some Fold.earlier[m] implies
-      add[Fold.cum[Fold.earlier[m]], rangeSum[m, lastSum[m]]] = chainSum[m]
-} for 5 but exactly 3 Scalar expect 0

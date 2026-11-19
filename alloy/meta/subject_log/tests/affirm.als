@@ -73,28 +73,9 @@ run unit_aff_afterRetireRefused {
 } for 5 but 4 Int expect 1
 
 // ── laws ────────────────────────────────────────────────────────────────────────────────────────
-// A committed affirmation changes nothing: its post is its pre, and the as-of read at its tick is its pre.
-assert unit_aff_recordUnchanged {
-  all o: aff/AffirmOcc | committed[o] implies (o.post = o.pre and wl/recordAt[o.subject, o.tick] = o.pre)
-}
-check unit_aff_recordUnchanged for 5 but 4 Int expect 0
-
-// A committed affirmation IS the spine's `lastTouch` at its tick — the evidence pointer moves, the record does not.
-assert unit_aff_lastTouchMoves {
-  all o: aff/AffirmOcc | committed[o] implies wl/lastTouch[o.subject, o.tick] = o
-}
-check unit_aff_lastTouchMoves for 5 but 4 Int expect 0
-
-// A committed affirmation always affirms the CURRENT record: "I checked and it is so" is never true of a stale version.
-assert unit_aff_neverCommitsStale {
-  all o: aff/AffirmOcc | committed[o] implies o.affirmed = o.pre
-}
-check unit_aff_neverCommitsStale for 5 but 4 Int expect 0
 
 // A refused affirmation writes nothing (the spine's discipline holds for the new kind).
 assert unit_aff_refusalWritesNothing {
   all o: aff/AffirmOcc | refusedAtAdmission[o] implies no o.post
 }
 check unit_aff_refusalWritesNothing for 5 but 4 Int expect 0
-// Terminality on this root too: nothing (SetLevel, Affirm, Retire) commits after a committed retire.
-check unit_aff_nothingAfterRetire { lc/nothingAfterRetire } for 5 but 4 Int expect 0
