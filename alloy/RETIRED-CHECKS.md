@@ -26,6 +26,18 @@ traced to its replacement without any other source.
 
 **Counts:** 86 retired `check` commands under 86 names, 95 check-and-lemma rows, 18 modules.
 
+**Four more checks are retired by a ruling of their own, and are not rows of this record.** The project owner's
+ruling on card QA787, second question, option (a), replaces them with four integration finders, one per refusal on
+the real stack. They are still in the tree and leave with those finders. Their roots open a lower module by its
+types alone, so the audit's rule below would keep them; the ruling decides.
+
+| Check | Root | The Dafny lemma that states the law |
+| --- | --- | --- |
+| `int_dem_contract_cycleIndivisible` | `operations/demand/tests/integration/demand.als` | `CycleIndivisible` (`src/operations/demand/demand-contract.dfy:886`) |
+| `int_dem_contract_frozenOutsideOpen` | `operations/demand/tests/integration/demand.als` | `FrozenOutsideOpen` (`src/operations/demand/demand-contract.dfy:894`) |
+| `int_ord_contract_demandIndivisible` | `procurement/order/tests/integration/order.als` | `DemandIndivisible` (`src/procurement/order/order-contract.dfy:640`) |
+| `int_ord_contract_frozenOutsideDraft` | `procurement/order/tests/integration/order.als` | `FrozenOutsideDraftOrder` and `FrozenOutsideDraftLine` (`src/procurement/order/order-contract.dfy:623`, :630) |
+
 ## The audit (2026-11-18)
 
 The pairings were first made by pointer, by name and by reading, and 210 checks (211 commands) were recorded as
@@ -41,30 +53,28 @@ the same at `2986f32` and at main `80192da`, where the audit read it.
 
 **The result.**
 
-- **86 checks stay retired.**
+- **86 checks stay retired under the rule,** and the four of the ruling above beside them.
   - 68 pairings stand as first recorded.
   - 18 had a citation that was wrong or incomplete, and the right lemma exists. Their rows now cite it. Most were a
     name matched across modules: each module's `nothingAfterRetire` check, for example, was paired with the
     affiliate's, the item's and the staff's lemmas.
-- **124 checks are restored to the tree.** `EXTENSIONS.md` lists them among the kept checks, each with its reason.
+- **120 checks are restored to the tree.** `EXTENSIONS.md` lists them among the kept checks, each with its reason.
   - **5 restate a fact of the Alloy model that Dafny only assumes.** Each is the guard of that fact:
     `unit_kernel_eIdIsKey`, `unit_principal_nameIsKey`, `X731Consistency`, `unit_occ_onePerTick` and
     `unit_occ_archeOriginPrecedes`.
   - **2 have no lemma that implies them:** `unit_act_walkEndsAtOrigin` and `unit_alg_scaleZeroValue`. The reference
     model was searched for a lemma whose statement concludes the property, by statement and not by name.
-  - **117 are in a root that opens a lower module without its implementation facts.** In Dafny a lower module's
+  - **113 are in a root that opens a lower module without its implementation facts.** In Dafny a lower module's
     state is always its `Effect` folded over its log. Such a root allows lower records that the chaining and effect
     facts would exclude, and it is not shown that every one of them is the state of some lower log. So the lemma
     is not shown to cover every instance of the root.
     - 75 are in a unit root that gives its lower modules as contract mocks: the demand's two unit roots (22), the
       order's (19), the receiver's (17) and the inventory item's (17). A mock keeps the lower module's occurrences
       and replaces its chaining and effect facts with the contract's `guarantees`.
-    - 42 are in a root that opens a lower module by its types alone, with neither its facts nor a mock: the item's
+    - 38 are in a root that opens a lower module by its types alone, with neither its facts nor a mock: the item's
       root (7), the kanban card's two (16), the pool's two (9), the inventory metrics' (3), the inventory item's
-      integration root (2), the demand's integration root (2) and the order's two (3). Four of these were to leave
-      with the integration finders that replace them: `int_dem_contract_cycleIndivisible`,
-      `int_dem_contract_frozenOutsideOpen`, `int_ord_contract_demandIndivisible` and
-      `int_ord_contract_frozenOutsideDraft`. They stay in the tree with the others.
+      integration root (2) and the order's received root (1). The demand's and the order's integration roots are
+      of this kind too: their four contract checks are the ones the ruling above retires.
     - A follow-up in the project's plan (activity AC-04-03-02-31) reads each such root: for each lower module it
       opens without its facts, what the checked module reads of it, and whether that is fixed as in Dafny. The
       checks whose root passes retire then.

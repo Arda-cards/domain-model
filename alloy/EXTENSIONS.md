@@ -142,32 +142,32 @@ is the 249 `check` commands outside `soak/`, `conventions/` and `meta/examples/`
 teaching material, as the conventions are: they are neither retired nor in the table of kept checks.
 
 The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
-state, need not prove, tests on one machine, assumes, or has no lemma for. Since the reading of 2026-11-18, 117 more are
+state, need not prove, tests on one machine, assumes, or has no lemma for. Since the reading of 2026-11-18, 113 more are
 kept for another reason: a Dafny lemma states the law, and it is not yet shown to cover every instance of the check's
 root.
 
-- **Retired, 86.** Each is a check of a law that a Dafny lemma proves, in a root whose instances satisfy the lemma's
+- **Retired, 90.** Each is a check of a law that a Dafny lemma proves, in a root whose instances satisfy the lemma's
   premises. The record is
   [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
   premises it assumes, why its statement implies the check's property, and what in the Alloy model implies each
   premise.
   - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 were recorded as
     retired. On 2026-11-18 each was read again, the check's text beside the lemma's statement, and each premise of
-    each lemma was looked for in the Alloy model. 68 stand, 18 had their citation corrected, and 124 were restored
+    each lemma was looked for in the Alloy model. 68 stand, 18 had their citation corrected, and 120 were restored
     to the tree and are kept (below).
-  - All 86 left the tree with this classification.
-  - Four contract checks were to leave with the four integration finders that replace them (ruling QA787, second
+  - 86 left the tree with this classification.
+  - Four leave with the four integration finders that replace them, by a ruling of their own (QA787, second
     question, option (a)): `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`,
-    `int_ord_contract_demandIndivisible` and `int_ord_contract_frozenOutsideDraft`. They are among the kept now:
-    their roots open a lower module by its types alone.
-- **Kept, 163.** The card for QA808 counted 36.
+    `int_ord_contract_demandIndivisible` and `int_ord_contract_frozenOutsideDraft`. Their roots open a lower
+    module by its types alone, so the rule of the reading would keep them; the ruling decides.
+- **Kept, 159.** The card for QA808 counted 36.
   - The kanban card's two print-machine checks were counted as retired there. They are kept, since Dafny decides
     them by an executed test, as it does the kit's machines.
-  - The reading of 2026-11-18 restored 124:
+  - The reading of 2026-11-18 restored 120:
     - five that restate a fact Dafny only assumes;
     - two that no lemma states;
-    - 117 in a root that opens a lower module without its implementation facts: 75 in the five unit roots that
-      give their lower modules as contract mocks, and 42 in ten roots that open one by its types alone.
+    - 113 in a root that opens a lower module without its implementation facts: 75 in the five unit roots that
+      give their lower modules as contract mocks, and 38 in eight roots that open one by its types alone.
 
 | Why Dafny has no proof | Kept checks | Root |
 | --- | --- | --- |
@@ -197,21 +197,19 @@ root.
 | | `unit_pool_transferPairOneStamp` | `resources/inventory_item/tests/inventory_pool.als` |
 | **True of the Alloy universe only** (1). The record-side wrong-item refusal never fires where ids are keys and pins are static. Dafny's witness `RecordWrongItem` shows it firing. | `unit_dem_recordProductionItemArmSubsumed` | `operations/demand/tests/unit/demand.als` |
 | **The bounded theorem the Dafny tree names as an extension** (1; TN-001's row S-05). | `unit_invmet_usableNonNegativeInRange` | `resources/inventory_item/tests/metrics.als` |
-| **The root opens a lower module without its implementation facts** (117). A Dafny lemma states each law, and the lemma is not yet shown to cover every instance of the root. In Dafny a lower state is always the `Effect` folded over a lower log. Such a root allows lower records that the chaining and effect facts would exclude, and it is not shown that every one is the state of some lower log. A follow-up in the project's plan (activity AC-04-03-02-31) reads each such root: what the checked module reads of the lower module, and whether that is fixed as in Dafny. As a contract mock (75), which keeps the lower occurrences and replaces the chaining and effect facts with the contract's `guarantees`. (19 in this root.) | `unit_dem_contract_cycleIndivisible`, `unit_dem_contract_frozenOutsideOpen`, `unit_dem_contract_attachRequiresAccepted`, `unit_dem_contract_removeRequiresShelved`, `unit_dem_contract_startProductionRequiresStarted`, `unit_dem_contract_distributeRequiresReady`, `unit_dem_contract_completeRequiresSettled`, `unit_dem_contract_withdrawnDetachReconciles`, `unit_dem_contract_terminalClosure`, `unit_dem_contract_holdingProvenance`, `unit_dem_contract_holdingExclusive`, `unit_dem_contract_createDeliveryGated`, `unit_dem_contract_deliveryTerminalRevoke`, `unit_dem_holdingPoolPinMatchesItem`, `unit_dem_nothingAfterRetire`, `unit_dem_contract_completeStampedAfterHolding`, `unit_dem_holdingPoolPinHolds`, `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive` | `operations/demand/tests/unit/demand.als` |
+| **The root opens a lower module without its implementation facts** (113). A Dafny lemma states each law, and the lemma is not yet shown to cover every instance of the root. In Dafny a lower state is always the `Effect` folded over a lower log. Such a root allows lower records that the chaining and effect facts would exclude, and it is not shown that every one is the state of some lower log. A follow-up in the project's plan (activity AC-04-03-02-31) reads each such root: what the checked module reads of the lower module, and whether that is fixed as in Dafny. As a contract mock (75), which keeps the lower occurrences and replaces the chaining and effect facts with the contract's `guarantees`. (19 in this root.) | `unit_dem_contract_cycleIndivisible`, `unit_dem_contract_frozenOutsideOpen`, `unit_dem_contract_attachRequiresAccepted`, `unit_dem_contract_removeRequiresShelved`, `unit_dem_contract_startProductionRequiresStarted`, `unit_dem_contract_distributeRequiresReady`, `unit_dem_contract_completeRequiresSettled`, `unit_dem_contract_withdrawnDetachReconciles`, `unit_dem_contract_terminalClosure`, `unit_dem_contract_holdingProvenance`, `unit_dem_contract_holdingExclusive`, `unit_dem_contract_createDeliveryGated`, `unit_dem_contract_deliveryTerminalRevoke`, `unit_dem_holdingPoolPinMatchesItem`, `unit_dem_nothingAfterRetire`, `unit_dem_contract_completeStampedAfterHolding`, `unit_dem_holdingPoolPinHolds`, `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive` | `operations/demand/tests/unit/demand.als` |
 | (3 in this root.) | `unit_pdr_retireIsTombstone`, `unit_pdr_nothingAfterRetire`, `unit_pdr_noRecordedRefusalWithoutGenesis` | `operations/demand/tests/unit/delivery_retire.als` |
 | (19 in this root.) | `unit_ord_contract_frozenOutsideDraft`, `unit_ord_contract_demandIndivisible`, `unit_ord_contract_attachRequiresReleased`, `unit_ord_contract_attachItemAgrees`, `unit_ord_contract_submitRequiresStarted`, `unit_ord_contract_receiptAccrues`, `unit_ord_contract_receiptReverses`, `unit_ord_contract_lineClosureByAct`, `unit_ord_contract_closeRequiresSettled`, `unit_ord_contract_supplierBindingFrozen`, `unit_ord_contract_orderTerminalClosure`, `unit_ord_contract_headerDetailFrozen`, `unit_ord_contract_priorityDefault`, `unit_ord_removeRequiresDetached`, `unit_ord_nothingAfterRetire`, `unit_ord_noRecordedRefusalWithoutGenesis`, `unit_ord_bindingPinCurrencyHolds`, `unit_ord_assigneePinCurrencyHolds`, `unit_ord_supplierBindingPinAgreesHolds` | `procurement/order/tests/unit/order.als` |
 | (17 in this root.) | `unit_rcv_contract_linePoolProvenance`, `unit_rcv_contract_captureWindowFrozen`, `unit_rcv_contract_completeRequiresLinesFinalized`, `unit_rcv_contract_capturedFactsFrozen`, `unit_rcv_contract_receiveSameItemPool`, `unit_rcv_contract_receiveAllocationBounded`, `unit_rcv_contract_actualSetOnce`, `unit_rcv_contract_deliveriesAppendOnly`, `unit_rcv_contract_lineForwardMonotone`, `unit_rcv_contract_receiverTerminalComplete`, `unit_rcv_contract_linesPoolLoneHolder`, `unit_rcv_contract_lineCyclePoolDisjoint`, `unit_rcv_contract_lineDemandPoolDisjoint`, `unit_rcv_carrierPinCurrencyHolds`, `unit_rcv_lineItemPinCurrencyHolds`, `unit_rcv_receiverCarrierPinAgreesHolds`, `unit_rcv_lineAttachAgreesWithPartner` | `receiving/receiver/tests/unit/receiver.als` |
 | (17 in this root.) | `unit_ii_contract_stateFunction`, `unit_ii_contract_liveHaveState`, `unit_ii_contract_bornLive`, `unit_ii_contract_closureIsTerminal`, `unit_ii_contract_touchesLiveness`, `unit_ii_contract_readBack`, `unit_occ_noCommittedOverdraw`, `unit_occ_noResurrection`, `unit_occ_terminalRetirement`, `unit_occ_splitConserves`, `unit_occ_mergeConserves`, `unit_occ_expiryNeverLengthens`, `unit_occ_sealedOnlyBySeal`, `unit_occ_committedUnitsValid`, `unit_occ_lpnUniqueAmongStarted`, `unit_occ_serialUniqueAmongStarted`, `unit_occ_itemPinCurrencyHolds` | `resources/inventory_item/tests/unit/inventory_item.als` |
 
-| By its types alone, with neither its facts nor a mock (42). Without facts here: the affiliate. (7 in this root.) | `unit_item_supplyOwnership`, `unit_item_supplyPinCurrencyHolds`, `unit_item_eachConfigured`, `unit_item_toEachIdentity`, `unit_item_lifecycleShape`, `unit_item_nothingAfterRetire`, `unit_item_retireIsTombstone` | `reference_data/item/tests/item.als` |
+| By its types alone, with neither its facts nor a mock (38). Without facts here: the affiliate. (7 in this root.) | `unit_item_supplyOwnership`, `unit_item_supplyPinCurrencyHolds`, `unit_item_eachConfigured`, `unit_item_toEachIdentity`, `unit_item_lifecycleShape`, `unit_item_nothingAfterRetire`, `unit_item_retireIsTombstone` | `reference_data/item/tests/item.als` |
 | Without facts here: the affiliate, the item, the inventory item and the processing network. (9 in this root.) | `unit_cyc_oneLiveCyclePerCard`, `unit_cyc_forwardMonotone`, `unit_cyc_noPoolBeforeInProcess`, `unit_cyc_poolFrozenOnceAttached`, `unit_cyc_poolProvenance`, `unit_cyc_poolExclusiveWhileLive`, `unit_cyc_closureIsTerminal`, `unit_cyc_quantityFixedAtGenesis`, `unit_cyc_poolItemHomogeneous` | `resources/kanban_card/tests/cycle_occurrences.als` |
 | Without facts here: the affiliate, the item, the inventory item and the processing network. (7 in this root.) | `unit_cyr_nothingAfterRetire`, `unit_cyr_abandonedIsWithdrawn`, `unit_cyr_closedBeforeSuccessorGenesis`, `unit_cyr_poolAttachedOnce`, `unit_cyr_startedPoolLive`, `unit_cyr_attachedOnceById`, `unit_cyr_noRecordedRefusalWithoutGenesis` | `resources/kanban_card/tests/cycle_retire.als` |
 | Without facts here: the affiliate, the item and the inventory item. (5 in this root.) | `unit_pool_homogeneous`, `unit_pool_sameTenant`, `unit_pool_membershipExclusive`, `unit_pool_stampsMonotone`, `unit_pool_reversalDisciplineHolds` | `resources/inventory_item/tests/inventory_pool.als` |
 | Without facts here: the affiliate, the item and the inventory item. (4 in this root.) | `unit_plc_nothingAfterRetire`, `unit_plc_affirmNeverCreatedIsNotClosed`, `unit_plc_affirmIsInert`, `unit_plc_noRecordedRefusalWithoutGenesis` | `resources/inventory_item/tests/pool_lifecycle.als` |
 | Without facts here: the affiliate and the item. (3 in this root.) | `unit_invmet_partitionAdditivity`, `unit_invmet_quietPeriodRepeats`, `unit_invmet_frameworkMatchesLog` | `resources/inventory_item/tests/metrics.als` |
 | Without facts here: the affiliate. (2 in this root.) | `int_ii_contract_stateFunction`, `int_ii_contract_closureIsTerminal` | `resources/inventory_item/tests/integration/inventory_item.als` |
-| Without facts here: the affiliate and the inventory item. (2 in this root.) | `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen` | `operations/demand/tests/integration/demand.als` |
-| Without facts here: the staff and the inventory item. (2 in this root.) | `int_ord_contract_demandIndivisible`, `int_ord_contract_frozenOutsideDraft` | `procurement/order/tests/integration/order.als` |
 | Without facts here: every domain module it reads. (1 in this root.) | `unit_ordr_receivedIsAccumulated` | `procurement/order/tests/unit/order_received.als` |
 The Inventory table above keeps its counts as measured at the cut. A root's row there that reads "checks RETIRED" is now
 exact, except for the roots this table names.
