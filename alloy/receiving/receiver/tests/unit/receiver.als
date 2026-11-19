@@ -529,15 +529,8 @@ run unit_rcv_addLineStartedAttributionRefused {
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
-// The line-side guard excludes exactly what the partner refuses: a committed append or attributed add never names an attribution
-// already started (the premise the paired composite's preservation needs — dafny-domain STYLE.md SO-1 (a)).
-check unit_rcv_lineAttachAgreesWithPartner {
-  all o: AppendAttributionOcc | committed[o] implies
-    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
-  all o: AddReceivingLineOcc | (committed[o] and some o.attribution) implies
-    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
-} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
-      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
-      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
-      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+// ── Laws of this root with no check here (the project owner's ruling QA835, option (ii), 2026-11-18) ──────────
+// 1 check left this root with that ruling: a check of a law the reference model proves is retired once every
+// premise of its lemma is established. alloy/RETIRED-CHECKS.md names each with its lemma, the lemma's premises and
+// why the lemma implies the check. The finders of this root are the laws' witnesses here.

@@ -213,35 +213,6 @@ assert unit_cyc_oneLiveCyclePerCard { oneLiveCyclePerCard }
 check unit_cyc_oneLiveCyclePerCard for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
 
-assert unit_cyc_forwardMonotone { forwardMonotone }
-check unit_cyc_forwardMonotone for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
-
-assert unit_cyc_noPoolBeforeInProcess { noPoolBeforeInProcess }
-check unit_cyc_noPoolBeforeInProcess for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 0
-
-assert unit_cyc_poolFrozenOnceAttached { poolFrozenOnceAttached }
-check unit_cyc_poolFrozenOnceAttached for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 1 InventoryPool, 2 Note expect 0
-
-assert unit_cyc_poolProvenance { poolProvenance }
-check unit_cyc_poolProvenance for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool,
-      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note expect 0
-
-assert unit_cyc_poolExclusiveWhileLive { poolExclusiveWhileLive }
-check unit_cyc_poolExclusiveWhileLive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool, 2 Note expect 0
-
-assert unit_cyc_closureIsTerminal { closureIsTerminal }
-check unit_cyc_closureIsTerminal for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
-
-assert unit_cyc_quantityFixedAtGenesis { quantityFixedAtGenesis }
-check unit_cyc_quantityFixedAtGenesis for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      3 CardCycle, 2 KanbanCard, 0 InventoryItem, 2 Note expect 0
-
 // HOMOGENEITY theorem (DT-015 R1 — SUITE-LEVEL by ruling, not a published contract law; promote
 // per L9 when a consumer stages reliance, e.g. demand's Distribute): a cycle's resolved pool
 // always classifies under its card's demanded Item — derived from the attach guard +
@@ -252,3 +223,8 @@ assert unit_cyc_poolItemHomogeneous {
 }
 check unit_cyc_poolItemHomogeneous for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 4 Quantity, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       3 CardCycle, 2 KanbanCard, 2 InventoryItem, 2 InventoryPool, 2 Note expect 0
+
+// ── Laws of this root with no check here (the project owner's ruling QA835, option (ii), 2026-11-18) ──────────
+// 7 checks left this root with that ruling: a check of a law the reference model proves is retired once every
+// premise of its lemma is established. alloy/RETIRED-CHECKS.md names each with its lemma, the lemma's premises and
+// why the lemma implies the check. The finders of this root are the laws' witnesses here.

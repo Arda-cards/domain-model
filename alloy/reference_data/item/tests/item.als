@@ -18,11 +18,6 @@ run unit_item_coherent {
   some o: CreateItemOcc | committed[o] and some o.supplies
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
 
-// Supply-row ownership is exclusive across COMMITTED histories (C1, a THEOREM of the RSupplyNotOwned arm since QA704 Q4 (a)) — UNSAT = holds.
-check unit_item_supplyOwnership {
-  no c: ItemSupply | some disj i1, i2: Item | c in itemSuppliesOf[i1] and c in itemSuppliesOf[i2]
-} for 6 but 2 RoleDetail, 4 Tick, 4 Snapshot, 4 Occurrence expect 0
-
 // ── QA704 Q4 (a), DT-009 Q27: the three content facts are guard arms (reflects dafny-domain src/reference-data/item/item.dfy ContentViol) ──
 // A write stating a supply row another item's committed history already holds is refused with exactly RSupplyNotOwned.
 // RED on the tree before the arms: `supplyOwnership` was a FACT, so the second item's write was unrepresentable (UNSAT).
@@ -45,10 +40,6 @@ run unit_item_supplierPinStaleRefused {
   some c: CreateItemOcc, s: c.supplies, p: s.supplierPin | not pinsCurrentBa[p, c.tick]
     and c.admission in Rejected and c.admission.because = RSupplierPinStale
 } for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 4 Occurrence expect 1
-// The currency law is now a THEOREM of the arm: every committed write's vendor pins are current at its tick.
-check unit_item_supplyPinCurrencyHolds {
-  all o: ItemWriteOcc | committed[o] implies all s: o.supplies | some s.supplierPin implies pinsCurrentBa[s.supplierPin, o.tick]
-} for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 4 Occurrence expect 0
 
 // ── Inventory-tracking mode & UoM scheme (DT-009 — identity-carried, version-independent) ──────
 // A tracked Item exists with a multi-unit scheme (`each` + another configured unit).
@@ -60,16 +51,6 @@ run unit_item_trackedScheme {
 run unit_item_modesCoexist {
   some i, j: Item | inventoryTracked[i] and not inventoryTracked[j]
 } for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 1
-
-// Every scheme configures `each` with factor 1.0 — regression on UomSchemeWF.
-check unit_item_eachConfigured {
-  all s: UomScheme | some s.factor[Each] and s.factor[Each] = SOne
-} for 6 but 2 RoleDetail, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
-
-// Converting an amount already in `each` is the identity (factor 1.0) — needs the ring identity.
-check unit_item_toEachIdentity {
-  ringAxioms implies all s: UomScheme, amt: Scalar | toEach[s, Each, amt] = amt
-} for 6 but 2 RoleDetail, 3 Scalar, 4 Tick, 3 Snapshot, 3 Occurrence expect 0
 
 // ── CUT 6 (DT-022 TQ-4): the card-issuance default, now version-carried ────────────────────────
 run unit_item_cardMinimumDefault {
@@ -89,9 +70,6 @@ run unit_item_lifecycleArc {
     u.post.sSupplies != c.post.sSupplies
   }
 } for 6 but 2 RoleDetail, 7 Tick, 4 Snapshot, 5 Occurrence expect 1
-
-// The lifecycle shape is a THEOREM of the guards + effects — UNSAT = holds.
-check unit_item_lifecycleShape { itemLifecycleShape } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 5 Occurrence expect 0
 
 // Reason-precise refusal: mutating a retired item refuses with exactly RItemRetired.
 run unit_item_retiredMutateRefused {
@@ -142,10 +120,7 @@ run unit_item_supplyRetiredVendorRefused {
   }
 } for 6 but 2 RoleDetail, 6 Tick, 5 Snapshot, 4 Occurrence expect 1
 
-// ── DT-030 retire cut (2026-09-09): terminality and the tombstone ────────────────────────────────
-assert unit_item_nothingAfterRetire {
-  all r: RetireItemOcc, o: CreateItemOcc + UpdateItemOcc + RetireItemOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
-}
-check unit_item_nothingAfterRetire for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 0
-assert unit_item_retireIsTombstone { all r: RetireItemOcc | committed[r] implies (r.post = r.pre and not itemLiveAt[r.subject, r.tick]) }
-check unit_item_retireIsTombstone for 6 but 2 RoleDetail, 5 Tick, 4 Snapshot, 3 Occurrence expect 0
+// ── Laws of this root with no check here (the project owner's ruling QA835, option (ii), 2026-11-18) ──────────
+// 7 checks left this root with that ruling: a check of a law the reference model proves is retired once every
+// premise of its lemma is established. alloy/RETIRED-CHECKS.md names each with its lemma, the lemma's premises and
+// why the lemma implies the check. The finders of this root are the laws' witnesses here.
