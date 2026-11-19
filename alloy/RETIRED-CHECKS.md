@@ -26,11 +26,12 @@ traced to its replacement without any other source.
 
 **Counts:** 86 retired `check` commands under 86 names, 95 check-and-lemma rows, 18 modules.
 
-**Four more checks are retired by a ruling of their own, and are not rows of this record.** The project owner's
-ruling on card QA787, second question, option (a), replaces them with four integration finders, one per refusal on
-the real stack. They are still in the tree and leave with those finders. Their roots open a lower module by its
-types alone, so the audit's rule below would keep them; the ruling decides. The lines in this table are at the
-Dafny revision named above (`ac60846`), as every line in this record is.
+**Four more checks are retired by a ruling of their own, and are not rows of this record.** The project owner's ruling
+on card QA787, second question, option (a), replaces them with four integration finders, one per refusal on the real
+stack. They left the tree with those finders: `int_dem_cycleHeldRefused` and `int_dem_frozenRefused` in the demand's
+root, `int_ord_demandHeldRefused` and `int_ord_frozenRefused` in the order's. Their roots open a lower module by its
+types alone, so the audit's rule below would keep them; the ruling decides. The lines in this table are at the Dafny
+revision named above (`ac60846`), as every line in this record is.
 
 | Check | Root | The Dafny lemma that states the law |
 | --- | --- | --- |

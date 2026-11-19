@@ -39,7 +39,8 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
    most 329 are named in a Dafny docstring at `dafny-domain` `bedfb64fa`, and at most 390 at the head of its pull
    request 59 (`92066ce`). The rest have no tie of their own: their root's header (rule 1) is the tie, and the
    conventions' teaching roots carry none. No command carries the comment form at `2f78f3e`; the four integration
-   refusal finders of pull request 20 add the first.
+   refusal finders (`int_dem_cycleHeldRefused`, `int_dem_frozenRefused`, `int_ord_demandHeldRefused`,
+   `int_ord_frozenRefused`) are the first.
 3. The Dafny lemma's docstring carries the reverse pointer, `Alloy extension: <root> · <what>` (DT-015 D6). The
    `· <what>` part may be left out.
 4. `make check-alloy` runs the kept roots only.
@@ -158,7 +159,7 @@ root.
     in the Alloy model. Of the 210, 68 stand, 18 had their citation corrected, 120 were restored to the tree and are
     kept (below), and four are retired by a ruling of their own (the last item).
   - 86 left the tree with this classification.
-  - Four leave with the four integration finders that replace them, by a ruling of their own (QA787, second
+  - Four left with the four integration finders that replace them, by a ruling of their own (QA787, second
     question, option (a)): `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`,
     `int_ord_contract_demandIndivisible` and `int_ord_contract_frozenOutsideDraft`. Their roots open a lower
     module by its types alone, so the rule of the reading would keep them; the ruling decides.
