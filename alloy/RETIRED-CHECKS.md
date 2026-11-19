@@ -13,10 +13,10 @@ traced to its replacement without any other source.
   `requires` clause. "The premises", below, lists each kind of premise with the facts of the Alloy model that imply
   it.
 - **Matched by** says how the row's check and lemma were first paired:
-  - the lemma's own `Alloy:` pointer names the check (78 rows);
-  - the names agree (61 rows);
-  - by reading the two statements (25 rows);
-  - the audit added the lemma (26 rows; see "The audit" below).
+  - the lemma's own `Alloy:` pointer names the check (66 rows);
+  - the names agree (57 rows);
+  - by reading the two statements (23 rows);
+  - the audit added the lemma (23 rows; see "The audit" below).
 - **Why the lemma implies the check** is the audit's sentence for the check, on the check's first row. **P** is what
   the lemma states, or what the lemmas state together when the check has several rows. **Q** is what the check states.
   The cell then says why P implies Q.
@@ -24,8 +24,8 @@ traced to its replacement without any other source.
 - **The scope:** the `check` commands outside `soak/`, `conventions/` and `meta/examples/`, as main stood at
   `2986f32`. The kept checks are listed in `EXTENSIONS.md`, each with its reason.
 
-**Counts:** 176 retired `check` commands under 175 names (`unit_pool_membershipExclusive` had two), 190
-check-and-lemma rows, 23 modules. 86 names are retired under the audit's rule, and 89 under the project owner's
+**Counts:** 157 retired `check` commands under 156 names (`unit_pool_membershipExclusive` had two), 169
+check-and-lemma rows, 21 modules. 86 names are retired under the audit's rule, and 70 under the project owner's
 ruling on the roots without lower facts: "The ruling", below, says which rows are which.
 
 **Four more checks are retired by a ruling of their own, and are not rows of this record.** The project owner's ruling
@@ -62,8 +62,8 @@ the same at `2986f32` and at main `80192da`, where the audit read it.
   - 18 had a citation that was wrong or incomplete, and the right lemma exists. Their rows now cite it. Most were a
     name matched across modules: each module's `nothingAfterRetire` check, for example, was paired with the
     affiliate's, the item's and the staff's lemmas.
-- **120 checks were restored to the tree.** 89 of them are retired since, under the ruling below. `EXTENSIONS.md`
-  lists the other 31 among the kept checks, each with its reason.
+- **120 checks were restored to the tree.** 70 of them are retired since, under the ruling below. `EXTENSIONS.md`
+  lists the other 50 among the kept checks, each with its reason.
   - **5 restate a fact of the Alloy model that Dafny only assumes.** Each is the guard of that fact:
     `unit_kernel_eIdIsKey`, `unit_principal_nameIsKey`, `X731Consistency`, `unit_occ_onePerTick` and
     `unit_occ_archeOriginPrecedes`.
@@ -81,7 +81,7 @@ the same at `2986f32` and at main `80192da`, where the audit read it.
       integration root (2) and the order's received root (1). The demand's and the order's integration roots are
       of this kind too: their four contract checks are the ones the ruling above retires.
     - The project owner ruled on these 113 on 2026-11-18 (card QA835, option (ii)): "The ruling on the roots
-      without lower facts", below. 89 are retired under it and are rows of this record. 24 stay.
+      without lower facts", below. 70 are retired under it and are rows of this record. 43 stay.
 
 ## The ruling on the roots without lower facts (2026-11-18)
 
@@ -92,19 +92,31 @@ always the effect folded over a lower log. A lemma whose premises are all establ
 system can reach. An instance of the root with a lower record that no log produces is outside what the model
 describes.
 
-- **89 checks retire under the ruling,** with 90 commands. Their rows are the sections `operations/demand`,
-  `procurement/order`, `receiving/receiver`, `resources/inventory_item` and `resources/kanban_card`, and the seven
-  rows of `reference_data/item` whose root is `item.als`. Each row's sentence is the audit's.
+- **70 checks retire under the ruling,** with 71 commands. Their rows are the sections `procurement/order`,
+  `resources/inventory_item` and `resources/kanban_card`, and the seven rows of `reference_data/item` whose root is
+  `item.als`. Each row's sentence is the audit's.
 - **Their premises were read in the reference model** at `1c868f2ee` (dafny-domain's main on 2026-11-19), lemma by
-  lemma. Each lemma has the same `requires` clauses there as at the revision this record cites. "The premises"
-  ends with the table of what establishes each.
-- **24 stay,** each for a premise that is not established. `EXTENSIONS.md` lists them.
-  - Twelve need only the receiver's well-formedness. The reference model proves that the unpaired appends keep
-    it. For the paired line kinds it is a declared obligation (dafny-domain's SO-1), not a lemma.
-  - Twelve need a premise that Dafny only assumes: ids are keys (`KeyedCycles`, `KeyedDemands`, `KeyedOrders`,
-    `KeyedPools`, `KeyedReceivers`), a pool has its genesis (`DemandPoolGenesis`, `ReceivingPoolGenesis`), or the
-    card set is well formed (`CardsWF`). Four of them need the receiver's well-formedness too.
-- **For the 89 the audit's second condition is not claimed.** What implies a premise of theirs is a lemma of the
+  lemma. Each lemma has the same `requires` clauses there as at the revision this record cites. One conclusion is
+  worded differently there: `AttachItemAgrees` names the demand's item as `d.itemPin.subject` at `ac60846` and as
+  `d.item` at `1c868f2ee`. It is the same item: since dafny-domain `eb515eb` the demand's record names its item
+  directly. "The premises" ends with the table of what establishes each premise.
+- **43 stay,** each for a premise that is not established. `EXTENSIONS.md` lists them.
+  - The 22 of the demand's two unit roots need the demand's well-formedness. The reference model proves that
+    every append but the two halves of a pairing keeps it (`AppendWellFormed`, `AppendPDWellFormed`). For the
+    pairings, `DeliverWellFormed` and `RevokeWellFormed` prove it only of a call that meets conditions: the
+    delivery names the one demand with its id, no other delivery carries its id, the demand is not deleted, no
+    pool row falls between the two halves, and for a revoke the demand is in process. `Deliver` and `Revoke`
+    accept any call. The model's own witness `RecordWrongItem` is a `Deliver` whose result is not well formed.
+  - The 17 of the receiver's unit root need the receiver's well-formedness. The reference model proves that the
+    unpaired appends keep it. For the paired line kinds it is a declared obligation (dafny-domain's SO-1), not a
+    lemma. One of the 17, `unit_rcv_lineAttachAgreesWithPartner`, has a lemma about the guard alone
+    (`LineAdmitsAttach`, premise (a) of that obligation): that a committed row of these kinds is one its guard
+    admitted is the well-formedness itself.
+  - Twelve of the 43 need a premise that Dafny only assumes: ids are keys (`KeyedCycles`, `KeyedDemands`,
+    `KeyedOrders`, `KeyedPools`, `KeyedReceivers`), a pool has its genesis (`DemandPoolGenesis`,
+    `ReceivingPoolGenesis`), or the card set is well formed (`CardsWF`). Eight of them are among the 39 above.
+    The other four need nothing else: two of the order's unit root and two of the kanban card's.
+- **For the 70 the audit's second condition is not claimed.** What implies a premise of theirs is a lemma of the
   reference model, not a fact of the Alloy root.
 
 ## The premises
@@ -114,7 +126,7 @@ root. So a lemma replaces a check only where the root's instances satisfy the le
 every kind of premise in the rows of the 86 checks retired under the audit's rule, with what implies it in the
 Alloy model, by file and line under `alloy/` at this revision. A premise with nothing that implies it would make its
 checks kept: none is left in those rows. Each fact the table cites for a check is in the import cone of that check's
-root (checked with `tools/cone.sh`, check by check). The 89 retired under the ruling are apart: their table,
+root (checked with `tools/cone.sh`, check by check). The 70 retired under the ruling are apart: their table,
 "Established in the reference model", ends this section.
 
 The table matches predicates. It takes the two guards and the two effects of a module to be the same functions,
@@ -152,20 +164,20 @@ otherwise.
 | item, in the reference data's shared root | 1 | `ItemAdmissionWitnessed` (`reference_data/item/item_implementation.als:64`) | `ItemChain` (:19), `ItemEffects` (:73) | |
 | staff | 4 | `StaffAdmissionWitnessed` (`reference_data/staff/staff_implementation.als:35`) | `StaffChain` (:15). The staff has no effect fact of its own: a staff record has no content that a write changes | |
 
-**Established in the reference model: the premises of the 89.** By file under `src/` at dafny-domain `1c868f2ee`.
-A check with lemmas of two kinds is counted in both.
+**Established in the reference model: the premises of the 70.** By file under `src/` at dafny-domain `1c868f2ee`.
+Each lemma named here requires the well-formedness it keeps and that the new row comes after every row of the log
+(`AllBefore`); a further condition is named. A check with lemmas of two kinds is counted in both.
 
 | Premise | Checks | The predicate | What establishes it |
 | --- | --- | --- | --- |
-| The inventory item's `WellFormed` | 20 | `resources/inventory-item/inventory-item.dfy:285` | `AppendWellFormed` (:345): every append keeps it. |
-| The demand's `WellFormed` | 18 | `operations/demand/demand.dfy:516` | `AppendWellFormed` (:2240) for every kind but the two halves of a pairing; `DeliverWellFormed` (:2430) and `RevokeWellFormed` (:2578) for the pairings; `AppendPDWellFormed` (:2254) for a delivery's retire. |
-| The order's `WellFormed` | 18 | `procurement/order/order.dfy:325` | `AppendOWellFormed` (:1377) and `AppendLWellFormed` (:1398). |
-| The kanban card's `WellFormed` | 16 | `resources/kanban-card/kanban-card.dfy:180` | `AppendWellFormed` (:227). |
-| The inventory pool's `WellFormed` | 9 | `resources/inventory-item/inventory-pool.dfy:163` | `AppendWellFormed` (:414) for every kind but a transfer; `TransferWellFormed` (:471). |
-| The item's `WellFormed` | 5 | `reference-data/item/item.dfy:105` | `AppendWellFormed` (:136). |
-| `StrictTicks(ba)`: the affiliate log is ordered | 2 | `meta/trace.dfy:61` | A conjunct of the affiliate's `WellFormed`, which its `AppendWellFormed` keeps (`reference-data/business-affiliate/business-affiliate.dfy:103`). |
+| The inventory item's `WellFormed` | 19 | `resources/inventory-item/inventory-item.dfy:285` | `AppendWellFormed` (:345), for every kind. |
+| The order's `WellFormed` | 18 | `procurement/order/order.dfy:325` | `AppendOWellFormed` (:1377) for the order's log and `AppendLWellFormed` (:1398) for the line's, each for every kind. |
+| The kanban card's `WellFormed` | 13 | `resources/kanban-card/kanban-card.dfy:180` | `AppendWellFormed` (:227), for every kind. |
+| The inventory pool's `WellFormed` | 9 | `resources/inventory-item/inventory-pool.dfy:163` | `AppendWellFormed` (:414) for every kind but a transfer; `TransferWellFormed` (:471) for a transfer, whose second half comes after its first (`t < t2`). |
+| The item's `WellFormed` | 5 | `reference-data/item/item.dfy:105` | `AppendWellFormed` (:136), for every kind. |
+| `StrictTicks(ba)`: the affiliate log is ordered | 2 | `meta/trace.dfy:61` | A conjunct of the affiliate's `WellFormed`, which its `AppendWellFormed` keeps for every kind (`reference-data/business-affiliate/business-affiliate.dfy:103`). |
 | `Aligned(log, at)` and `StrictChronology(log, at)` | 1 | `resources/inventory-item/metrics.dfy:67`, :71 | Nothing, and nothing needs to: the check states both as its own antecedent (`clocksAligned and strictChronology implies …`). |
-| No standing premise | 6 | | The lemma has no `requires` clause, or only case hypotheses. |
+| No standing premise | 5 | | The lemma has no `requires` clause, or only case hypotheses. |
 
 **Not checked by this table:** that each guard and each effect of the Alloy model equals the Dafny one arm by arm.
 That is the mirror itself, kept by the finders of each refusal and by the pointer check, not by this record.
@@ -195,16 +207,16 @@ law of one structure, where the check stated it of every structure its root admi
     `unit_q_sumSingleton`;
   - the scalar's own three and the profile's one, which state an axiom itself: `unit_scalar_addInverse`,
     `unit_scalar_distributes`, `unit_scalar_zeroNeOne`, `unit_prof_premisesInForce`.
-  - Eight more are among the 89 retired under the ruling. Each is a law of quantities in a root where the group
+  - Eight more are among the 70 retired under the ruling. Each is a law of quantities in a root where the group
     and order axioms hold as a fact (`DomainLogPremises`). The last assumes the ring axioms too, as its premise:
     `unit_occ_mergeConserves`, `unit_occ_splitConserves`, `unit_occ_noCommittedOverdraw`,
     `unit_invmet_partitionAdditivity`, `unit_ord_contract_receiptAccrues`, `unit_ord_contract_receiptReverses`,
     `unit_ordr_receivedIsAccumulated`, `unit_item_toEachIdentity`.
-  - Three more of the 89 name a scalar or a quantity and state no law of its values:
+  - Three more of the 70 name a scalar or a quantity and state no law of its values:
     `unit_occ_committedUnitsValid` (the units of an amount, its keys), `unit_item_eachConfigured` (a constant: the
     factor of each is one) and `unit_invmet_quietPeriodRepeats` (equal members give equal totals).
-  - Every one of the 89 is in a root with that fact, and these modules add and compare quantities in their
-    guards and effects. So each of the 89 was checked over small abstract scalars and is proved over the reals.
+  - Every one of the 70 is in a root with that fact, and these modules add and compare quantities in their
+    guards and effects. So each of the 70 was checked over small abstract scalars and is proved over the reals.
 - **Elapsed time, 2 checks.** Alloy's metric is abstract, under the premise `durationAxioms`
   (`meta/time/time.als:66`). Dafny's instants are integers and its durations naturals (`src/meta/time.dfy:20`, :99),
   and each law is a theorem of that metric: `unit_time_elapsedWhenOrdered`, `unit_time_zeroAtPoint`.
@@ -324,31 +336,6 @@ law of one structure, where the check stated it of every structure its root admi
 | `unit_time_withinBounds` | `time.als` | `WithinBounds` | `src/meta/time.dfy:149` | none | the name | P: Within(t, i) exactly when the interval's ends bound t. Q: the same. The same statement, definitional on both sides. |
 | `unit_time_zeroAtPoint` | `time.als` | `ZeroAtPoint` | `src/meta/time.dfy:151` | none | the name | P: DurationBetween(a, a) == Some(ZeroDuration). Q: the same, under the duration axioms, which state it. The same law: Dafny proves it of its metric. |
 
-## `operations/demand`
-
-| Check | Root | Dafny lemma | At | Premises | Matched by | Why the lemma implies the check |
-| --- | --- | --- | --- | --- | --- | --- |
-| `unit_dem_contract_completeRequiresSettled` | `unit/demand.als` | `CompleteRequiresSettled` | `src/operations/demand/demand-contract.dfy:943` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.Complete? && c in AttachedLiveAt(log[..i], PrefixBefore(clog, log[i].tick), log[i].subject)` | the lemma's own `Alloy:` pointer | P: a committed Complete found no attached live member cycle IN_PROCESS as of its tick. Q: the same. The same statement. |
-| `unit_dem_contract_completeStampedAfterHolding` | `unit/demand.als` | `CompleteStampedAfterHolding` | `src/operations/demand/demand-contract.dfy:952` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.Complete? && PreOf(log, i).Some? && PreOf(log, i).value.sHolding.Some? && p in KC.PoolsNamed(PrefixBefore(plog, log[i].tick), PreOf(log, i).value.sHolding.value)` | the lemma's own `Alloy:` pointer | P: no committed write of the holding pool before a committed Complete is dated after the Complete's stamp. Q: every committed write of the holding pool causally before a committed Complete is dated at or before it. The same statement. |
-| `unit_dem_contract_cycleIndivisible` | `unit/demand.als` | `CycleIndivisible` | `src/operations/demand/demand-contract.dfy:886` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && d1 in DemandOf(log, c) && d2 in DemandOf(log, c)` | the lemma's own `Alloy:` pointer | P: in a well-formed world, two demands that hold a cycle are the same demand. Q: at every tick a cycle has at most one demand. P implies Q: P holds of every well-formed log, so of the prefix at each tick. |
-| `unit_dem_contract_deliveryTerminalRevoke` | `unit/demand.als` | `DeliveryTerminalRevoke` | `src/operations/demand/demand-contract.dfy:1006` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && n1 <= n2 <= \|pdlog\| && DeliveryStatusAt(pdlog[..n1], pd) == Some(PD_REVOKED)` | the lemma's own `Alloy:` pointer | P: a delivery that reads REVOKED in a prefix of its log reads REVOKED in every longer prefix. Q: a delivery REVOKED at a tick is REVOKED at every later tick. The same statement: a later tick is a longer prefix. |
-| `unit_dem_contract_distributeRequiresReady` | `unit/demand.als` | `DistributeRequiresReady` | `src/operations/demand/demand-contract.dfy:933` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.Distribute? && m in log[i].kind.fills && PreOf(log, i).Some? && m in PreOf(log, i).value.sContributions && PreOf(log, i).value.sContributions[m].CardContribution? && c in CyclesNamed(PrefixBefore(clog, log[i].tick), PreOf(log, i).value.sContributions[m].cycle)` | the lemma's own `Alloy:` pointer | P: a committed Distribute found the cycle of every card contribution it asserts as filled READY as of its tick. Q: the same. The same statement. |
-| `unit_dem_contract_frozenOutsideOpen` | `unit/demand.als` | `FrozenOutsideOpen` | `src/operations/demand/demand-contract.dfy:894` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && IsMutator(log[i].kind)` | the lemma's own `Alloy:` pointer | P: a committed contribution mutator read a state whose status is OPEN. Q: the same. The same statement. |
-| `unit_dem_contract_holdingProvenance` | `unit/demand.als` | `HoldingProvenance` | `src/operations/demand/demand-contract.dfy:1032` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && HoldingAt(log, d) == Some(e)` | the lemma's own `Alloy:` pointer | P: a demand whose holding is e has a committed StartProduction naming e in its log. Q: a demand with a holding at a tick has a committed StartProduction at or before it naming that holding. The same statement, for the prefix at each tick. |
-| `unit_dem_contract_startProductionRequiresStarted` | `unit/demand.als` | `StartProductionRequiresStarted` | `src/operations/demand/demand-contract.dfy:925` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.StartProduction? && c in AttachedLiveAt(log[..i], PrefixBefore(clog, log[i].tick), log[i].subject)` | the lemma's own `Alloy:` pointer | P: a committed StartProduction found every attached live member cycle IN_PROCESS as of its tick. Q: the same. The same statement. |
-| `unit_dem_contract_terminalClosure` | `unit/demand.als` | `TerminalClosure` | `src/operations/demand/demand-contract.dfy:974` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && n1 <= n2 <= \|log\| && DemandStatusAt(log[..n1], d).Some? && TerminalStatus(DemandStatusAt(log[..n1], d).value)` | the lemma's own `Alloy:` pointer | P: a demand whose status is terminal in a prefix of its log has a terminal status in every longer prefix. Q: a demand COMPLETE or CANCELED at a tick is COMPLETE or CANCELED at every later tick. The same statement: a later tick is a longer prefix. |
-| `unit_dem_contract_withdrawnDetachReconciles` | `unit/demand.als` | `WithdrawnDetachReconciles` | `src/operations/demand/demand-contract.dfy:963` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.DetachWithdrawn?` | the lemma's own `Alloy:` pointer | P: a committed DetachWithdrawn's post contributions are its pre contributions without the entry it names (and that entry was a card contribution). Q: the post contributions are the pre contributions without the target. P implies Q: P's third clause is Q. |
-| `unit_dem_holdingPoolPinHolds` | `unit/demand.als` | `HoldingPoolPinMatchesItem` | `src/operations/demand/demand-contract.dfy:1082` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.StartProduction? && log[i].kind.holding.Some? && p in KC.PoolsNamed(PrefixBefore(plog, log[i].tick), log[i].kind.holding.value)` | reading | P: every pool that a committed StartProduction's holding names carries the demand's item pin. Q: the same. The same statement. |
-| `unit_dem_holdingPoolPinMatchesItem` | `unit/demand.als` | `HoldingPoolPinMatchesItem` | `src/operations/demand/demand-contract.dfy:1082` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.StartProduction? && log[i].kind.holding.Some? && p in KC.PoolsNamed(PrefixBefore(plog, log[i].tick), log[i].kind.holding.value)` | the lemma's own `Alloy:` pointer | P: every pool that a committed StartProduction's holding names carries the demand's item pin. Q: the same. The same statement. |
-| `unit_dem_nothingAfterRetire` | `unit/demand.als` | `DemandNothingAfterRetire` | `src/operations/demand/demand-contract.dfy:1242` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < j < \|log\| && Committed(log[i]) && Committed(log[j]) && log[i].subject == log[j].subject` | the audit of 2026-11-18 | P: of two committed rows on one demand, the earlier is not a DeleteDemand. Q: no committed row of a demand follows its committed delete. The same statement, on the demand log. |
-| `unit_dem_recordedHoldingLive` | `unit/demand.als` | `RecordedHoldingLive` | `src/operations/demand/demand-contract.dfy:1051` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.RecordProduction? && HoldingAt(log[..i], log[i].subject).Some?` | the name | P: a committed RecordProduction on a demand with a holding found that holding's pool live as of its tick. Q: the same. The same statement. |
-| `unit_dem_recordedHoldingLive` | `unit/demand.als` | `RecordedHoldingLive` | `src/operations/demand/demand.dfy:1027` | none | the name | |
-| `unit_dem_startedHoldingLive` | `unit/demand.als` | `StartedHoldingLive` | `src/operations/demand/demand-contract.dfy:1041` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < \|log\| && Committed(log[i]) && log[i].kind.StartProduction? && log[i].kind.holding.Some?` | the name | P: a committed StartProduction that names a holding names a pool live as of its tick. Q: the same. The same statement. |
-| `unit_dem_startedHoldingLive` | `unit/demand.als` | `StartedHoldingLive` | `src/operations/demand/demand.dfy:1004` | none | the name | |
-| `unit_pdr_noRecordedRefusalWithoutGenesis` | `unit/delivery_retire.als` | `DeliveryNoRecordedRefusalWithoutGenesis` | `src/operations/demand/demand-contract.dfy:1265` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && j < \|pdlog\| && Recorded(pdlog, PDShapeOf, j) && !Committed(pdlog[j])` | the audit of 2026-11-18 | P: a recorded row of the delivery log that did not commit sits on a delivery started before it. Q: the recording law on the delivery log. The same statement, on the delivery log. |
-| `unit_pdr_nothingAfterRetire` | `unit/delivery_retire.als` | `DeliveryNothingAfterRetire` | `src/operations/demand/demand-contract.dfy:1250` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && i < j < \|pdlog\| && Committed(pdlog[i]) && Committed(pdlog[j]) && pdlog[i].subject == pdlog[j].subject` | the audit of 2026-11-18 | P: of two committed rows on one delivery, the earlier is not a RetireDelivery. Q: nothing commits on the delivery's log after a committed retire. The same statement, on the delivery log. |
-| `unit_pdr_retireIsTombstone` | `unit/delivery_retire.als` | `DeliveryRetireIsTombstone` | `src/operations/demand/demand-contract.dfy:1258` | `WellFormed(log, pdlog, clog, cards, plog, il, items) && j < \|pdlog\| && Committed(pdlog[j]) && pdlog[j].kind.RetireDelivery?` | reading | P: a committed RetireDelivery's post state is its pre state. Q: the same. The same statement. |
-
 ## `procurement/order`
 
 | Check | Root | Dafny lemma | At | Premises | Matched by | Why the lemma implies the check |
@@ -374,12 +361,6 @@ law of one structure, where the check stated it of every structure its root admi
 | `unit_ord_removeRequiresDetached` | `unit/order.als` | `RemoveRequiresDetached` | `src/procurement/order/order-contract.dfy:771` | `WellFormed(olog, llog, dlog, items, ba, staff) && i < \|llog\| && Committed(llog[i]) && llog[i].kind.RemoveLine?` | the lemma's own `Alloy:` pointer | P: a committed RemoveLine read a line state with no paired demand. Q: the same. The same statement. |
 | `unit_ord_supplierBindingPinAgreesHolds` | `unit/order.als` | `BindingsSound` | `src/procurement/order/order-contract.dfy:744` | `WellFormed(olog, llog, dlog, items, ba, staff) && StrictTicks(ba) && i < \|olog\| && Committed(olog[i]) && SupplierWritten(olog[i].kind).Some?` | the lemma's own `Alloy:` pointer | P: a committed row that writes a supplier binding writes one that agrees with the affiliate log. Q: a committed CreateOrder or UpdateSupplier's binding pin agrees. The same statement: those are the kinds that write a supplier. P's premise StrictTicks(ba) is the affiliate log's own order, which its append ensures. |
 | `unit_ordr_receivedIsAccumulated` | `unit/order_received.als` | `ReceivedIsAccumulated` | `src/procurement/order/order-contract.dfy:688` | `WellFormed(olog, llog, dlog, items, ba, staff) && n <= \|llog\|` | the name | P: for every line and every prefix of the line log, the stored sReceived is the sum of its committed receipts minus the sum of its reversals. Q: the same at every tick, written case by case for up to two postings. P implies Q: P holds for any number of postings. |
-
-## `receiving/receiver`
-
-| Check | Root | Dafny lemma | At | Premises | Matched by | Why the lemma implies the check |
-| --- | --- | --- | --- | --- | --- | --- |
-| `unit_rcv_lineAttachAgreesWithPartner` | `unit/receiver.als` | `LineAdmitsAttach` | `src/receiving/receiver/receiver.dfy:1359` | `(k.AppendAttribution? && AppendAttributionViol(prefix, oat, l, k.attribution) == {}) \|\| (k.AddReceivingLine? && k.withAttribution.Some? && AddLineViol(prefix, rvt, oat, it, l, k) == {})` | the lemma's own `Alloy:` pointer | P: a line-side attach that its guard admits (an AppendAttribution, or an AddReceivingLine with an attribution) names an attribution whose AttachAttribution guard raises nothing. Q: a committed line-side attach names an attribution with no committed attach before it. P implies Q: that guard raises RAttributionStarted exactly when the attribution has a committed row before (OAViol, receiver.dfy:316), so 'raises nothing' is 'not started'. |
 
 ## `reference_data/business_affiliate`
 
