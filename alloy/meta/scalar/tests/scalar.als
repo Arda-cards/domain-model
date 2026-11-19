@@ -9,16 +9,3 @@ open meta/scalar/scalar
 
 // A non-trivial commutative ring with unit exists at this carrier size.
 run unit_scalar_ringExists { ringAxioms } for exactly 3 Scalar expect 1
-
-// The ring is non-trivial (0 ≠ 1) — follows from ringAxioms.
-check unit_scalar_zeroNeOne { ringAxioms implies SZero != SOne } for 3 Scalar expect 0
-
-// Every element has an additive inverse.
-check unit_scalar_addInverse {
-  ringAxioms implies all a: Scalar | a.splus[a.sneg] = SZero
-} for exactly 3 Scalar expect 0
-
-// Multiplication distributes over addition.
-check unit_scalar_distributes {
-  ringAxioms implies all a, b, c: Scalar | a.smul[b.splus[c]] = (a.smul[b]).splus[a.smul[c]]
-} for exactly 3 Scalar expect 0

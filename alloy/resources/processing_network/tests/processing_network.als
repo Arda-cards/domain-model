@@ -40,8 +40,3 @@ run unit_pnet_retirementBoundary {
     stationLiveAt[s, t1] and not stationLiveAt[s, t2]
   }
 } for 4 but 4 Tick expect 1
-
-// An unretired station is live at EVERY tick (the latch's benign default).
-check unit_pnet_unretiredAlwaysLive {
-  all s: Station, t: Tick | no s.retiredAt implies stationLiveAt[s, t]
-} for 4 but 4 Tick expect 0

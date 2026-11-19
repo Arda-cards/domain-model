@@ -17,14 +17,6 @@ run unit_principal_loads {
   some disj p, q: Principal | p.name != q.name
 } for 4 expect 1
 
-// DECISION #1 — fully an Entity: a principal's identity resolves back to it (`resolve[eId] = p`).
-assert unit_principal_resolvesAsEntity { all p: Principal | resolve[p.eId] = p }
-check unit_principal_resolvesAsEntity for 6 expect 0
-
 // The readable handle is a KEY: equal handles imply the same principal.
 assert unit_principal_nameIsKey { all p, q: Principal | p.name = q.name implies p = q }
 check unit_principal_nameIsKey for 6 expect 0
-
-// A principal is recoverable from its handle (`principalNamed` round-trips).
-assert unit_principal_recoverable { all p: Principal | principalNamed[p.name] = p }
-check unit_principal_recoverable for 6 expect 0

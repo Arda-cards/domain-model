@@ -22,12 +22,29 @@ Everything else a root contains, every `check` of a law Dafny proves unboundedly
 1. Its header names the Dafny module it reflects: `// Reflects dafny-domain src/<path>.dfy`.
    A soak root, which refines lemmas and reflects no single module, names them instead:
    `// Refines Dafny: <Module>.<Lemma>`, one line per lemma.
-2. Each kept command names what it extends: `// Extension class 1: finder for <Module>.<Witness>` or
-   `// Extension class 2: counter-example search for <Module>.<Lemma> (deferred | S-07)`.
-3. The Dafny lemma's docstring carries the reverse pointer, `// Alloy extension: <root> <command>` (DT-015 D6).
+2. A kept command is tied to the reference model in writing where it mirrors something there. The reference model's
+   pointer check (`tools/check-pointer-parity.py` in `dafny-domain`) resolves every tie that is written.
+   - **A finder that mirrors a Dafny witness** is named in that witness's docstring, in its `Alloy:` clause. Where
+     the Dafny side does not name it, a comment directly above the command does:
+     `// Extension class 1: finder for <Module>.<Witness>`.
+   - **A finder with no Dafny witness** has no tie of its own. Its root's `Reflects` header (rule 1) ties it to the
+     module. That is class 1 as defined above: an instance nobody wrote.
+   - **A soak check (class 2):** the Dafny lemma's docstring carries rule 3's pointer, and the root names the lemma
+     in its `Refines Dafny` marker (rule 1).
+   - **A kept check that guards Alloy's own encoding** has no Dafny lemma that implies it. It is named, with the
+     reason, in the table
+     under "The checks, classified command by command" below.
+
+   Measured at `2f78f3e`, over the commands outside the modeling cookbook (`meta/examples/`): of the 580 finders, at
+   most 329 are named in a Dafny docstring at `dafny-domain` `bedfb64fa`, and at most 390 at the head of its pull
+   request 59 (`92066ce`). The rest have no tie of their own: their root's header (rule 1) is the tie, and the
+   conventions' teaching roots carry none. No command carries the comment form at `2f78f3e`; the four integration
+   refusal finders of pull request 20 add the first.
+3. The Dafny lemma's docstring carries the reverse pointer, `Alloy extension: <root> · <what>` (DT-015 D6). The
+   `· <what>` part may be left out.
 4. `make check-alloy` runs the kept roots only.
 
-## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is the Alloy cut's work; step A's removals marked)
+## Inventory (MEASURED at `ca51fc7f0`; the per-command classification is applied below; step A's removals marked)
 
 The counts are commands per root today. The class is the ROOT's default; a command may be reclassified in the cut.
 
@@ -117,6 +134,88 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 | `tests/pool_lattice.als` | 2 | 1 | REFLECTS Dafny: runs kept as finders (class 1). Since the TN-004 projection: 4 runs, 0 checks — the check `sys_poolLatticeGlobal` is RETIRED (the project owner's ruling QA761, Q1 (a), 2026-11-12: Dafny proves `PoolLattice.PoolLatticeGlobal` for every log), and the finders cover the four holder kinds |
 | `tests/system.als` | 5 | 0 | REFLECTS Dafny: runs kept as finders (class 1); checks kept only for a deferred or S-07-type law, else RETIRED |
 
+## The checks, classified command by command (applied 2026-11-16)
+
+The project owner's rulings QA779, option (a) (2026-11-12), and QA808, option (c) (2026-11-16): a `check` of a law the
+reference model proves is retired, and a check Dafny has no proof of is kept. An executed test is not a proof. The scope
+is the 249 `check` commands outside `soak/`, `conventions/` and `meta/examples/`, as main stood at `2986f32`. The
+13 checks of the modeling cookbook (`meta/examples/`, run by `make check-examples`, not by `make check-alloy`) are
+teaching material, as the conventions are: they are neither retired nor in the table of kept checks.
+
+The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
+state, need not prove, tests on one machine, assumes, or has no lemma for. Since the reading of 2026-11-18, 113 more are
+kept for another reason: a Dafny lemma states the law, and it is not yet shown to cover every instance of the check's
+root.
+
+- **Retired, 90.** 86 are each a check of a law that a Dafny lemma proves, in a root whose instances satisfy the
+  lemma's premises. Four are retired by a ruling of their own (the last item below). The record is
+  [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
+  premises it assumes, why its statement implies the check's property, and what in the Alloy model implies each
+  premise.
+  - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 commands were
+    recorded as retired, under 210 names: one check, `unit_pool_membershipExclusive`, has two commands. On 2026-11-18
+    each was read again, the check's text beside the lemma's statement, and each premise of each lemma was looked for
+    in the Alloy model. Of the 210, 68 stand, 18 had their citation corrected, 120 were restored to the tree and are
+    kept (below), and four are retired by a ruling of their own (the last item).
+  - 86 left the tree with this classification.
+  - Four leave with the four integration finders that replace them, by a ruling of their own (QA787, second
+    question, option (a)): `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`,
+    `int_ord_contract_demandIndivisible` and `int_ord_contract_frozenOutsideDraft`. Their roots open a lower
+    module by its types alone, so the rule of the reading would keep them; the ruling decides.
+- **Kept, 159 commands under 158 names** (the check named above has two). The card for QA808 counted 36.
+  - The kanban card's two print-machine checks were counted as retired there. They are kept, since Dafny decides
+    them by an executed test, as it does the kit's machines.
+  - The reading of 2026-11-18 restored 120:
+    - five that restate a fact Dafny only assumes;
+    - two that no lemma states;
+    - 113 in a root that opens a lower module without its implementation facts: 75 in the five unit roots that
+      give their lower modules as contract mocks, and 38 in eight roots that open one by its types alone.
+
+| Why Dafny has no proof | Kept checks | Root |
+| --- | --- | --- |
+| **The arithmetic is Alloy's own** (8). They show that Alloy's bounded `Int` behaves as a ring. Dafny proves the same axioms of its unbounded scalar, so it says nothing of Alloy's integers. | `int_addAssoc`, `int_addComm`, `int_addId`, `int_addInv`, `int_distrib`, `int_mulComm`, `int_mulId`, `int_posClosed_bounded` | `meta/keyed_value_algebra/tests/scalar_int.als` |
+| **True by construction in Dafny** (14). In Dafny each is a type or a function, with nothing to prove. In Alloy each is a relation that a wrong fact could break. | `unit_action_outcomesPartition`, `unit_action_refusalHasReason`, `unit_action_successNoReason`, `unit_action_prePostDomains`, `unit_action_prefixMonotone`, `unit_action_prefixOnlyCommitted` | `meta/action/tests/action.als` |
+| | `unit_attr_oneActor` | `meta/action/tests/attributed.als` |
+| | `unit_aff_refusalWritesNothing` | `meta/subject_log/tests/affirm.als` |
+| | `unit_lc_refusalWritesNothing` | `meta/subject_log/tests/lifecycle.als` |
+| | `unit_occ_archeTotal` | `meta/occurrence/tests/occurrence.als` |
+| | `unit_act_originsAreSelfInitiated` | `meta/activation/tests/activation.als` |
+| | `unit_duration_zeroIsMin` | `meta/time/tests/duration.als` |
+| | `unit_time_endpointsUnique` | `meta/time/tests/time.als` |
+| | `unit_meas_endpointsLone` | `meta/measurement/tests/measurement.als` |
+| **Tested on each concrete state machine** (9). Reachability and live signals are properties of one machine. Dafny decides them by an executed test per machine, not by a lemma. | `unit_sm_allReachable`, `unit_sm_firedInto`, `unit_sm_liveSignals` | `meta/state_machine/tests/machine.als` |
+| | `x731_admin_reachable`, `x731_op_reachable`, `x731_usage_reachable`, `x731_liveSignals` | `shared/x731_state/tests/state.als` |
+| | `unit_kc_printReachable`, `unit_kc_printLiveSignals` | `resources/kanban_card/tests/kanban_card.als` |
+| **A premise in Dafny** (7). Dafny assumes it, and no lemma establishes it. Alloy checks that its facts imply it. One sample per instant, in the measurement lemmas. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
+| Tenant isolation, in the kernel's well-formed universe. | `unit_shared_tenantIsolation` | `reference_data/shared/tests/shared.als` |
+| Entity ids are keys (`Keyed`). The lemma `Kernel.EIdIsKey` concludes it only from that premise. | `unit_kernel_eIdIsKey` | `meta/tests/kernel.als` |
+| Principal names are keys (`NamesUnique`). The lemma `Principal.NameIsKey` concludes it only from that premise. | `unit_principal_nameIsKey` | `meta/principal/tests/principal.als` |
+| The X.731 interlocks (`ResourceInterlocks`). The lemma `X731State.X731Consistency` requires both interlocks and concludes the first. | `X731Consistency` | `shared/x731_state/tests/state.als` |
+| One occurrence per tick (`OneOccurrencePerTick`). The lemma `Trace.TickIndexUnique` concludes it inside one log; across the logs of a world it is the premise `ServicesTicksDisjoint`. | `unit_occ_onePerTick` | `meta/occurrence/tests/occurrence.als` |
+| A cited origin precedes the occurrence that cites it (`ArcheOriginPrecedes`). Dafny establishes it inside one service (`Activated`); across services it is the premise `CrossCallersPrecede`. | `unit_occ_archeOriginPrecedes` | `meta/occurrence/tests/occurrence.als` |
+| **No Dafny lemma states it** (2). Every chain of citations reaches an origin. `Activation.TreeWalkNonIncreasing` and `Activation.NoProperCycle` state that a walk never goes forward and that only an origin loops; no lemma concludes that a walk reaches one. | `unit_act_walkEndsAtOrigin` | `meta/activation/tests/activation.als` |
+| Scaling the zero value gives the zero value. The lemma `KeyedAlgebra.ScaleZeroValue` states it for `int` keys only. | `unit_alg_scaleZeroValue` | `meta/keyed_value_algebra/tests/keyed_monoid.als` |
+| **True by construction in Dafny, in a domain module** (3). The state is a datatype and the effect a function, and the transfer composite takes one stamp. | `unit_ba_postHoldsExactlyTheWrittenVersions`, `unit_ba_statesWithEqualPayloadsAreEqual` | `reference_data/business_affiliate/tests/business_affiliate.als` |
+| | `unit_pool_transferPairOneStamp` | `resources/inventory_item/tests/inventory_pool.als` |
+| **True of the Alloy universe only** (1). The record-side wrong-item refusal never fires where ids are keys and pins are static. Dafny's witness `RecordWrongItem` shows it firing. | `unit_dem_recordProductionItemArmSubsumed` | `operations/demand/tests/unit/demand.als` |
+| **The bounded theorem the Dafny tree names as an extension** (1; TN-001's row S-05). | `unit_invmet_usableNonNegativeInRange` | `resources/inventory_item/tests/metrics.als` |
+| **The root opens a lower module without its implementation facts** (113). A Dafny lemma states each law, and the lemma is not yet shown to cover every instance of the root. In Dafny a lower state is always the `Effect` folded over a lower log. Such a root allows lower records that the chaining and effect facts would exclude, and it is not shown that every one is the state of some lower log. A follow-up in the project's plan (activity AC-04-03-02-31) reads each such root: what the checked module reads of the lower module, and whether that is fixed as in Dafny. As a contract mock (75), which keeps the lower occurrences and replaces the chaining and effect facts with the contract's `guarantees`. (19 in this root.) | `unit_dem_contract_cycleIndivisible`, `unit_dem_contract_frozenOutsideOpen`, `unit_dem_contract_attachRequiresAccepted`, `unit_dem_contract_removeRequiresShelved`, `unit_dem_contract_startProductionRequiresStarted`, `unit_dem_contract_distributeRequiresReady`, `unit_dem_contract_completeRequiresSettled`, `unit_dem_contract_withdrawnDetachReconciles`, `unit_dem_contract_terminalClosure`, `unit_dem_contract_holdingProvenance`, `unit_dem_contract_holdingExclusive`, `unit_dem_contract_createDeliveryGated`, `unit_dem_contract_deliveryTerminalRevoke`, `unit_dem_holdingPoolPinMatchesItem`, `unit_dem_nothingAfterRetire`, `unit_dem_contract_completeStampedAfterHolding`, `unit_dem_holdingPoolPinHolds`, `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive` | `operations/demand/tests/unit/demand.als` |
+| (3 in this root.) | `unit_pdr_retireIsTombstone`, `unit_pdr_nothingAfterRetire`, `unit_pdr_noRecordedRefusalWithoutGenesis` | `operations/demand/tests/unit/delivery_retire.als` |
+| (19 in this root.) | `unit_ord_contract_frozenOutsideDraft`, `unit_ord_contract_demandIndivisible`, `unit_ord_contract_attachRequiresReleased`, `unit_ord_contract_attachItemAgrees`, `unit_ord_contract_submitRequiresStarted`, `unit_ord_contract_receiptAccrues`, `unit_ord_contract_receiptReverses`, `unit_ord_contract_lineClosureByAct`, `unit_ord_contract_closeRequiresSettled`, `unit_ord_contract_supplierBindingFrozen`, `unit_ord_contract_orderTerminalClosure`, `unit_ord_contract_headerDetailFrozen`, `unit_ord_contract_priorityDefault`, `unit_ord_removeRequiresDetached`, `unit_ord_nothingAfterRetire`, `unit_ord_noRecordedRefusalWithoutGenesis`, `unit_ord_bindingPinCurrencyHolds`, `unit_ord_assigneePinCurrencyHolds`, `unit_ord_supplierBindingPinAgreesHolds` | `procurement/order/tests/unit/order.als` |
+| (17 in this root.) | `unit_rcv_contract_linePoolProvenance`, `unit_rcv_contract_captureWindowFrozen`, `unit_rcv_contract_completeRequiresLinesFinalized`, `unit_rcv_contract_capturedFactsFrozen`, `unit_rcv_contract_receiveSameItemPool`, `unit_rcv_contract_receiveAllocationBounded`, `unit_rcv_contract_actualSetOnce`, `unit_rcv_contract_deliveriesAppendOnly`, `unit_rcv_contract_lineForwardMonotone`, `unit_rcv_contract_receiverTerminalComplete`, `unit_rcv_contract_linesPoolLoneHolder`, `unit_rcv_contract_lineCyclePoolDisjoint`, `unit_rcv_contract_lineDemandPoolDisjoint`, `unit_rcv_carrierPinCurrencyHolds`, `unit_rcv_lineItemPinCurrencyHolds`, `unit_rcv_receiverCarrierPinAgreesHolds`, `unit_rcv_lineAttachAgreesWithPartner` | `receiving/receiver/tests/unit/receiver.als` |
+| (17 in this root.) | `unit_ii_contract_stateFunction`, `unit_ii_contract_liveHaveState`, `unit_ii_contract_bornLive`, `unit_ii_contract_closureIsTerminal`, `unit_ii_contract_touchesLiveness`, `unit_ii_contract_readBack`, `unit_occ_noCommittedOverdraw`, `unit_occ_noResurrection`, `unit_occ_terminalRetirement`, `unit_occ_splitConserves`, `unit_occ_mergeConserves`, `unit_occ_expiryNeverLengthens`, `unit_occ_sealedOnlyBySeal`, `unit_occ_committedUnitsValid`, `unit_occ_lpnUniqueAmongStarted`, `unit_occ_serialUniqueAmongStarted`, `unit_occ_itemPinCurrencyHolds` | `resources/inventory_item/tests/unit/inventory_item.als` |
+
+| By its types alone, with neither its facts nor a mock (38). Without facts here: the affiliate. (7 in this root.) | `unit_item_supplyOwnership`, `unit_item_supplyPinCurrencyHolds`, `unit_item_eachConfigured`, `unit_item_toEachIdentity`, `unit_item_lifecycleShape`, `unit_item_nothingAfterRetire`, `unit_item_retireIsTombstone` | `reference_data/item/tests/item.als` |
+| Without facts here: the affiliate, the item, the inventory item and the processing network. (9 in this root.) | `unit_cyc_oneLiveCyclePerCard`, `unit_cyc_forwardMonotone`, `unit_cyc_noPoolBeforeInProcess`, `unit_cyc_poolFrozenOnceAttached`, `unit_cyc_poolProvenance`, `unit_cyc_poolExclusiveWhileLive`, `unit_cyc_closureIsTerminal`, `unit_cyc_quantityFixedAtGenesis`, `unit_cyc_poolItemHomogeneous` | `resources/kanban_card/tests/cycle_occurrences.als` |
+| Without facts here: the affiliate, the item, the inventory item and the processing network. (7 in this root.) | `unit_cyr_nothingAfterRetire`, `unit_cyr_abandonedIsWithdrawn`, `unit_cyr_closedBeforeSuccessorGenesis`, `unit_cyr_poolAttachedOnce`, `unit_cyr_startedPoolLive`, `unit_cyr_attachedOnceById`, `unit_cyr_noRecordedRefusalWithoutGenesis` | `resources/kanban_card/tests/cycle_retire.als` |
+| Without facts here: the affiliate, the item and the inventory item. (5 in this root.) | `unit_pool_homogeneous`, `unit_pool_sameTenant`, `unit_pool_membershipExclusive`, `unit_pool_stampsMonotone`, `unit_pool_reversalDisciplineHolds` | `resources/inventory_item/tests/inventory_pool.als` |
+| Without facts here: the affiliate, the item and the inventory item. (4 in this root.) | `unit_plc_nothingAfterRetire`, `unit_plc_affirmNeverCreatedIsNotClosed`, `unit_plc_affirmIsInert`, `unit_plc_noRecordedRefusalWithoutGenesis` | `resources/inventory_item/tests/pool_lifecycle.als` |
+| Without facts here: the affiliate and the item. (3 in this root.) | `unit_invmet_partitionAdditivity`, `unit_invmet_quietPeriodRepeats`, `unit_invmet_frameworkMatchesLog` | `resources/inventory_item/tests/metrics.als` |
+| Without facts here: the affiliate. (2 in this root.) | `int_ii_contract_stateFunction`, `int_ii_contract_closureIsTerminal` | `resources/inventory_item/tests/integration/inventory_item.als` |
+| Without facts here: every domain module it reads. (1 in this root.) | `unit_ordr_receivedIsAccumulated` | `procurement/order/tests/unit/order_received.als` |
+The Inventory table above keeps its counts as measured at the cut. A root's row there that reads "checks RETIRED" is now
+exact, except for the roots this table names.
+
 ## Retired with the cut, by design item of DT-015
 
 - D3: `meta/subject_log/tests/subject_log.als`'s duplicate-origin commands (`unit_slog_archeSelfMintedReactionAllowed` and its pair), the pool's `RDuplicateOrigin` witnesses in `resources/inventory_item/tests/inventory_pool.als`.
@@ -138,12 +237,12 @@ The counts are commands per root today. The class is the ROOT's default; a comma
 - OQ-1 (DT-015): RULED, QA708 (a) with the activation atom standing for `ActId` (MP, 2026-11-05); taken verbatim in step B.
 - QA704 Q2 (b): DONE at `bb7570a` — `RNoSuchPool` (declared in `inventory_pool.als`, `poolLiveAt`/`namedPoolLive`) at StartProduction, CreateDelivery and RecordProduction (demand) and at StartProcessing (kanban), reading A of dafny-domain #33: a holding retired between two deliveries refuses the second `Deliver` whole; witnesses `unit_dem_startProductionNoSuchPoolRefused`, `unit_dem_recordProductionHoldingRetiredRefused`, `unit_dem_createDeliveryHoldingRetiredRefused`, `unit_cyr_startProcessingNoSuchPoolRefused`; theorems `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive`, `unit_cyr_startedPoolLive`.
 - MF-004 (dafny-domain #32's bot finding, #33's remedy): `RAttributionStarted` on the receiver's line-side attach (`appendAttributionViol`, `addLineViol`) at `4c29334`; the pairing fact stays, `unit_rcv_lineAttachAgreesWithPartner` checks it no longer excludes what the partner refuses.
-- The per-command classification of the 300-odd `check` commands, root by root, with the Dafny lemma named for each kept one. RULED: QA779, option (a) (the project owner, 2026-11-12): every unit-root `check` of a law Dafny proves is retired, the finders stay, and each kept check is named here with its class. Measured before the ruling: of the 65 contract checks of the demand's, the order's, the inventory item's and the receiver's unit roots, 12 found no instance of their scenario at their scope and 2 more only half of it. The classification is its own change, after the TN-004 projection.
+- The per-command classification of the 300-odd `check` commands, root by root, with the Dafny lemma named for each kept one. RULED: QA779, option (a) (the project owner, 2026-11-12): every unit-root `check` of a law Dafny proves is retired, the finders stay, and each kept check is named here with its class. Measured before the ruling: of the 65 contract checks of the demand's, the order's, the inventory item's and the receiver's unit roots, 12 found no instance of their scenario at their scope and 2 more only half of it. The classification is its own change, after the TN-004 projection. DONE. The first classification, of 2026-11-16, retired 211 commands and kept 38; the reading of 2026-11-18 superseded those counts. The section "The checks, classified command by command" gives the scope and the present result. The kit's checks followed QA808, option (c).
 - `int_dem_recollationAfterFailure` (`operations/demand/tests/integration/demand.als`): FOUND in 856 s at `36ea315` (2026-11-14, a day run), in its form with the twelve rows named and ordered (`41f277e`). Before that form it had no verdict: 4 hours at 15 occurrences (2026-11-06), where it could not have an instance (the arc counts 16), and 4 hours at 20 (the bound QA740 (c) set on paper) in the night window of 2026-11-13.
-- QA807 (a) (the project owner, 2026-11-16: "Option (a) plus add an extended scope check in the nightly window to try to verify the pending ones"): five commands are NOT DECIDED at their present scope. They stay in the tree, and an extended run in a night window the project owner opens tries them again. None found a counterexample or was refuted.
+- QA807 (a) (the project owner, 2026-11-16: "Option (a) plus add an extended scope check in the nightly window to try to verify the pending ones"): four commands are NOT DECIDED at their present scope. They stay in the tree, and an extended run in a night window the project owner opens tries them again. None found a counterexample or was refuted. A fifth, `unit_dem_twoFreshHoldings`, was on this list until the night window of 2026-11-17 decided it; it is retired, and the next entry records it.
   - `soak_sys_poolLatticeGlobal` (`soak/sliced/zlattice_soak.als`), the check of the whole-system pool-lattice row over four holder kinds, at 10 ticks and occurrences: no verdict in 3 h 50 min (the window of 2026-11-13, at `c788153`) or in 7 h 45 min (2026-11-14, at `005a59b`). The law is proven for every log in the reference model (`PoolLattice.PoolLatticeGlobal`); its sixteen companion finders are found at this scope.
   - `soak_dem_holdingProvenance` (`soak/sliced/demand_soak.als`): no verdict in 2 h (2026-11-13) or in 4 h (2026-11-14, at `005a59b`). Its inductive rung is decided at `005a59b`; the law is proven in the reference model (`Demands.HoldingProvenance`).
   - `int_rcv_latticeCompanion` (`receiving/receiver/tests/integration/receiver.als`): no verdict in 4 h (2026-11-13, at its earlier scope) or in 6 h (2026-11-14, at `b4d017b`, after its re-size in `6aa5530`). The reference model's witness of the same history runs in every gate (`ReceiverTests.LatticeCompanion`).
   - `int_rcv_deliveryArc` (`receiving/receiver/tests/integration/receiver_arc.als`): still running after 3 h 36 min when the window of 2026-11-13 ended; no verdict in 6 h (2026-11-14, at `b4d017b`). The reference model's witness runs in every gate (`ReceiverTests.DeliveryArc`).
-  - `unit_dem_twoFreshHoldings` (`operations/demand/tests/unit/demand.als`), the witness of `holdingAttachedOnce`: no verdict in 1,800 s at `005a59b` and `b4d017b`, then in five day runs of its named-and-ordered forms (2026-11-15): 1,800 s at `b6cdfc3`, 1,800 s and 3,600 s at `b48b912`, 1,800 s at five pools (`a0d1762`), and the diagnostic at `72ede78` (evidence refs `jmpicnic-ag/two-fresh-holdings-*`). Its two siblings are found at `b6cdfc3`. The reference model proves the law (`DemandsContract.HoldingAttachedOnce`) and runs a witness of the history in every gate (`DemandTests.HoldingsAttachedOnce`).
+- QA819, question 1, option (A) (the project owner, 2026-11-17): `unit_dem_twoFreshHoldings` (`operations/demand/tests/unit/demand.als`), the witness of `holdingAttachedOnce`, is RETIRED. It was decided with no example at its scope: in its named-and-ordered form the solver answered UNSAT in 8,237 s (the night window of 2026-11-17, at main `2986f32`; CNF export, gimsatul, 2 threads), against its `expect 1`. The cause is not identified: by reading, no guard and no fact excludes the scenario, and its two siblings are found at `b6cdfc3`. Before that verdict it had none in 1,800 s at `005a59b` and `b4d017b`, nor in five day runs of its named-and-ordered forms (2026-11-15): 1,800 s at `b6cdfc3`, 1,800 s and 3,600 s at `b48b912`, 1,800 s at five pools (`a0d1762`), and the diagnostic at `72ede78` (evidence refs `jmpicnic-ag/two-fresh-holdings-*`). Dafny's `DemandTests.HoldingsAttachedOnce` witnesses the scenario in every gate, and the reference model proves the law (`DemandsContract.HoldingAttachedOnce`). What the retirement costs: `holdingAttachedOnce` now has neither a check nor a witness in this tree. The command's last text is in its root's history, at `80192da`. Its repair is ticketed: two variant runs, the finder without its pinned calls and the finder in the shape of Dafny's witness, with no window time until the project owner schedules them. The law's docstring in `operations/demand/demand_contracts.als` still names the finder as its witness; it is corrected with the next change to that file, because a comment there would put every root that opens the demand's contract into this change's gate.
 - The three roots the container cannot finish (`receiving/receiver/tests/integration/receiver.als`, `operations/demand/tests/integration/demand.als`, `receiving/receiver/tests/unit/receiver.als`) run in the next night window on the dedicated machine (HARRY-TUTTLE's slot, requested 2026-11-05 14:3xZ); the PR opens `heavy-cone` citing the container runs and says which roots the window still owes.

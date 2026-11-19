@@ -29,37 +29,6 @@ run unit_alg_scaleOne {
 } for 3 but exactly 3 Scalar expect 1
 
 // --- keyed-algebra laws (assume the ring; small scope) ---
-check unit_alg_addCommutative {
-  ringAxioms implies all a, b: K -> lone Scalar | (nf[a] and nf[b]) implies add[a, b] = add[b, a]
-} for 3 but exactly 3 Scalar expect 0
-
-check unit_alg_addIdentity {
-  ringAxioms implies all a: K -> lone Scalar | nf[a] implies add[a, zero] = a
-} for 3 but exactly 3 Scalar expect 0
-
-check unit_alg_addClosedNf {
-  ringAxioms implies all a, b: K -> lone Scalar | (nf[a] and nf[b]) implies nf[add[a, b]]
-} for 3 but exactly 3 Scalar expect 0
-
-check unit_alg_addAssociative {
-  ringAxioms implies all a, b, c: K -> lone Scalar |
-    (nf[a] and nf[b] and nf[c]) implies add[add[a, b], c] = add[a, add[b, c]]
-} for 3 but exactly 3 Scalar expect 0
-
-check unit_alg_addInverse {
-  ringAxioms implies all a: K -> lone Scalar | nf[a] implies add[a, negate[a]] = zero
-} for 3 but exactly 3 Scalar expect 0
-
-check unit_alg_scaleZeroScalar {
-  ringAxioms implies all a: K -> lone Scalar | scale[SZero, a] = zero
-} for 3 but exactly 3 Scalar expect 0
 check unit_alg_scaleZeroValue {
   ringAxioms implies all s: Scalar | scale[s, zero] = zero
-} for 3 but exactly 3 Scalar expect 0
-check unit_alg_scaleOneIdentity {
-  ringAxioms implies all a: K -> lone Scalar | nf[a] implies scale[SOne, a] = a
-} for 3 but exactly 3 Scalar expect 0
-check unit_alg_scaleDistribAdd {
-  ringAxioms implies all s: Scalar, a, b: K -> lone Scalar |
-    (nf[a] and nf[b]) implies scale[s, add[a, b]] = add[scale[s, a], scale[s, b]]
 } for 3 but exactly 3 Scalar expect 0

@@ -10,32 +10,6 @@ pred premises { ringAxioms and orderAxioms }
 
 run unit_ord_loads { premises } for 3 but exactly 3 Scalar expect 1
 
-// --- the product order is a partial order (these DO hold; UNSAT = no counterexample) ---
-check unit_ord_lteReflexive {
-  premises implies all a: K -> lone Scalar | lte[a, a]
-} for 3 but exactly 3 Scalar expect 0
-check unit_ord_lteTransitive {
-  premises implies all a, b, c: K -> lone Scalar | (lte[a, b] and lte[b, c]) implies lte[a, c]
-} for 3 but exactly 3 Scalar expect 0
-check unit_ord_lteAntisymmetric {
-  premises implies all a, b: K -> lone Scalar | (nf[a] and nf[b] and lte[a, b] and lte[b, a]) implies a = b
-} for 3 but exactly 3 Scalar expect 0
-
-// --- sign classification agrees with the order against ZERO ---
-check unit_ord_positiveIsAboveZero {
-  premises implies all a: K -> lone Scalar |
-    nf[a] implies (classify[a] = POSITIVE iff (not isZero[a] and lte[zero, a]))
-} for 3 but exactly 3 Scalar expect 0
-
-// --- semantic equality: EQUAL exactly when lexically equal; UNEQUAL ⇒ really different ---
-check unit_ord_semEqualIffLexical {
-  premises implies all a, b: K -> lone Scalar |
-    (nf[a] and nf[b]) implies (semanticEq[a, b] = EQUAL iff lexEq[a, b])
-} for 3 but exactly 3 Scalar expect 0
-check unit_ord_semUnequalImpliesDifferent {
-  premises implies all a, b: K -> lone Scalar | semanticEq[a, b] = UNEQUAL implies a != b
-} for 3 but exactly 3 Scalar expect 0
-
 // --- demonstrations (the interesting cases EXIST; SAT) ---
 run unit_ord_indeterminateSign {
   premises and (some a: K -> lone Scalar | classify[a] = INDETERMINATE)

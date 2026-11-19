@@ -23,31 +23,3 @@ run unit_time_samePeriod {
 run unit_time_differentPeriods {
   calendarAxioms and (some ps: PeriodSpec, disj a, b: Instant | not samePeriod[ps, a, b])
 } for 4 expect 1
-
-// check: the close is always at-or-after the instant.
-assert unit_time_closeAtOrAfter {
-  calendarAxioms implies all ps: PeriodSpec, t: Instant | atOrBefore[t, endOfPeriod[ps, t]]
-}
-check unit_time_closeAtOrAfter for 4 expect 0
-
-// check: idempotent — the close of a close is itself.
-assert unit_time_closeIdempotent {
-  calendarAxioms implies all ps: PeriodSpec, t: Instant | endOfPeriod[ps, endOfPeriod[ps, t]] = endOfPeriod[ps, t]
-}
-check unit_time_closeIdempotent for 4 expect 0
-
-// check: samePeriod is an equivalence relation.
-assert unit_time_samePeriodEquiv {
-  calendarAxioms implies all ps: PeriodSpec, a, b, c: Instant |
-    samePeriod[ps, a, a]
-    and (samePeriod[ps, a, b] implies samePeriod[ps, b, a])
-    and ((samePeriod[ps, a, b] and samePeriod[ps, b, c]) implies samePeriod[ps, a, c])
-}
-check unit_time_samePeriodEquiv for 4 expect 0
-
-// check: an instant shares its period with its own close (a consequence of idempotence).
-assert unit_time_inOwnPeriod {
-  calendarAxioms implies all ps: PeriodSpec, t: Instant | samePeriod[ps, t, endOfPeriod[ps, t]]
-}
-check unit_time_inOwnPeriod for 4 expect 0
-

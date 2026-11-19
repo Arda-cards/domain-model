@@ -1,6 +1,10 @@
 module receiving/receiver/tests/unit/receiver_one_activation
-// Reflects dafny-domain src/receiving/receiver/tests/receiver-tests.dfy: SplitAttachPairRefused, SplitDetachPairRefused,
-//   SplitReceivePairRefused and SplitSecondActualRefused (the reference model since MP's ruling of 2026-11-04; alloy/EXTENSIONS.md)
+// Reflects dafny-domain src/receiving/receiver/tests/receiver-tests.dfy (the reference model since MP's ruling of 2026-11-04;
+//   alloy/EXTENSIONS.md)
+// Refines Dafny: ReceiverTests.SplitAttachPairRefused, ReceiverTests.SplitDetachPairRefused
+// Refines Dafny: ReceiverTests.SplitReceivePairRefused, ReceiverTests.SplitSecondActualRefused
+//   (the witnesses this root mirrors; listed in the marker, which the pointer check resolves: a name after the Reflects
+//   path is a note the check does not read)
 
 open receiving/receiver/receiver_implementation
 open receiving/receiver/receiver_contracts
