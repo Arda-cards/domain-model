@@ -14,8 +14,8 @@ open resources/kanban_card/kanban_card_implementation
  * INTEGRATION suite for the demand module (DT-016/DT-017; C/OP call-first shape): the real
  * demand log composed with the REAL item + station stacks (the kanban cycle log and the pool
  * are already real in the unit tier — the INTERIM R3 seam). Gate tier: a joint loads witness,
- * the full R8 production arc, the re-collation-after-failure arc, and re-discharge of two key
- * laws on the composed stack.
+ * the full R8 production arc, the re-collation-after-failure arc, and the two refusals
+ * (RCycleHeld, RFrozen) on the composed stack.
  */
 
 // ── joint loads: the composed stack is satisfiable, refs resolve across all layers ──────────────
@@ -75,11 +75,32 @@ run int_dem_recollationAfterFailure {
       // one call per service (four). The bound of 20 was set on paper (QA740 (c), 2026-11-09); at 20 it had no verdict in 4
       // hours in the night window of 2026-11-13, on the model before two fixes, and the window of 2026-11-14 left it out.
 
-// ── contract re-discharge on the composed stack (UNSAT = holds with the real lower layers) ──────
-assert int_dem_contract_cycleIndivisible { cycleIndivisible }
-check int_dem_contract_cycleIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+// ── the two refusals on the composed stack ───────────────────────────────────────────────────────
+// They replace the two contract checks this root held (`cycleIndivisible`, `frozenOutsideOpen`), retired as checks of laws
+// the reference model proves (dafny-domain `CycleIndivisible`, `FrozenOutsideOpen`). A finder per refusal shows what a
+// check could not show at its scope: with the REAL item and station stacks under it, the guard still fires.
 
-assert int_dem_contract_frozenOutsideOpen { frozenOutsideOpen }
-check int_dem_contract_frozenOutsideOpen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+// Extension class 1: finder for DemandTests.Refusals (RCycleHeld): a cycle a live demand holds is refused to a second one.
+// The holder is ANOTHER live demand, and the acting demand does not hold the cycle itself: `attachCycleViol` also answers
+// RCycleHeld for a cycle the acting demand already has, and that same-demand retry is not this refusal. The reason set is
+// exactly RCycleHeld.
+run int_dem_cycleHeldRefused {
+  some o: AddContributionOcc, d2: DemandItem - o.subject, k: CardCycle {
+    refusedAtAdmission[o]
+    o.admission.because = RCycleHeld
+    o.contribution in CardContribution
+    resolve[o.contribution.cycleRef] = k
+    liveDemandAt[d2, o.tick]
+    k in attachedAt[d2, o.tick]
+    no c: dPre[o].sContributions & CardContribution | c.cycleRef = o.contribution.cycleRef
+  }
+} for 10 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem,
+      12 Occurrence, 13 Tick, 14 EntityId, 13 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+
+// Extension class 1: finder for DemandTests.CollateAndRelease (RFrozen): a contribution added after the Release is refused.
+run int_dem_frozenRefused {
+  some o: AddContributionOcc | refusedAtAdmission[o] and o.admission.because = RFrozen
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 2 Contribution,
+      12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
