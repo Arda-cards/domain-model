@@ -126,6 +126,35 @@ otherwise.
 **Not checked by this table:** that each guard and each effect of the Alloy model equals the Dafny one arm by arm.
 That is the mirror itself, kept by the finders of each refusal and by the pointer check, not by this record.
 
+**An abstract structure in Alloy, a single structure in Dafny.** For 32 of the retired checks the lemma proves the
+law of one structure, where the check stated it of every structure its root admits. The rows of these checks say
+"the same law" or "the same statement": read them with this paragraph.
+
+- **The scalar, 30 checks.** Alloy's `Scalar` is an uninterpreted signature (`meta/scalar/scalar.als:18`). A root
+  admits every structure that satisfies what it assumes of the scalar: the ring and order axioms as a premise of the
+  check (`ringAxioms`, `meta/scalar/scalar.als:44`; `orderAxioms`, `meta/keyed_value_algebra/keyed_order.als:59`),
+  the group and order axioms as a fact (`DomainLogPremises`, `meta/profiles/domain_log.als:24`), or nothing. At the
+  checks' scopes these are small finite structures, the integers modulo 3 among them. Dafny's `Scalar` is `real`
+  (`src/meta/scalar.dfy:13`), and each lemma is the law for the reals. The lemmas `GroupAxioms`, `RingAxioms` and
+  `OrderAxioms` (`src/meta/scalar.dfy:35`, :42, :51) and `DomainLogPremises` (`src/meta/profiles.dfy:41`) prove
+  that the reals satisfy Alloy's axioms, so each law holds of the scalar the reference model uses. Of another
+  structure with those axioms, nothing checks the law any more. The 30:
+  - the keyed algebra's eight: `unit_alg_addAssociative`, `unit_alg_addClosedNf`, `unit_alg_addCommutative`,
+    `unit_alg_addIdentity`, `unit_alg_addInverse`, `unit_alg_scaleDistribAdd`, `unit_alg_scaleOneIdentity`,
+    `unit_alg_scaleZeroScalar`;
+  - the keyed order's six: `unit_ord_lteAntisymmetric`, `unit_ord_lteReflexive`, `unit_ord_lteTransitive`,
+    `unit_ord_positiveIsAboveZero`, `unit_ord_semEqualIffLexical`, `unit_ord_semUnequalImpliesDifferent`;
+  - the keyed sum's four: `unit_sum_baseIsVal`, `unit_sum_cumNf`, `unit_sum_stepFolds`, `unit_sum_telescope`;
+  - the unit collapse's four: `unit_collapse_eachIdentity`, `unit_collapse_eachKeyed`,
+    `unit_collapse_singleIsToEach`, `unit_collapse_twoUnitFolds`;
+  - the quantity's four: `unit_q_dispatchLastFirst`, `unit_q_minLeMax`, `unit_q_minMaxSampled`,
+    `unit_q_sumSingleton`;
+  - the scalar's own three and the profile's one, which state an axiom itself: `unit_scalar_addInverse`,
+    `unit_scalar_distributes`, `unit_scalar_zeroNeOne`, `unit_prof_premisesInForce`.
+- **Elapsed time, 2 checks.** Alloy's metric is abstract, under the premise `durationAxioms`
+  (`meta/time/time.als:66`). Dafny's instants are integers and its durations naturals (`src/meta/time.dfy:20`, :99),
+  and each law is a theorem of that metric: `unit_time_elapsedWhenOrdered`, `unit_time_zeroAtPoint`.
+
 ## `meta/activation`
 
 | Check | Root | Dafny lemma | At | Premises | Matched by | Why the lemma implies the check |
