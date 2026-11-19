@@ -1,0 +1,54 @@
+# The pointer parity check, started from here (the project owner's ruling on card QA814, option (a)).
+#
+# The check itself lives in dafny-domain (its workflow pointer-parity.yaml, tools/check-pointer-parity.py): a text check
+# that every pointer the Dafny reference model carries to this model, and every pointer this model carries back
+# (`// Reflects dafny-domain`, `// Refines Dafny:`, `// Extension class n: ... for`), names something that exists on the
+# other side. It runs there because dafny-domain can read both repositories and this one cannot read dafny-domain.
+#
+# This workflow starts that check for THIS repository's commit and waits for it, so a pull request here that renames or
+# removes something the Dafny model points at fails before it merges. The mechanism is the one operations uses to start
+# api-test's suite after a deployment (its reusable_deployment.yaml): a dispatch with a token that may start workflows
+# in the other repository, then `gh run watch --exit-status`.
+#
+# The run to watch is the one the dispatch's own response names. The step calls the REST endpoint "create a workflow
+# dispatch event" with `return_run_details`, which answers with the run's id (`workflow_run_id`; documented for API
+# version 2022-11-28, GitHub's changelog of 2026-02-19). It does not read the id out of `gh workflow run`'s message,
+# which is written for people and may be empty when the command is not interactive.
+#
+# The secret ARDA_API_TEST_WORKFLOW_DISPATCH is that token: the key operations and accounts-component start api-test's
+# suite with. The project owner widened its applicability (card QA814); this workflow's first run shows whether it
+# reaches this repository and may start dafny-domain's workflows. A pull request from a fork has no secrets, so the job
+# is skipped for it: a skipped job, never a green one.
+name: pointer-parity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pointer-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Start dafny-domain's pointer parity check for this commit, and wait for it
+        env:
+          GITHUB_TOKEN: ${{ secrets.ARDA_API_TEST_WORKFLOW_DISPATCH }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -u
+          [ -n "${GITHUB_TOKEN:-}" ] || { echo "::error::the secret ARDA_API_TEST_WORKFLOW_DISPATCH is not set: the check did not run"; exit 1; }
+          id="$(gh api --method POST -H "X-GitHub-Api-Version: 2022-11-28" \
+            repos/Arda-cards/dafny-domain/actions/workflows/pointer-parity.yaml/dispatches \
+            -f ref=main -f "inputs[domain_model_ref]=$HEAD_SHA" -F return_run_details=true --jq .workflow_run_id)"
+          [[ "$id" =~ ^[0-9]+$ ]] || { echo "::error::the dispatch returned no run id (got '$id'): the check was not watched"; exit 1; }
+          echo "::notice title=Started dafny-domain's pointer parity check::https://github.com/Arda-cards/dafny-domain/actions/runs/$id"
+          gh run watch "$id" --repo Arda-cards/dafny-domain --exit-status
