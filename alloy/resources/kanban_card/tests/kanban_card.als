@@ -102,7 +102,7 @@ run unit_kc_crossCardPrecededImpossible {
 } for 6 but 2 RoleDetail, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard, 5 Int, 3 Scalar, 2 Note expect 0
 
 // (The live-cycle laws — one live per card, live = open tail — are THEOREMS of the log now:
-// see dafny-domain `OneLiveCyclePerCard` (the Alloy check is retired) and the closure suite of tests/cycle_occurrences.als.)
+// see tests/cycle_occurrences.als `unit_cyc_oneLiveCyclePerCard` and the closure suite.)
 
 // Print snapshot consistency on the card (the print lifecycle keeps the machine form).
 run unit_kc_badPrintPairingImpossible {

@@ -169,8 +169,8 @@ fact PoolActivated     { activated[PoolService, plog/SubjectOcc] }   // DT-015 R
 
 // ── reason-precise admission guards (Accepted ⟺ ∅; because = EXACTLY the set) ────────────────────
 /** prevPoolWrite — the newest committed write on `p` STRICTLY before `o` (the pool's OWN guard reads its own log, so the
-    at-or-before read `lastPoolWrite[p, o.tick]` would name a committed `o` itself — found by the first counterexample of the
-    check `unit_pool_stampsMonotone`, 2026-10-15 (retired since: dafny-domain `PoolStampsMonotoneHolds` proves the law); a consumer reading the pool at ITS tick has no such self, OneOccurrencePerTick). */
+    at-or-before read `lastPoolWrite[p, o.tick]` would name a committed `o` itself — found by `unit_pool_stampsMonotone`'s
+    first counterexample, 2026-10-15; a consumer reading the pool at ITS tick has no such self, OneOccurrencePerTick). */
 fun prevPoolWrite[o: PoolOcc, p: InventoryPool]: lone PoolOcc {
   { w: poolWriteKinds | committed[w] and w.subject = p and precedes[w.tick, o.tick]
       and (no b: poolWriteKinds | committed[b] and b.subject = p and precedes[b.tick, o.tick] and precedes[w.tick, b.tick]) }

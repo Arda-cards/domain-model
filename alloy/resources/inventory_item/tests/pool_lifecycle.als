@@ -64,6 +64,8 @@ run unit_plc_addAfterRetireRefused {
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
 
 // ── the theorem ────────────────────────────────────────────────────────────────────────────────
+assert unit_plc_nothingAfterRetire { lc/nothingAfterRetire }
+check unit_plc_nothingAfterRetire for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
 
 // ── Q43: the pool adopts `affirm` (red-first: parse fails on `aff` / `AffirmPoolOcc` until the adoption lands) ────
 // ── affirm on a live pool whose affirmed version IS the current record: commits, post = pre ───
@@ -82,6 +84,12 @@ run unit_plc_affirmNeverCreatedRefused {
   some o: AffirmPoolOcc | refusedAtAdmission[o] and o.admission.because = RPoolNotCreated and no o.pre
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
 
+// complement: a never-created affirm does NOT carry the closed atom (the two conditions are told apart on the wire)
+assert unit_plc_affirmNeverCreatedIsNotClosed {
+  all o: AffirmPoolOcc | (refusedAtAdmission[o] and no o.pre) implies RPoolClosed not in o.admission.because
+}
+check unit_plc_affirmNeverCreatedIsNotClosed for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
+
 // Q45 (a) (MP: "A set — several reasons"): a stale affirmation of a RETIRED subject carries BOTH atoms — `because` is a set
 run unit_plc_affirmStaleOnRetiredCarriesBoth {
   some r: RetirePoolOcc, o: AffirmPoolOcc | committed[r] and o.subject = r.subject and precedes[r.tick, o.tick]
@@ -94,8 +102,11 @@ run unit_plc_affirmAfterRetireRefused {
 } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 1
 
 // ── the affirm never writes a new record ───────────────────────────────────────────────────────
+assert unit_plc_affirmIsInert { all o: AffirmPoolOcc | committed[o] implies o.post = o.pre }
+check unit_plc_affirmIsInert for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
 
 // ── MPBOT-11 M2 (2026-10-01) — the recording law on the pool log: refused vs recorded ──────────
+check unit_plc_noRecordedRefusalWithoutGenesis { lc/noRecordedRefusalWithoutGenesis } for 6 but 2 RoleDetail, 2 Scalar, 3 Int, 6 Tick, 6 Occurrence, 6 Snapshot expect 0
 // witness I: an add refused on a never-created pool is NOT recorded (no host row)
 run unit_plc_refusedAddBeforeCreateNotRecorded {
   some o: PoolAddOcc | refusedAtAdmission[o] and no o.pre and not lc/recorded[o]

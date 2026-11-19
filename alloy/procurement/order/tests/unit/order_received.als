@@ -11,6 +11,14 @@ open procurement/order/order_received
  * both kinds) and witnesses the ends, the compensated middle, and the reversal-first window. The kanban print machine rides the cone: pins as everywhere.
  */
 
+// The theorem: the stored value equals the recompute, for every line at every tick (≤2 postings).
+assert unit_ordr_receivedIsAccumulated {
+  all l: OrderLine, t: Tick | receivedIsAccumulatedAt[l, t]
+}
+check unit_ordr_receivedIsAccumulated for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Order, 2 OrderLine, 0 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      2 RecordReceiptOcc, 1 ReverseReceiptOcc, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
+
 // Witness, empty end: a started line with no postings reads the keyed zero.
 run unit_ordr_zeroBeforeAnyPosting {
   some a: AddLineOcc, t: Tick | {
