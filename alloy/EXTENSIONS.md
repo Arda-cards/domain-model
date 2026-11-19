@@ -151,16 +151,17 @@ root.
   [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
   premises it assumes, why its statement implies the check's property, and what in the Alloy model implies each
   premise.
-  - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 were recorded as
-    retired. On 2026-11-18 each was read again, the check's text beside the lemma's statement, and each premise of
-    each lemma was looked for in the Alloy model. 68 stand, 18 had their citation corrected, and 120 were restored
-    to the tree and are kept (below).
+  - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 commands were
+    recorded as retired, under 210 names: one check, `unit_pool_membershipExclusive`, has two commands. On 2026-11-18
+    each was read again, the check's text beside the lemma's statement, and each premise of each lemma was looked for
+    in the Alloy model. Of the 210, 68 stand, 18 had their citation corrected, 120 were restored to the tree and are
+    kept (below), and four are retired by a ruling of their own (the last item).
   - 86 left the tree with this classification.
   - Four leave with the four integration finders that replace them, by a ruling of their own (QA787, second
     question, option (a)): `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`,
     `int_ord_contract_demandIndivisible` and `int_ord_contract_frozenOutsideDraft`. Their roots open a lower
     module by its types alone, so the rule of the reading would keep them; the ruling decides.
-- **Kept, 159.** The card for QA808 counted 36.
+- **Kept, 159 commands under 158 names** (the check named above has two). The card for QA808 counted 36.
   - The kanban card's two print-machine checks were counted as retired there. They are kept, since Dafny decides
     them by an executed test, as it does the kit's machines.
   - The reading of 2026-11-18 restored 120:
