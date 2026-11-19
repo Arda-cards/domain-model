@@ -148,7 +148,7 @@ fact ItemPinTenancy { all ii: InventoryItem | ii.itemPin.subject.tenantId = ii.t
 // D9 / G5 — license plates are unique among items WITH COMMITTED HISTORY, and D10 / G6 — a present serialNumber is unique
 // within (tenant, Item) among them: since QA704 Q4 (a) (DT-009 Q27) both are ARMS of the births (`identityViol` in the
 // implementation: RLicensePlateTaken, RSerialTaken, on Create and on Split's new sibling) and THEOREMS over started items
-// (dafny-domain `LicensePlateUniqueHolds` and `SerialNumberUniquePerItemHolds`; the Alloy checks are retired), as in dafny-domain
+// (tests/unit/inventory_item.als unit_occ_lpnUniqueAmongStarted, unit_occ_serialUniqueAmongStarted), as in dafny-domain
 // src/resources/inventory-item/inventory-item.dfy. An item atom no birth committed is outside their reach. Non-reusability
 // of a plate comes from the log's no-resurrection guard rather than a Retired axis.
 
