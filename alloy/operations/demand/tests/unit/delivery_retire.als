@@ -58,6 +58,12 @@ run unit_pdr_retireAfterRevoke {
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 Contribution, 0 Placement,
       15 Tick, 14 EntityId, 16 Snapshot, 15 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
+// complement: a committed retire never writes a new record (RetireEffect)
+assert unit_pdr_retireIsTombstone { all o: RetireDeliveryOcc | committed[o] implies o.post = o.pre }
+check unit_pdr_retireIsTombstone for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
+      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
+
 // ── refused while the delivery is still CREATED (not terminal) — the demand's two-step ─────────
 run unit_pdr_retireNotTerminalRefused {
   some o: RetireDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RNotTerminal
@@ -100,8 +106,15 @@ run unit_pdr_revokeAfterRetireRefused {
       16 Tick, 14 EntityId, 16 Snapshot, 16 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── the theorem: nothing commits on the delivery's log after a committed retire ────────────────
+assert unit_pdr_nothingAfterRetire { pdlc/nothingAfterRetire }
+check unit_pdr_nothingAfterRetire for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
+      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── MPBOT-11 M2 (2026-10-01) — the recording law on the delivery log: refused vs recorded ─────
+check unit_pdr_noRecordedRefusalWithoutGenesis { pdlc/noRecordedRefusalWithoutGenesis } for 8 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery,
+      11 Tick, 11 EntityId, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 // witness: a refused delivery genesis is NOT recorded; a refused revoke on a CREATED delivery IS
 run unit_pdr_refusedGenesisNotRecordedRevokeOnLiveRecorded {
   some d: DemandItem, vi: CreateItemOcc, vp: CreatePoolOcc, dc: CreateWithContributionOcc, dr: ReleaseOcc, dsp: StartProductionOcc,

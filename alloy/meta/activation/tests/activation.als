@@ -77,6 +77,9 @@ run unit_act_crossServiceCitation {
 } for 5 expect 0
 
 // ── theorems (check; UNSAT = holds) ─────────────────────────────────────────────────────────────
+// Every walk ends at an origin: the tree is rooted.
+assert unit_act_walkEndsAtOrigin { all o: Occurrence | some origins & o.*arche }
+check unit_act_walkEndsAtOrigin for 5 expect 0
 
 // The origins are exactly the kernel's self-initiated occurrences.
 assert unit_act_originsAreSelfInitiated { origins = selfInitiated }

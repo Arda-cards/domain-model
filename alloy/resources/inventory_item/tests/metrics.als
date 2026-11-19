@@ -79,6 +79,19 @@ run unit_invmet_levelJumps {
       expect 1
 
 // ── family A: theorems (check; UNSAT = holds) ───────────────────────────────────────────────────
+// CONSERVATION + REFINEMENT in one law: a cell partitioned into two disjoint covering cells has
+// additive totals (locator subtotals tie out to the item total; coarser nodes = Σ of finer).
+assert unit_invmet_partitionAdditivity {
+  all z, x, y: CountCell |
+    (x.cAsOf = z.cAsOf and y.cAsOf = z.cAsOf
+     and (let zL = { l: TLine | l.tCell = z }, xL = { l: TLine | l.tCell = x }, yL = { l: TLine | l.tCell = y } |
+            no (xL.tMember & yL.tMember) and zL.tMember = xL.tMember + yL.tMember))
+    implies cellTotal[z] = add[cellTotal[x], cellTotal[y]]
+}
+// NB the antecedent is stated over the LINES (CellLinesExact pins them 1:1 to members), not by
+// recomputing membersOf four times — the recomputation made this check pathologically slow.
+check unit_invmet_partitionAdditivity for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 3 CountCell, 4 TLine, 4 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+      expect 0
 
 // BOUNDARY WITNESS (a deliberate NON-theorem): per-member cone-safety (degraded ≤ actual — a
 // record FACT, G4) does NOT lift through the Σ at the abstract-scalar level. `orderAxioms` is only
@@ -130,6 +143,19 @@ assert unit_invmet_usableNonNegativeInRange {
 check unit_invmet_usableNonNegativeInRange for 4 but 2 RoleDetail, 4 Int, 6 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
       expect 0
 
+// A QUIET window repeats the level (LOCF): no committed occurrence in (τ₁, τ₂] ⟹ same members,
+// same total — the family-B "a period with no change repeats the prior count".
+assert unit_invmet_quietPeriodRepeats {
+  clocksAligned implies
+  all disj c1, c2: CountCell |
+    (c1.cTenant = c2.cTenant and c1.cItem = c2.cItem and no c1.cLevel and no c2.cLevel
+     and atOrBefore[c1.cAsOf, c2.cAsOf]
+     and (no o: IIOcc | committed[o] and earlierThan[c1.cAsOf, o.at] and atOrBefore[o.at, c2.cAsOf]))
+    implies (membersOf[c1] = membersOf[c2] and cellTotal[c1] = cellTotal[c2])
+}
+check unit_invmet_quietPeriodRepeats for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 4 InventoryItemState, 2 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 4 Tick, 4 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 2 CountCell, 3 TLine, 3 DLine, 0 PeriodSpec, 0 TimeZone, 0 Signal, 0 Measurement
+      expect 0
+
 // ── family B: the calendar sampling ─────────────────────────────────────────────────────────────
 // A series point loads: a cell evaluated AT a period close (endOfPeriod under calendarAxioms)
 // counts a committed member — B is A sampled at the close.
@@ -154,3 +180,12 @@ run unit_invmet_bridgeLoads {
   }
 } for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 2 Measurement
       expect 1
+
+// THE RE-POINT THEOREM (DT-007 ↔ DT-008): the measurement framework's LOCF read equals the log's
+// as-of projection — "as-of τ" IS "the last measurement with effective-time ≤ τ".
+assert unit_invmet_frameworkMatchesLog {
+  (clocksAligned and strictChronology) implies
+    all s: IILevelSignal, t: Instant | valueAt[s, t] = stateAsOf[s.watches, t].sActual
+}
+check unit_invmet_frameworkMatchesLog for 4 but 2 RoleDetail, 4 Int, 3 Scalar, 8 Quantity, 3 Unit, 8 EntityId, 2 Item, 2 ItemSupply, 2 UomScheme, 5 InventoryItemState, 3 LicensePlate, 0 SerialNumber, 0 Individualizer, 0 LotNumber, 0 Text, 0 Money, 0 Currency, 3 PhysicalLocator, 5 Label, 5 Tick, 5 Instant, 1 Duration, 0 TimeInterval, 0 Metric, 0 Report, 2 InventoryItem, 0 CountCell, 0 TLine, 0 DLine, 0 PeriodSpec, 0 TimeZone, 1 Signal, 4 Measurement
+      expect 0

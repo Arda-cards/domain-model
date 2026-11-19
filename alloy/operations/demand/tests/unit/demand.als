@@ -21,9 +21,45 @@ open resources/kanban_card/kanban_card_mock                   // kanban as CONTR
  */
 
 // ── CONTRACT DISCHARGE (check; UNSAT = the law holds of the implementation) ─────────────────────
+assert unit_dem_contract_cycleIndivisible { cycleIndivisible }
+check unit_dem_contract_cycleIndivisible for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_frozenOutsideOpen { frozenOutsideOpen }
+check unit_dem_contract_frozenOutsideOpen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+// The C/OP saga commit gates — theorems of the reason-precise guards:
+assert unit_dem_contract_attachRequiresAccepted { attachRequiresAccepted }
+check unit_dem_contract_attachRequiresAccepted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_removeRequiresShelved { removeRequiresShelved }
+check unit_dem_contract_removeRequiresShelved for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_startProductionRequiresStarted { startProductionRequiresStarted }
+check unit_dem_contract_startProductionRequiresStarted for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_distributeRequiresReady { distributeRequiresReady }
+check unit_dem_contract_distributeRequiresReady for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_completeRequiresSettled { completeRequiresSettled }
+check unit_dem_contract_completeRequiresSettled for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // (`completeRequiresDistributed` left the contract with TN-004 row 11, dafny-domain MD-084: the release at Complete is derived
 // from the status, and what the released pools hold is the placements' law, `completedItemsPlaced`.)
+
+assert unit_dem_contract_withdrawnDetachReconciles { withdrawnDetachReconciles }
+check unit_dem_contract_withdrawnDetachReconciles for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 8 Quantity, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_terminalClosure { terminalClosure }
+check unit_dem_contract_terminalClosure for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── SAT witnesses — the §2 scenarios (C/OP call-first: cycle op, then demand commit) ────────────
 // Scenario 1 (collate and release): Accept c1 → CreateWithContribution → Accept c2 → AddContribution → Release.
@@ -250,6 +286,15 @@ run unit_dem_unattachedRequestingLegal {
 // published poolProvenance: the cross-kind clause reasons from attach payloads to record
 // bindings through the mock. Scope discipline: 2 of the OWN kind + 1 cycle; explicit
 // abstract-parent pins (knowledge-base/pool-lattice-genesis-premise.md §3). ────────────────────
+assert unit_dem_contract_holdingProvenance { holdingProvenance }
+check unit_dem_contract_holdingProvenance for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_holdingExclusive { holdingExclusiveWhileLive }
+check unit_dem_contract_holdingExclusive for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 1 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The SAT companion (anti-vacuity): the premise HOLDS with a live demand holding its pool and
 // a live MOCK cycle holding a distinct one (the cycle's binding now needs its committed
@@ -265,6 +310,14 @@ run unit_dem_latticeCompanion {
       12 EntityId, 9 Tick, 10 Snapshot, 9 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── the ProductionDelivery subject (§8.1.2/§8.1.4, DT-020 build cut 3) ──────────────────────────
+// Contract discharge — the §8.1.4 gates as theorems of createDeliveryViol:
+assert unit_dem_contract_createDeliveryGated { createDeliveryGated }
+check unit_dem_contract_createDeliveryGated for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_dem_contract_deliveryTerminalRevoke { deliveryTerminalRevoke }
+check unit_dem_contract_deliveryTerminalRevoke for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 ProductionDelivery, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // SCOPES of the delivery finders (TN-004): the target reaches IN_PROCESS through an external contribution and its pool, so
 // a committed pair counts 10 occurrences: the item's version and its call, the pool's create and its call, the demand's
@@ -350,6 +403,17 @@ run unit_dem_deliveryRetryAfterWrongPoolRecorded {
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 3 InventoryPool, 2 Contribution, 0 Placement,
       15 Occurrence, 15 Tick, 17 EntityId, 17 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
 
+// M3.2: the minted holding pool's itemPin always agrees with the demand's item — a THEOREM of
+// the StartProduction effect (`StartProductionHoldingPoolPin`). RED before the fact: nothing
+// constrained a resolved holding pool's itemPin, so the solver could freely disagree them.
+assert unit_dem_holdingPoolPinMatchesItem {
+  all o: StartProductionOcc, p: resolve[o.holding] & InventoryPool |
+    committed[o] implies p.itemPin.subject = o.subject.itemPin.subject
+}
+check unit_dem_holdingPoolPinMatchesItem for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool,
+      8 Occurrence, 10 EntityId, 7 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
 // Revoke on an already-REVOKED delivery — exactly RDeliveryClosed (terminal §8.1.1).
 run unit_dem_revokeRevokedRefused {
   some o: RevokeDeliveryOcc | refusedAtAdmission[o] and o.admission.because = RDeliveryClosed
@@ -393,6 +457,12 @@ run unit_dem_directCreateRetiredRefused {
       10 EntityId, 7 Tick, 7 Snapshot, 7 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
 
 // ── DT-030 retire cut (2026-09-09): terminality ──────────────────────────────────────────────────
+// Nothing commits on a demand item after its committed delete (the tombstone is the end of history).
+assert unit_dem_nothingAfterRetire {
+  all r: DeleteDemandOcc, o: CreateDemandOcc + CreateWithContributionOcc + AddContributionOcc + RemoveContributionOcc + EditContributionOcc + SetContributionNotesOcc + SetUserNotesOcc + SetWorkOrderOcc + SetFulfillmentNotesOcc + DetachWithdrawnOcc + ReleaseOcc + ReopenOcc + StartProductionOcc + RecordProductionOcc + ExtractProductionOcc + DistributeOcc + CompleteOcc + CancelOcc + DeleteDemandOcc | (committed[r] and committed[o] and o.subject = r.subject) implies not precedes[r.tick, o.tick]
+}
+check unit_dem_nothingAfterRetire for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 3 CardCycle, 2 KanbanCard, 0 InventoryItem, 9 Tick, 12 EntityId, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── COORDINATOR-Q527 (MP, 2026-10-15: the RBackdated family) — a COMPLETE is refused when its holding pool's newest
 // write is dated after the COMPLETE's own stamp. RESTATED by TN-004 row 11 (dafny-domain MD-084, DT-016 PR B): Option B's
@@ -410,6 +480,13 @@ run unit_dem_completeBackdatedHoldingRefused {
 } for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 2 InventoryPool, 1 Contribution, 1 Placement, 5 Instant,
       12 Occurrence, 13 Tick, 13 EntityId, 15 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+
+// W2: every committed pool write causally before a committed COMPLETE is dated at or before it (the A5
+// condition as a published law — a theorem of the RBackdatedHolding arm and the pool's own trace law).
+assert unit_dem_contract_completeStampedAfterHolding { completeStampedAfterHolding }
+check unit_dem_contract_completeStampedAfterHolding for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 3 Instant,
+      8 Occurrence, 10 EntityId, 8 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // (W3, the check of `completeRequiresRetiredHolding`, left with the law: TN-004 row 11, dafny-domain MD-084.)
 
@@ -456,6 +533,12 @@ run unit_dem_startProductionWrongItemRefused {
     and some p: resolve[o.holding] & InventoryPool | p.itemPin.subject != o.subject.itemPin.subject
 } for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 1
+// The law is a THEOREM of the arm: a committed StartProduction's resolved holding pool carries the demand's item pin (M3.2).
+check unit_dem_holdingPoolPinHolds {
+  all o: StartProductionOcc | committed[o] implies
+    (all p: resolve[o.holding] & InventoryPool | p.itemPin.subject = o.subject.itemPin.subject)
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── QA704 Q2 (b) (MP, 2026-11-05; dafny-domain#33, MD-074): a named holding pool must EXIST and be LIVE ─────────────────────
 // A StartProduction naming a holding that resolves to no live pool (no pool, or a pool retired before the act) is refused
@@ -482,6 +565,15 @@ run unit_dem_createDeliveryHoldingRetiredRefused {
 } for 7 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
       1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 2 InventoryPool, 1 Contribution, 0 Placement,
       12 Occurrence, 13 Tick, 14 EntityId, 14 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 1
+// The laws are THEOREMS of the arms (Dafny StartedHoldingLive, RecordedHoldingLive): a committed act's holding is live at its tick.
+check unit_dem_startedHoldingLive {
+  all o: StartProductionOcc | (committed[o] and some o.holding) implies namedPoolLive[o.holding, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 2 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 InventoryPool, 9 EntityId, 8 Occurrence, 8 Tick, 2 Note, 2 Reference, 2 ContributionId expect 0
+check unit_dem_recordedHoldingLive {
+  all o: RecordProductionOcc | (committed[o] and some dPre[o].sHolding) implies namedPoolLive[dPre[o].sHolding, o.tick]
+} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 DemandItem, 0 CardCycle, 1 KanbanCard, 0 InventoryItem, 1 ProductionDelivery, 1 InventoryPool, 10 EntityId, 9 Occurrence, 9 Tick, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ══ TN-004, the demand's contributions (dafny-domain MD-076 to MD-080; PR A, on dafny-domain main at 0040544) ════════════════
 // The FINDERS of the witnesses PR A added to dafny-domain src/operations/demand/tests/demand-tests.dfy, each named after the
@@ -942,38 +1034,12 @@ run unit_dem_startProductionUsedHoldingRefused {
       // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
       // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
 
-// ── DemandTests.HoldingsAttachedOnce ───────────────────────────────────────────────────────────────────────────────────────
-// Two demands in production on two fresh holdings: their two StartProduction rows name different pools.
-run unit_dem_twoFreshHoldings {
-  some disj d1, d2: DemandItem, disj ki, kp, kd: Call, vi: CreateItemOcc, disj p1, p2, h1, h2: CreatePoolOcc,
-       disj c1, c2: CreateWithContributionOcc, disj r1, r2: ReleaseOcc, disj s1, s2: StartProductionOcc | {
-    committed[s1] and committed[s2] and s1.subject != s2.subject
-    some s1.holding and some s2.holding and s1.holding != s2.holding
-    // the rows, named and ordered: two released demands, each then starting production on its own holding
-    pinnedReleased[d1, vi, p1, c1, r1] and pinnedReleased[d2, vi, p2, c2, r2]
-    committed[h1] and committed[h2] and s1.holding = h1.subject.eId and s2.holding = h2.subject.eId
-    s1.subject = d1 and s2.subject = d2
-    precedes[p1.tick, p2.tick] and precedes[p2.tick, h1.tick] and precedes[h1.tick, h2.tick] and precedes[h2.tick, c1.tick]
-    precedes[r1.tick, s1.tick] and precedes[s1.tick, c2.tick] and precedes[r2.tick, s2.tick]
-    // the calls, named and ordered (2026-11-15): one per service, each just before the first row it writes, as the order's
-    // Submit arc does. With them the fourteen occurrences have ONE order: ki, vi, kp, p1, p2, h1, h2, kd, c1, r1, s1, c2, r2, s2
-    vi.arche = ki and (p1 + p2 + h1 + h2).arche = kp and (c1 + c2 + r1 + r2 + s1 + s2).arche = kd
-    precedes[ki.tick, vi.tick] and precedes[vi.tick, kp.tick] and precedes[kp.tick, p1.tick]
-    precedes[h2.tick, kd.tick] and precedes[kd.tick, c1.tick]
-  }
-} for 6 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
-      2 DemandItem, 0 CardCycle, 0 KanbanCard, 0 InventoryItem, 4 InventoryPool, 3 Contribution, 0 Placement, 4 Instant,
-      0 ProductionDelivery, 0 Station, 3 Quantity,
-      20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot, 2 Note, 2 Reference, 3 ContributionId expect 1
-      // WIDENED 2026-11-14 (a scope read): at the earlier scope (for 5, 2 Contribution, Quantity and ContributionId, 3 Instant,
-      // the counted occurrences) and with only those four bounds raised, the pinned form had no instance. A diagnostic of two
-      // released demands, one of them started, was found at this scope (for 6, 20 Occurrence, 21 Tick, 20 EntityId, 22 Snapshot,
-      // 3 Contribution, Quantity and ContributionId, 4 Instant). Which bound binds is not identified.
-      // THE CALLS ARE PINNED (2026-11-15): at this scope with its calls free, this finder had no verdict at its 1,800 s cap
-      // (2026-11-15, at b6cdfc3), where its two siblings above and below were found in 119 s and 96 s. The fourteen
-      // occurrences (eleven rows, three calls) now have one order; the scope is unchanged.
-      // NOT DECIDED (QA807 (a), 2026-11-16): in this form too, no verdict in 1,800 s and in 3,600 s (2026-11-15, at b48b912),
-      // nor with five pools (a0d1762) or in a diagnostic (72ede78). alloy/EXTENSIONS.md records it; a night window retries it.
+// ── DemandTests.HoldingsAttachedOnce: no finder here ───────────────────────────────────────────────────────────────────────
+// `unit_dem_twoFreshHoldings` (two demands in production on two fresh holdings, their two StartProduction rows naming
+// different pools) is RETIRED: the project owner's ruling QA819, question 1, option (A), 2026-11-17. In its named-and-ordered
+// form at its scope it was decided with no example (UNSAT in 8,237 s, 2026-11-17, at main `2986f32`), against its `expect 1`,
+// and the cause is not identified. alloy/EXTENSIONS.md has the record. The command's last text is in this file's history, at
+// `80192da`. The reference model's witness DemandTests.HoldingsAttachedOnce runs the scenario in every gate.
 
 // ── DemandTests.CompletePlacements ─────────────────────────────────────────────────────────────────────────────────────────
 // One locator for everything: the Complete commits when the item its released pool holds already sits there (call-first),
@@ -1136,4 +1202,5 @@ run unit_dem_cancelPoolNotEmptyRefused {
 // of the reference model (dafny-domain `HoldersReleasedAtComplete`, `CompletedItemsPlaced`,
 // `ContributionPoolExclusiveWhileLive`, `ContributionFrom`), proven there for every log. By alloy/EXTENSIONS.md's rule a
 // bounded check of a law Dafny proves is RETIRED, and the four this root carried were removed with that ruling. The finders
-// above are the laws' witnesses here. (`holdingAttachedOnce`: witness unit_dem_twoFreshHoldings, proof dafny-domain's lemma.)
+// above are the laws' witnesses here. (`holdingAttachedOnce` has no witness in this tree: its finder, unit_dem_twoFreshHoldings,
+// is retired, as its section above says. Its proof and its witness are dafny-domain's.)

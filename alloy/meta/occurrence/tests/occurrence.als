@@ -17,6 +17,10 @@ run unit_occ_loads {
   some disj a, b: TestOcc | occPrecedes[a, b]
 } for 4 expect 1
 
+// One occurrence per tick (the linearization fact is in force).
+assert unit_occ_onePerTick { all disj a, b: TestOcc | a.tick != b.tick }
+check unit_occ_onePerTick for 5 expect 0
+
 // The note seat: an occurrence may carry a free-text annotation of the act itself (plain
 // String — zero universe cost in commands without literals; MP ruling 2026-08-10).
 run unit_occ_noteWitness {
@@ -32,6 +36,10 @@ run unit_occ_noteOptional {
 run unit_occ_archeSelfInitiated {
   some o: TestOcc | o.arche = o and o in selfInitiated
 } for 4 expect 1
+
+// A cited origin is strictly earlier than the occurrence citing it.
+assert unit_occ_archeOriginPrecedes { all o: TestOcc | o.arche != o implies occPrecedes[o.arche, o] }
+check unit_occ_archeOriginPrecedes for 5 expect 0
 
 // The field is total: every occurrence has an origin, itself or an earlier one (a theorem of `one`).
 assert unit_occ_archeTotal { all o: TestOcc | one o.arche and (o.arche = o or occPrecedes[o.arche, o]) }

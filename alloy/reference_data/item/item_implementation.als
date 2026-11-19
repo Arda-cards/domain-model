@@ -67,7 +67,7 @@ fact ItemAdmissionWitnessed {
   all o: RetireItemOcc | (o.admission = Accepted iff no itemMutateViol[o]) and (o.admission in Rejected implies o.admission.because = itemMutateViol[o])
 }
 
-// (Supply-pin currency, DT-023 Q-A, is the RSupplierPinStale arm of itemContentViol since QA704 Q4 (a); its law is proven in the reference model: dafny-domain `SupplierPinsSoundHolds`.)
+// (Supply-pin currency, DT-023 Q-A, is the RSupplierPinStale arm of itemContentViol since QA704 Q4 (a); its law is the theorem tests/item.als unit_item_supplyPinCurrencyHolds.)
 
 // ── effects (SET semantics on the write kinds; the retire's tombstone is the lifecycle module's `RetireEffect`) ──
 fact ItemEffects {
@@ -80,5 +80,5 @@ fact ItemEffects {
 
 
 // ── the content axiom that STAYS (C2, identity-carried: nothing deeper derives it); C1 and C3 are THEOREMS of itemContentViol
-// since QA704 Q4 (a) (dafny-domain `SupplyOwnershipHolds`; the refusal witnesses are in tests/item.als) ────────────────────────────────────────
+// since QA704 Q4 (a) (tests/item.als unit_item_supplyOwnership and the refusal witnesses) ────────────────────────────────────────
 fact ItemContentLaws { uomSchemesSound }

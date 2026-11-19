@@ -42,6 +42,92 @@ open resources/inventory_item/inventory_item_mock
  */
 
 // ── CONTRACT DISCHARGE (check; UNSAT = the law holds of the implementation) ─────────────────────
+assert unit_rcv_contract_linePoolProvenance { linePoolProvenance }
+check unit_rcv_contract_linePoolProvenance for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_captureWindowFrozen { captureWindowFrozen }
+check unit_rcv_contract_captureWindowFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_completeRequiresLinesFinalized { completeRequiresLinesFinalized }
+check unit_rcv_contract_completeRequiresLinesFinalized for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 3 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_capturedFactsFrozen { capturedFactsFrozen }
+check unit_rcv_contract_capturedFactsFrozen for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 3 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 1 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_receiveSameItemPool { receiveSameItemPool }
+check unit_rcv_contract_receiveSameItemPool for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 2 InventoryItem, 2 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_receiveAllocationBounded { receiveAllocationBounded }
+check unit_rcv_contract_receiveAllocationBounded for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Quantity, 8 Occurrence, 10 EntityId, 7 Tick, 10 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_actualSetOnce { actualSetOnce }
+check unit_rcv_contract_actualSetOnce for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 2 OrderAttribution, 0 Order, 2 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_deliveriesAppendOnly { deliveriesAppendOnly }
+check unit_rcv_contract_deliveriesAppendOnly for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 2 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_lineForwardMonotone { lineForwardMonotone }
+check unit_rcv_contract_lineForwardMonotone for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 1 OrderLine, 0 DemandItem, 1 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 1 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_receiverTerminalComplete { receiverTerminalComplete }
+check unit_rcv_contract_receiverTerminalComplete for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      2 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation, 6 Occurrence, 8 EntityId, 6 Tick, 8 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+// The LATTICE ROW (§8.5.3): the COMBINED check was RELOCATED to the soak tier at DT-023
+// cut 7a (`soak_rcv_linePoolExclusiveUnitScope` — the item-log census pushed its UNSAT
+// proof past 9h). Per the D-1b sliced-gate-coverage rule (soak-verification-specification,
+// applied retroactively at cut 8), the row's THREE FACETS are checked here in universes
+// that each exclude the other holder kinds — an EXACT decomposition (the row is their
+// conjunction), so the gate keeps full facet-level assurance while the conjunction soaks.
+assert unit_rcv_contract_linesPoolLoneHolder { linesPoolLoneHolder }
+check unit_rcv_contract_linesPoolLoneHolder for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_lineCyclePoolDisjoint { lineCyclePoolDisjoint }
+check unit_rcv_contract_lineCyclePoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      1 CardCycle, 1 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
+
+assert unit_rcv_contract_lineDemandPoolDisjoint { lineDemandPoolDisjoint }
+check unit_rcv_contract_lineDemandPoolDisjoint for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 1 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 1 InventoryItem, 2 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      8 Occurrence, 10 EntityId, 7 Tick, 9 Snapshot, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // The FOURTH facet (TN-004; dafny-domain `LineContributionPoolDisjoint`, MD-087): a line-held pool against a live demand's
 // EXTERNAL CONTRIBUTION, under the genesis premise's Receive-against-attach clause. Its OWN published law — not a conjunct
@@ -395,6 +481,29 @@ run unit_rcv_lineItemPinStaleRefused {
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
+// The currency laws are THEOREMS of the arms (Dafny CarrierPinCurrency, ItemPinCurrency): committed writes pin current versions.
+check unit_rcv_carrierPinCurrencyHolds {
+  all o: ReceiverHeaderOcc | (committed[o] and some o.carrierPin) implies pinsCurrentBa[o.carrierPin, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
+check unit_rcv_lineItemPinCurrencyHolds {
+  all o: AddReceivingLineOcc    | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
+  all o: UpdateReceivingLineOcc | (committed[o] and some o.item) implies pinsCurrentItem[o.item, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 1 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 8 Tick, 8 Snapshot, 8 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
+// The definitional law is a THEOREM of the RCarrierPinUnsound arm over committed header writes.
+check unit_rcv_receiverCarrierPinAgreesHolds { receiverCarrierPinAgrees }
+  for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 0 ReceivingLine, 0 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      1 BusinessAffiliate, 1 BusinessRole, 9 EntityId, 5 Tick, 5 Snapshot, 5 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0
 
 // ── MF-004 (found by the bots on dafny-domain#32, 2026-11-05; confirmed in both trees): the line-side attach guards mirror
 // the partner's arm. An attribution whose OWN log is started (attached once, since detached) is refused by `AttachAttribution`
@@ -420,3 +529,15 @@ run unit_rcv_addLineStartedAttributionRefused {
       0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
       0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
       10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 1
+// The line-side guard excludes exactly what the partner refuses: a committed append or attributed add never names an attribution
+// already started (the premise the paired composite's preservation needs — dafny-domain STYLE.md SO-1 (a)).
+check unit_rcv_lineAttachAgreesWithPartner {
+  all o: AppendAttributionOcc | committed[o] implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+  all o: AddReceivingLineOcc | (committed[o] and some o.attribution) implies
+    no g: AttachAttributionOcc | committed[g] and g.subject.eId = o.attribution and precedes[g.tick, o.tick]
+} for 5 but 2 RoleDetail, 5 Int, 3 Scalar, 5 State, 8 Signal, 8 Transition, 1 StateMachine, 0 Guard,
+      1 Receiver, 2 ReceivingLine, 1 OrderAttribution, 0 Order, 0 OrderLine, 0 DemandItem, 0 ProductionDelivery,
+      0 CardCycle, 0 KanbanCard, 0 InventoryItem, 0 InventoryPool, 0 Station,
+      0 SupplierBinding, 0 SupplierName, 0 SupplierData, 0 Confirmation,
+      10 EntityId, 12 Tick, 10 Snapshot, 10 Occurrence, 2 Note, 2 Reference, 2 ContributionId expect 0

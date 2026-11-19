@@ -1,6 +1,9 @@
 module operations/demand/tests/unit/demand_one_activation
-// Reflects dafny-domain src/operations/demand/tests/demand-tests.dfy: SplitCreatePairRefused, SplitRevokePairRefused and
-//   DeliverUnderOneActivation (the reference model since MP's ruling of 2026-11-04; alloy/EXTENSIONS.md)
+// Reflects dafny-domain src/operations/demand/tests/demand-tests.dfy (the reference model since MP's ruling of 2026-11-04;
+//   alloy/EXTENSIONS.md)
+// Refines Dafny: DemandTests.SplitCreatePairRefused, DemandTests.SplitRevokePairRefused, DemandTests.DeliverUnderOneActivation
+//   (the witnesses this root mirrors; listed in the marker, which the pointer check resolves: a name after the Reflects
+//   path is a note the check does not read)
 
 open operations/demand/demand_implementation
 open operations/demand/demand_contracts
