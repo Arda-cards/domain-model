@@ -142,22 +142,30 @@ is the 249 `check` commands outside `soak/`, `conventions/` and `meta/examples/`
 teaching material, as the conventions are: they are neither retired nor in the table of kept checks.
 
 The kept checks are none of the three classes above. They guard Alloy's own encoding: properties that Dafny cannot
-state, need not prove, tests on one machine, assumes, or has no lemma for.
+state, need not prove, tests on one machine, assumes, or has no lemma for. Since the reading of 2026-11-18, 75 more are
+kept for another reason: a Dafny lemma states the law, and it is not yet shown to cover every instance of the check's
+root.
 
-- **Retired, 206.** Each is a check of a law that a Dafny lemma proves. The record is
+- **Retired, 129.** Each is a check of a law that a Dafny lemma proves, in a root whose instances satisfy the lemma's
+  premises. The record is
   [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
-  premises it assumes, and why its statement implies the check's property.
+  premises it assumes, why its statement implies the check's property, and what in the Alloy model implies each
+  premise.
   - The pairings were first made by the lemma's `Alloy:` pointer, by name, or by reading, and 211 were recorded as
-    retired. On 2026-11-18 each was read again, the check's text beside the lemma's statement. 171 stand, 34 had
-    their citation corrected, and 5 that no lemma implies were restored to the tree and are kept (below).
-  - 202 left the tree with this classification.
+    retired. On 2026-11-18 each was read again, the check's text beside the lemma's statement, and each premise of
+    each lemma was looked for in the Alloy model. 101 stand, 27 had their citation corrected, and 82 were restored
+    to the tree and are kept (below).
+  - 125 left the tree with this classification.
   - Four leave with the four integration finders that replace them (ruling QA787, second question, option (a)):
     `int_dem_contract_cycleIndivisible`, `int_dem_contract_frozenOutsideOpen`, `int_ord_contract_demandIndivisible`
     and `int_ord_contract_frozenOutsideDraft`.
-- **Kept, 43.** The card for QA808 counted 36.
+- **Kept, 120.** The card for QA808 counted 36.
   - The kanban card's two print-machine checks were counted as retired there. They are kept, since Dafny decides
     them by an executed test, as it does the kit's machines.
-  - The reading of 2026-11-18 restored five: three that Dafny assumes as a premise, and two that no lemma states.
+  - The reading of 2026-11-18 restored 82:
+    - five that restate a fact Dafny only assumes;
+    - two that no lemma states;
+    - 75 in the five unit roots that give their lower modules as contract mocks.
 
 | Why Dafny has no proof | Kept checks | Root |
 | --- | --- | --- |
@@ -174,17 +182,24 @@ state, need not prove, tests on one machine, assumes, or has no lemma for.
 | **Tested on each concrete state machine** (9). Reachability and live signals are properties of one machine. Dafny decides them by an executed test per machine, not by a lemma. | `unit_sm_allReachable`, `unit_sm_firedInto`, `unit_sm_liveSignals` | `meta/state_machine/tests/machine.als` |
 | | `x731_admin_reachable`, `x731_op_reachable`, `x731_usage_reachable`, `x731_liveSignals` | `shared/x731_state/tests/state.als` |
 | | `unit_kc_printReachable`, `unit_kc_printLiveSignals` | `resources/kanban_card/tests/kanban_card.als` |
-| **A premise in Dafny** (5). Dafny assumes it, and no lemma establishes it. Alloy checks that its facts imply it. One sample per instant, in the measurement lemmas. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
+| **A premise in Dafny** (7). Dafny assumes it, and no lemma establishes it. Alloy checks that its facts imply it. One sample per instant, in the measurement lemmas. | `unit_meas_oneSamplePerInstant` | `meta/measurement/tests/measurement.als` |
 | Tenant isolation, in the kernel's well-formed universe. | `unit_shared_tenantIsolation` | `reference_data/shared/tests/shared.als` |
 | Entity ids are keys (`Keyed`). The lemma `Kernel.EIdIsKey` concludes it only from that premise. | `unit_kernel_eIdIsKey` | `meta/tests/kernel.als` |
 | Principal names are keys (`NamesUnique`). The lemma `Principal.NameIsKey` concludes it only from that premise. | `unit_principal_nameIsKey` | `meta/principal/tests/principal.als` |
 | The X.731 interlocks (`ResourceInterlocks`). The lemma `X731State.X731Consistency` requires both interlocks and concludes the first. | `X731Consistency` | `shared/x731_state/tests/state.als` |
+| One occurrence per tick (`OneOccurrencePerTick`). The lemma `Trace.TickIndexUnique` concludes it inside one log; across the logs of a world it is the premise `ServicesTicksDisjoint`. | `unit_occ_onePerTick` | `meta/occurrence/tests/occurrence.als` |
+| A cited origin precedes the occurrence that cites it (`ArcheOriginPrecedes`). Dafny establishes it inside one service (`Activated`); across services it is the premise `CrossCallersPrecede`. | `unit_occ_archeOriginPrecedes` | `meta/occurrence/tests/occurrence.als` |
 | **No Dafny lemma states it** (2). Every chain of citations reaches an origin. `Activation.TreeWalkNonIncreasing` and `Activation.NoProperCycle` state that a walk never goes forward and that only an origin loops; no lemma concludes that a walk reaches one. | `unit_act_walkEndsAtOrigin` | `meta/activation/tests/activation.als` |
 | Scaling the zero value gives the zero value. The lemma `KeyedAlgebra.ScaleZeroValue` states it for `int` keys only. | `unit_alg_scaleZeroValue` | `meta/keyed_value_algebra/tests/keyed_monoid.als` |
 | **True by construction in Dafny, in a domain module** (3). The state is a datatype and the effect a function, and the transfer composite takes one stamp. | `unit_ba_postHoldsExactlyTheWrittenVersions`, `unit_ba_statesWithEqualPayloadsAreEqual` | `reference_data/business_affiliate/tests/business_affiliate.als` |
 | | `unit_pool_transferPairOneStamp` | `resources/inventory_item/tests/inventory_pool.als` |
 | **True of the Alloy universe only** (1). The record-side wrong-item refusal never fires where ids are keys and pins are static. Dafny's witness `RecordWrongItem` shows it firing. | `unit_dem_recordProductionItemArmSubsumed` | `operations/demand/tests/unit/demand.als` |
 | **The bounded theorem the Dafny tree names as an extension** (1; TN-001's row S-05). | `unit_invmet_usableNonNegativeInRange` | `resources/inventory_item/tests/metrics.als` |
+| **The root gives its lower modules as mocks** (75). A Dafny lemma states each law, and the lemma is not yet shown to cover every instance of the root. The unit root opens its lower modules as contract mocks, which keep the lower occurrences and replace the chaining and effect facts with the contract's `guarantees`. In Dafny a lower state is always the `Effect` folded over a lower log. It is not shown that every lower state of a mock is the state of some lower log. A follow-up in the project's plan (activity AC-04-03-02-31) compares each mock with the effect's fold. (19 in this root.) | `unit_dem_contract_cycleIndivisible`, `unit_dem_contract_frozenOutsideOpen`, `unit_dem_contract_attachRequiresAccepted`, `unit_dem_contract_removeRequiresShelved`, `unit_dem_contract_startProductionRequiresStarted`, `unit_dem_contract_distributeRequiresReady`, `unit_dem_contract_completeRequiresSettled`, `unit_dem_contract_withdrawnDetachReconciles`, `unit_dem_contract_terminalClosure`, `unit_dem_contract_holdingProvenance`, `unit_dem_contract_holdingExclusive`, `unit_dem_contract_createDeliveryGated`, `unit_dem_contract_deliveryTerminalRevoke`, `unit_dem_holdingPoolPinMatchesItem`, `unit_dem_nothingAfterRetire`, `unit_dem_contract_completeStampedAfterHolding`, `unit_dem_holdingPoolPinHolds`, `unit_dem_startedHoldingLive`, `unit_dem_recordedHoldingLive` | `operations/demand/tests/unit/demand.als` |
+| (3 in this root.) | `unit_pdr_retireIsTombstone`, `unit_pdr_nothingAfterRetire`, `unit_pdr_noRecordedRefusalWithoutGenesis` | `operations/demand/tests/unit/delivery_retire.als` |
+| (19 in this root.) | `unit_ord_contract_frozenOutsideDraft`, `unit_ord_contract_demandIndivisible`, `unit_ord_contract_attachRequiresReleased`, `unit_ord_contract_attachItemAgrees`, `unit_ord_contract_submitRequiresStarted`, `unit_ord_contract_receiptAccrues`, `unit_ord_contract_receiptReverses`, `unit_ord_contract_lineClosureByAct`, `unit_ord_contract_closeRequiresSettled`, `unit_ord_contract_supplierBindingFrozen`, `unit_ord_contract_orderTerminalClosure`, `unit_ord_contract_headerDetailFrozen`, `unit_ord_contract_priorityDefault`, `unit_ord_removeRequiresDetached`, `unit_ord_nothingAfterRetire`, `unit_ord_noRecordedRefusalWithoutGenesis`, `unit_ord_bindingPinCurrencyHolds`, `unit_ord_assigneePinCurrencyHolds`, `unit_ord_supplierBindingPinAgreesHolds` | `procurement/order/tests/unit/order.als` |
+| (17 in this root.) | `unit_rcv_contract_linePoolProvenance`, `unit_rcv_contract_captureWindowFrozen`, `unit_rcv_contract_completeRequiresLinesFinalized`, `unit_rcv_contract_capturedFactsFrozen`, `unit_rcv_contract_receiveSameItemPool`, `unit_rcv_contract_receiveAllocationBounded`, `unit_rcv_contract_actualSetOnce`, `unit_rcv_contract_deliveriesAppendOnly`, `unit_rcv_contract_lineForwardMonotone`, `unit_rcv_contract_receiverTerminalComplete`, `unit_rcv_contract_linesPoolLoneHolder`, `unit_rcv_contract_lineCyclePoolDisjoint`, `unit_rcv_contract_lineDemandPoolDisjoint`, `unit_rcv_carrierPinCurrencyHolds`, `unit_rcv_lineItemPinCurrencyHolds`, `unit_rcv_receiverCarrierPinAgreesHolds`, `unit_rcv_lineAttachAgreesWithPartner` | `receiving/receiver/tests/unit/receiver.als` |
+| (17 in this root.) | `unit_ii_contract_stateFunction`, `unit_ii_contract_liveHaveState`, `unit_ii_contract_bornLive`, `unit_ii_contract_closureIsTerminal`, `unit_ii_contract_touchesLiveness`, `unit_ii_contract_readBack`, `unit_occ_noCommittedOverdraw`, `unit_occ_noResurrection`, `unit_occ_terminalRetirement`, `unit_occ_splitConserves`, `unit_occ_mergeConserves`, `unit_occ_expiryNeverLengthens`, `unit_occ_sealedOnlyBySeal`, `unit_occ_committedUnitsValid`, `unit_occ_lpnUniqueAmongStarted`, `unit_occ_serialUniqueAmongStarted`, `unit_occ_itemPinCurrencyHolds` | `resources/inventory_item/tests/unit/inventory_item.als` |
 
 The Inventory table above keeps its counts as measured at the cut. A root's row there that reads "checks RETIRED" is now
 exact, except for the roots this table names.
