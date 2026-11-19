@@ -80,7 +80,7 @@ fun createViol[o: inventory_item_types/CreateOcc]: set Reason {
 // commitments (the D3 grandfather principle: a receiving line added pre-retirement still
 // births; at-rest stock of a retired item is legal). The new-commitment gates live in
 // demand/order/receiving/kanban. A birth after retirement simply pins the retired version.
-// (The currency law is the RItemPinStale arm of `createViol` since QA704 Q4 (a); its theorem: tests/unit/inventory_item.als unit_occ_itemPinCurrencyHolds.)
+// (The currency law is the RItemPinStale arm of `createViol` since QA704 Q4 (a); its theorem is the reference model's, dafny-domain `ItemPinCurrencyHolds`; the Alloy check is retired.)
 fun deleteViol[o: DeleteOcc]: set Reason {
   ((not liveBefore[o, o.target]) => RNotLive else none)
   + ((liveBefore[o, o.target] and o.pre.sFill != EMPTY) => RNotApplicable else none)   // use WriteOff
