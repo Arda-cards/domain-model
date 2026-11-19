@@ -146,8 +146,8 @@ state, need not prove, tests on one machine, assumes, or has no lemma for. Since
 kept for another reason: a Dafny lemma states the law, and it is not yet shown to cover every instance of the check's
 root.
 
-- **Retired, 90.** Each is a check of a law that a Dafny lemma proves, in a root whose instances satisfy the lemma's
-  premises. The record is
+- **Retired, 90.** 86 are each a check of a law that a Dafny lemma proves, in a root whose instances satisfy the
+  lemma's premises. Four are retired by a ruling of their own (the last item below). The record is
   [`RETIRED-CHECKS.md`](RETIRED-CHECKS.md): check by check, the lemma, where it is at a named Dafny revision, the
   premises it assumes, why its statement implies the check's property, and what in the Alloy model implies each
   premise.

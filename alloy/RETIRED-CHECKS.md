@@ -29,7 +29,8 @@ traced to its replacement without any other source.
 **Four more checks are retired by a ruling of their own, and are not rows of this record.** The project owner's
 ruling on card QA787, second question, option (a), replaces them with four integration finders, one per refusal on
 the real stack. They are still in the tree and leave with those finders. Their roots open a lower module by its
-types alone, so the audit's rule below would keep them; the ruling decides.
+types alone, so the audit's rule below would keep them; the ruling decides. The lines in this table are at the
+Dafny revision named above (`ac60846`), as every line in this record is.
 
 | Check | Root | The Dafny lemma that states the law |
 | --- | --- | --- |
