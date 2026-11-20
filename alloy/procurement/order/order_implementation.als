@@ -184,8 +184,8 @@ fun addLineViol[o: AddLineOcc]: set Reason {
 //  effective version is the read-time derivation `effectiveItemAt`, so genesis-currency of a
 //  stored version pin is no longer meaningful. Genesis liveness stays guarded in addLineViol.)
 // (Binding-pin currency, DT-023 cut 7b, and assignee-pin currency, cut 7c, are the RVendorPinStale and RAssigneePinStale arms
-// above since QA704 Q4 (a); their laws are the theorems tests/unit/order.als unit_ord_bindingPinCurrencyHolds and
-// unit_ord_assigneePinCurrencyHolds.)
+// above since QA704 Q4 (a); their laws are the reference model's lemmas, dafny-domain `BindingPinCurrency` and
+// `AssigneePinCurrency`; the Alloy checks are retired.)
 fun updateLineViol[o: UpdateLineOcc]: set Reason {
   ((not usableLineAtOcc[o]) => RLineClosed else none)
   + parentGateViol[o]
