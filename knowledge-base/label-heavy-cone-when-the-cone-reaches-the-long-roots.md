@@ -60,9 +60,12 @@ with `heavy-cone` to avoid the timeouts"):**
 - **Rule:** push, wait until the push's `check-affected` run is listed, then set the label. The label's run is then the
   later one: it cancels the push's run and skips the solve. A PR that already carries the label before a push is not
   expected to be affected, because the push's event then lists the label (not measured here).
-- **Recovery:** remove the label and set it again. On #16 the label was removed at 00:53:31Z and set at 00:53:44Z, and the
-  run of the re-added label passed in four seconds (00:54:03Z to 00:54:07Z). A re-run of the failed job is not expected
-  to help, because a re-run repeats the run of the push's event (not measured here).
+- **Recovery:** remove the label, wait until the removal's `check-affected` run is listed, then set the label again. The
+  removal starts a run too (`unlabeled` is a trigger), and the same race applies: created after the label's run, it
+  would cancel it and run the cone without the label. On #16 the label was removed at 00:53:31Z and set at 00:53:44Z; the
+  removal's run was the earlier one and was cancelled at 00:53:54Z, and the re-added label's run passed in four seconds
+  (00:54:03Z to 00:54:07Z). A re-run of the failed job is not expected to help, because a re-run repeats the run of the
+  push's event (not measured here).
 - **How to tell it from a real failure:** the PR shows the label, the failed run's "heavy-cone escape valve" step is
   skipped, and the error is the budget's, with no root named.
 
