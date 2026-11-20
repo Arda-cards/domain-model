@@ -51,15 +51,18 @@ with `heavy-cone` to avoid the timeouts"):**
 - **Symptom:** the PR carried the label and its local gate was green, and `affected-cones` still failed: "the cone run
   exceeded its budget (900s effective of 15m nominal; setup took 22s of the 1200s job limit)". No root reported a wrong
   verdict.
-- **What happened:** the head was pushed at 00:36:18Z and the label was set at 00:36:21Z. GitHub created the label's run
-  first (00:36:24Z) and the push's run one second later (00:36:25Z). The workflow keeps one run per branch (`concurrency`
+- **What happened:** the head was pushed at 00:36:18Z (the repository's activity log for the branch) and the label was
+  set at 00:36:21Z (the pull request's events). GitHub created the label's run first (00:36:24Z) and the push's run one
+  second later (00:36:25Z). The workflow keeps one run per branch (`concurrency`
   with `cancel-in-progress`), so the later run, the push's, cancelled the label's. A run decides from its own event
   (`contains(github.event.pull_request.labels.*.name, 'heavy-cone')`), and the push's event was made before the label
   existed. Its step "heavy-cone escape valve" shows as skipped, and it ran the cone to the end of the budget.
 - **Rule:** push, wait until the push's `check-affected` run is listed, then set the label. The label's run is then the
   later one: it cancels the push's run and skips the solve. A PR that already carries the label before a push is not
   expected to be affected, because the push's event then lists the label (not measured here).
-- **Recovery:** remove the label and set it again. Do not re-run the failed job: a re-run uses the push's event again.
+- **Recovery:** remove the label and set it again. On #16 the label was removed at 00:53:31Z and set at 00:53:44Z, and the
+  run of the re-added label passed in four seconds (00:54:03Z to 00:54:07Z). A re-run of the failed job is not expected
+  to help, because a re-run repeats the run of the push's event (not measured here).
 - **How to tell it from a real failure:** the PR shows the label, the failed run's "heavy-cone escape valve" step is
   skipped, and the error is the budget's, with no root named.
 
