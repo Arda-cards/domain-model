@@ -45,14 +45,22 @@ pred uomSchemesSound { all s: UomScheme | one i: Item | i.uom = s }
     the former soft-ref soundness clauses are unrepresentable. */
 pred supplierPinsSound {
   // Since QA704 Q4 (a) a THEOREM of the implementation's RSupplierPinUnsound arm (dafny-domain `SupplierPinsSoundHolds`), over
-  // the supply rows of COMMITTED writes.
-  all o: ItemWriteOcc | committed[o] implies all s: o.supplies {
+  // the supply rows a COMMITTED row mentions: a committed write's payload AND every committed occurrence's record, as the
+  // reference model's `RowSupplies` (MPBOT-399). In the implementation the records clause follows from `ItemEffects`; a
+  // consumer opening the mock has no such effect, so the contract states it.
+  all s: committedRowSupplies {
     some s.supplierPin iff some s.supplierRole   // together or not at all (DT-023 cut 8,
                                                  //   the PDEV-241 re-base: a vendor link
                                                  //   always names its VENDOR role)
     some s.supplierPin implies s.supplierPin.subject.tenantId = s.tenantId
     some s.supplierRole implies roleSelectorAgrees[s.supplierPin, s.supplierRole, VENDOR]
   }
+}
+
+/** committedRowSupplies — the supply rows a COMMITTED row mentions: a committed write's payload and the record any committed
+    occurrence produced (dafny-domain `RowSupplies`; a refused row mentions none). */
+fun committedRowSupplies: set ItemSupply {
+  { o: ItemWriteOcc | committed[o] }.supplies + { o: ItemOcc | committed[o] }.post.sSupplies
 }
 
 // ── C4: the lifecycle shape (DT-023 R1 — theorem of guards + effects) ──────────────────────────
